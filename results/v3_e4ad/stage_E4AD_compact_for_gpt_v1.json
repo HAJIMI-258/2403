@@ -1,0 +1,26 @@
+{
+  "stage": "E4A-D",
+  "trigger_audit_passed": 1,
+  "fixation_coverage_passed": 1,
+  "descriptor_margin_positive_rate": 0.23333333333333334,
+  "same_space_margin_positive_rate": 0.28888888888888886,
+  "reference_mismatch_event_count": 20,
+  "descriptor_degenerate_event_count": 0,
+  "metric_consistency_passed": 1,
+  "competition_removed_target_count_recomputed": 4,
+  "main_failure_type": "active_evidence_not_discriminative",
+  "failure_counts": {
+    "active_evidence_not_discriminative": 25,
+    "passive_success_no_active_needed": 42,
+    "reference_space_mismatch": 20,
+    "trigger_missed_failure_event": 6,
+    "ambiguous_multi_valid_bundle": 9
+  },
+  "actionable_failure_counts": {
+    "active_evidence_not_discriminative": 25,
+    "reference_space_mismatch": 20,
+    "trigger_missed_failure_event": 6,
+    "ambiguous_multi_valid_bundle": 9
+  },
+  "next_recommendation": "E4A.1 same-space active evidence descriptor"
+}

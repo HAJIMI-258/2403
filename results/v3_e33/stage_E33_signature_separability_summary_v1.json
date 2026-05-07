@@ -1,0 +1,89 @@
+{
+  "baseline": {
+    "ablation_name": "A0_E32b_baseline",
+    "global_top1": 0.35294117647058826,
+    "global_top3": 0.6470588235294118,
+    "global_top5": 0.7058823529411765,
+    "false_bundle_retrieval_rate": 0.6470588235294118,
+    "focus_top1_count": 3,
+    "focus_success_count": 3,
+    "regression_event_count": 0,
+    "target_in_top3_but_lost_top1_count": 5,
+    "target_not_in_top5_count": 5,
+    "signature_collision_count": 5,
+    "wrong_bundle_overgeneric_count": 0,
+    "mean_target_wrong_signature_margin": -0.032926434820348564,
+    "proto0_top5_share": 0.17647058823529413,
+    "bundle552_top1_count": 1,
+    "strict_anchor_real_svr": 0.7058823529411765,
+    "strict_anchor_shuffled_svr": 0.23529411764705882,
+    "wrong_old_prototype_visible_count": 2,
+    "selected_as_best": 1,
+    "improved_event_count": 0,
+    "unchanged_failure_count": 11,
+    "unchanged_success_count": 6,
+    "eligible_for_best": 0
+  },
+  "collision_counts": {
+    "separation_collision": 1,
+    "wrong_bundle_overgeneric": 1,
+    "multi_cue_collision": 16,
+    "temporal_collision": 6,
+    "content_collision": 3,
+    "context_collision": 5,
+    "disappearance_collision": 1
+  },
+  "target_in_top3_but_lost_top1_events": [
+    {
+      "ablation_name": "A0_E32b_baseline",
+      "event_id": "M-RE-TC-005",
+      "target_bundle_id": 287,
+      "target_rank": 2,
+      "target_in_top3": 1,
+      "target_in_top5": 1,
+      "top1_bundle_id": 286,
+      "failure_reason": "multi_cue_collision"
+    },
+    {
+      "ablation_name": "A0_E32b_baseline",
+      "event_id": "M-RE-TC-006",
+      "target_bundle_id": 336,
+      "target_rank": 3,
+      "target_in_top3": 1,
+      "target_in_top5": 1,
+      "top1_bundle_id": 338,
+      "failure_reason": "temporal_collision"
+    },
+    {
+      "ablation_name": "A0_E32b_baseline",
+      "event_id": "M-RE-TC-010",
+      "target_bundle_id": 523,
+      "target_rank": 3,
+      "target_in_top3": 1,
+      "target_in_top5": 1,
+      "top1_bundle_id": 518,
+      "failure_reason": "multi_cue_collision"
+    },
+    {
+      "ablation_name": "A0_E32b_baseline",
+      "event_id": "M-RE-TC-011",
+      "target_bundle_id": 523,
+      "target_rank": 3,
+      "target_in_top3": 1,
+      "target_in_top5": 1,
+      "top1_bundle_id": 518,
+      "failure_reason": "multi_cue_collision"
+    },
+    {
+      "ablation_name": "A0_E32b_baseline",
+      "event_id": "M-RE-TC-015",
+      "target_bundle_id": 628,
+      "target_rank": 2,
+      "target_in_top3": 1,
+      "target_in_top5": 1,
+      "top1_bundle_id": 636,
+      "failure_reason": "temporal_collision"
+    }
+  ],
+  "human_summary": "Signature audit compares target bundle against wrong top candidates across content/support/motion/context/temporal/disappearance/provenance/separation."
+}

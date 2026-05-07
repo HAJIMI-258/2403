@@ -1,0 +1,18 @@
+{
+  "baseline_target_rows": 4,
+  "baseline_target_lineage_rows": 0,
+  "baseline_unrelated_attach_rows": 4,
+  "baseline_target_lineage_active_count": 0,
+  "baseline_target_lineage_dormant_count": 0,
+  "baseline_target_lineage_ghost_count": 0,
+  "baseline_target_lineage_retired_count": 2,
+  "baseline_target_lineage_continuation_bank_size": 0,
+  "baseline_target_lineage_temp_attach_expired": true,
+  "forced_target_rows": 1,
+  "forced_target_has_assignment_row": false,
+  "forced_target_lineage_continuation_bank_size": 3,
+  "forced_target_lineage_temp_attach_present": true,
+  "forced_target_lineage_temp_attach_expired": false,
+  "stagea2_primary_break": "attach-written rows in the Stage A.1 target frame come from other lineages' active-match traffic, while the target lineage itself has no live candidates and no continuation bank",
+  "stagea2_secondary_break": "apply_concept_gated_resurrection only consumes dormant/ghost + continuation-bank candidates, and TemporaryAttachSlot stores the current attached track state rather than an old recoverable identity"
+}

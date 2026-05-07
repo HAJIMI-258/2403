@@ -1,0 +1,14 @@
+{
+  "target_event_id": 6,
+  "target_frame": 990,
+  "target_lineage_id": 2,
+  "preserve_final_lineage": "0",
+  "tiebreak_final_lineage": "0",
+  "preserve_target_visible": 0,
+  "tiebreak_target_visible": 0,
+  "preserve_target_rank": null,
+  "tiebreak_target_rank": null,
+  "tiebreak_applied": 0,
+  "continuity_priority_score": null,
+  "geometry_priority_score": null
+}

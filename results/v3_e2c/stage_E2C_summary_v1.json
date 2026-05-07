@@ -1,0 +1,147 @@
+{
+  "runtime_only": {
+    "overall": {
+      "events": 18,
+      "raw_svr": 0.7777777777777778,
+      "canonical_svr": 0.9444444444444444,
+      "anchor_svr": 0.9444444444444444,
+      "claim_visibility": 0.7777777777777778,
+      "raw_continuity_owner_visible": 0.0,
+      "raw_runtime_owner_visible": 0.7777777777777778
+    },
+    "proposal_detected_only": {
+      "events": 17,
+      "raw_svr": 0.8235294117647058,
+      "canonical_svr": 1.0,
+      "anchor_svr": 1.0,
+      "claim_visibility": 0.8235294117647058,
+      "raw_continuity_owner_visible": 0.0,
+      "raw_runtime_owner_visible": 0.8235294117647058
+    },
+    "scenarios": {
+      "track_a_bridge": {
+        "overall": {
+          "events": 1,
+          "raw_svr": 1.0,
+          "canonical_svr": 1.0,
+          "anchor_svr": 1.0,
+          "claim_visibility": 1.0,
+          "raw_continuity_owner_visible": 0.0,
+          "raw_runtime_owner_visible": 1.0
+        },
+        "proposal_detected_only": {
+          "events": 1,
+          "raw_svr": 1.0,
+          "canonical_svr": 1.0,
+          "anchor_svr": 1.0,
+          "claim_visibility": 1.0,
+          "raw_continuity_owner_visible": 0.0,
+          "raw_runtime_owner_visible": 1.0
+        }
+      },
+      "track_c_long_horizon": {
+        "overall": {
+          "events": 17,
+          "raw_svr": 0.7647058823529411,
+          "canonical_svr": 0.9411764705882353,
+          "anchor_svr": 0.9411764705882353,
+          "claim_visibility": 0.7647058823529411,
+          "raw_continuity_owner_visible": 0.0,
+          "raw_runtime_owner_visible": 0.7647058823529411
+        },
+        "proposal_detected_only": {
+          "events": 16,
+          "raw_svr": 0.8125,
+          "canonical_svr": 1.0,
+          "anchor_svr": 1.0,
+          "claim_visibility": 0.8125,
+          "raw_continuity_owner_visible": 0.0,
+          "raw_runtime_owner_visible": 0.8125
+        }
+      }
+    }
+  },
+  "dual_owner": {
+    "overall": {
+      "events": 18,
+      "raw_svr": 0.7777777777777778,
+      "canonical_svr": 0.9444444444444444,
+      "anchor_svr": 0.9444444444444444,
+      "claim_visibility": 0.7777777777777778,
+      "raw_continuity_owner_visible": 0.7777777777777778,
+      "raw_runtime_owner_visible": 0.7777777777777778
+    },
+    "proposal_detected_only": {
+      "events": 17,
+      "raw_svr": 0.8235294117647058,
+      "canonical_svr": 1.0,
+      "anchor_svr": 1.0,
+      "claim_visibility": 0.8235294117647058,
+      "raw_continuity_owner_visible": 0.8235294117647058,
+      "raw_runtime_owner_visible": 0.8235294117647058
+    },
+    "scenarios": {
+      "track_a_bridge": {
+        "overall": {
+          "events": 1,
+          "raw_svr": 1.0,
+          "canonical_svr": 1.0,
+          "anchor_svr": 1.0,
+          "claim_visibility": 1.0,
+          "raw_continuity_owner_visible": 1.0,
+          "raw_runtime_owner_visible": 1.0
+        },
+        "proposal_detected_only": {
+          "events": 1,
+          "raw_svr": 1.0,
+          "canonical_svr": 1.0,
+          "anchor_svr": 1.0,
+          "claim_visibility": 1.0,
+          "raw_continuity_owner_visible": 1.0,
+          "raw_runtime_owner_visible": 1.0
+        }
+      },
+      "track_c_long_horizon": {
+        "overall": {
+          "events": 17,
+          "raw_svr": 0.7647058823529411,
+          "canonical_svr": 0.9411764705882353,
+          "anchor_svr": 0.9411764705882353,
+          "claim_visibility": 0.7647058823529411,
+          "raw_continuity_owner_visible": 0.7647058823529411,
+          "raw_runtime_owner_visible": 0.7647058823529411
+        },
+        "proposal_detected_only": {
+          "events": 16,
+          "raw_svr": 0.8125,
+          "canonical_svr": 1.0,
+          "anchor_svr": 1.0,
+          "claim_visibility": 0.8125,
+          "raw_continuity_owner_visible": 0.8125,
+          "raw_runtime_owner_visible": 0.8125
+        }
+      }
+    }
+  },
+  "paired": {
+    "events": 18,
+    "proposal_detected_events": 17,
+    "raw_visible_before": 14,
+    "raw_visible_after": 14,
+    "canonical_visible_before": 17,
+    "canonical_visible_after": 17,
+    "anchor_visible_before": 17,
+    "anchor_visible_after": 17,
+    "improved_raw_visibility_events": 0,
+    "improved_canonical_visibility_events": 0,
+    "improved_anchor_visibility_events": 0,
+    "new_canonical_visible_events": 0,
+    "new_anchor_visible_events": 0,
+    "proposal_detected_raw_visible_before": 14,
+    "proposal_detected_raw_visible_after": 14,
+    "proposal_detected_canonical_visible_before": 17,
+    "proposal_detected_canonical_visible_after": 17,
+    "proposal_detected_anchor_visible_before": 17,
+    "proposal_detected_anchor_visible_after": 17
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "target_frame": 990,
+  "target_prototype_id": 3,
+  "target_lineage_id": 2,
+  "runtime_candidate_lineages": [
+    0
+  ],
+  "continuity_candidate_lineages": [
+    2
+  ],
+  "combined_candidate_lineages": [
+    0,
+    2
+  ],
+  "lineage2_enters_preserve_input": 1,
+  "lineage2_enters_claim_builder": 1,
+  "notes": "一旦把 preserve-input 的候选形成从 runtime owner 扩成 runtime owner + continuity owner，prototype 3 的 continuity key 就足以把 lineage 2 重新暴露给 preserve-input/claim-builder。"
+}

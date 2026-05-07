@@ -1,0 +1,58 @@
+[
+  {
+    "scenario": "multi_object_reentry",
+    "mode": "before",
+    "u_recall": 0.6968973747016707,
+    "idsw": 59,
+    "reentry_events": 3,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 3.6420047732696896,
+    "mean_dormant_tracks": 0.0,
+    "peak_dormant_tracks": 0,
+    "created_tracks": 201,
+    "reactivation_successes": 0
+  },
+  {
+    "scenario": "multi_object_reentry",
+    "mode": "after",
+    "u_recall": 0.6968973747016707,
+    "idsw": 48,
+    "reentry_events": 3,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 5.233890214797136,
+    "mean_dormant_tracks": 0.7780429594272077,
+    "peak_dormant_tracks": 4,
+    "created_tracks": 25,
+    "reactivation_successes": 19
+  },
+  {
+    "scenario": "hard_drift_occlusion",
+    "mode": "before",
+    "u_recall": 0.6292760540970566,
+    "idsw": 86,
+    "reentry_events": 2,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 3.4725536992840094,
+    "mean_dormant_tracks": 0.0,
+    "peak_dormant_tracks": 0,
+    "created_tracks": 208,
+    "reactivation_successes": 0
+  },
+  {
+    "scenario": "hard_drift_occlusion",
+    "mode": "after",
+    "u_recall": 0.6292760540970566,
+    "idsw": 69,
+    "reentry_events": 2,
+    "recovered_old_id": 1,
+    "reentry_recovery_rate": 0.5,
+    "mean_active_tracks": 5.145584725536993,
+    "mean_dormant_tracks": 0.7136038186157518,
+    "peak_dormant_tracks": 3,
+    "created_tracks": 25,
+    "reactivation_successes": 13
+  }
+]

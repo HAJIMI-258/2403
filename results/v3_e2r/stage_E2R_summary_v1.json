@@ -1,0 +1,13 @@
+{
+  "track_c_only": true,
+  "actual_runtime_owner_rows_total": 251102,
+  "actual_continuity_owner_rows_total": 0,
+  "actual_unique_source_lineages": [
+    0,
+    1
+  ],
+  "actual_unique_continuity_source_lineages": [],
+  "continuity_owner_branch_materialized": false,
+  "continuity_overwrite_rows": 6,
+  "target_lineage_lost_rows": 0
+}

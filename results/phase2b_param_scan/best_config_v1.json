@@ -1,0 +1,61 @@
+{
+  "field": {
+    "wb": 0.35,
+    "wt": 0.2,
+    "wq": 0.25,
+    "wr": 0.2,
+    "tau_obj": 0.47,
+    "ema_eta": 0.82,
+    "hab_rho": 0.9,
+    "hab_lambda": 0.95,
+    "smoothing_kernel_size": 5,
+    "min_area": 96,
+    "max_proposals": 8
+  },
+  "tracking": {
+    "beta_iou": 0.35,
+    "beta_center": 0.45,
+    "beta_feat": 0.2,
+    "max_match_cost": 0.62,
+    "keepalive_frames": 8,
+    "use_linear_prediction": true,
+    "signature_momentum": 0.7,
+    "velocity_momentum": 0.65
+  },
+  "memory": {
+    "tau_birth": 0.35,
+    "tau_merge": 0.18,
+    "tau_sim": 0.2,
+    "lr_proto": 0.35,
+    "decay_rate": 0.02,
+    "decay_patience": 20,
+    "memory_budget": 32,
+    "decay_floor": 0.1
+  },
+  "final_metrics": {
+    "easy_single_object": {
+      "u_recall": 1.0,
+      "purity": 1.0,
+      "pfr": 0.0,
+      "idsw": 0,
+      "memory_growth": 0.0,
+      "final_prototypes": 1
+    },
+    "multi_object_reentry": {
+      "u_recall": 0.9069212410501193,
+      "purity": 0.6744604316546763,
+      "pfr": 0.0,
+      "idsw": 0,
+      "memory_growth": 0.0,
+      "final_prototypes": 2
+    },
+    "hard_drift_occlusion": {
+      "u_recall": 0.5294351630867143,
+      "purity": 0.674347158218126,
+      "pfr": 0.0,
+      "idsw": 0,
+      "memory_growth": 0.0,
+      "final_prototypes": 2
+    }
+  }
+}

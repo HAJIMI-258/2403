@@ -1,0 +1,17 @@
+{
+  "target_event_id": 6,
+  "target_gt_object_id": 2,
+  "target_frame": 990,
+  "target_lineage_id": 2,
+  "offline_expected_lineage_id": 2,
+  "runtime_old_lineage_id": null,
+  "runtime_old_continuity_lineage_id": null,
+  "runtime_old_track_id": null,
+  "runtime_old_prototype_id": null,
+  "target_continuity_source_visible": 0,
+  "target_claim_visible": 0,
+  "target_final_selected_lineage": 0,
+  "target_failure_class": "visibility_failure",
+  "target_source_row_count": 36,
+  "target_claim_row_count": 2
+}

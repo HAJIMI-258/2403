@@ -1,0 +1,17 @@
+{
+  "target_frame": 990,
+  "target_prototype_id": 3,
+  "target_lineage_id": 2,
+  "baseline_runtime_registry_lineages": [
+    0,
+    1
+  ],
+  "baseline_runtime_owner_lineage_id": 0,
+  "baseline_continuity_lineage_id": 0,
+  "forced_continuity_lineage_id": 2,
+  "continuity_source_enumerable_after_force": true,
+  "preserve_input_still_runtime_owner_only": true,
+  "lineage2_enters_preserve_input_without_owner_split": false,
+  "lineage2_enters_claim_builder_without_owner_split": false,
+  "notes": "只保 continuity key 时，runtime registry 仍可只有 {0,1}；若 preserve-input 仍只枚举 runtime owner，lineage 2 依旧进不了 preserve-input。"
+}

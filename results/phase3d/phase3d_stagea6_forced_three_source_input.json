@@ -1,0 +1,11 @@
+{
+  "target_event_id": 6,
+  "target_frame": 990,
+  "target_lineage_id": 2,
+  "continuity_entered_preserve_input": 0,
+  "continuity_entered_claim_builder": 0,
+  "three_source_entered_preserve_input": 0,
+  "three_source_entered_claim_builder": 0,
+  "continuity_final_lineage": 0,
+  "three_source_final_lineage": 0
+}

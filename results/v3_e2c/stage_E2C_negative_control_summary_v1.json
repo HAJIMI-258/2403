@@ -1,0 +1,18 @@
+{
+  "scope": "track_c_long_horizon_dual_owner_only",
+  "proposal_detected_events": 16,
+  "real_anchor_visible_count": 16,
+  "real_anchor_svr": 1.0,
+  "shuffled_anchor_visible_count": 14,
+  "shuffled_anchor_svr": 0.875,
+  "focus_real_anchor_visible_count": 3,
+  "focus_shuffled_anchor_visible_count": 2,
+  "focus_wrong_old_prototype_visible_count": 0,
+  "normal_reference_event_count": 3,
+  "normal_triple_match_count": 3,
+  "pass": {
+    "shuffled_anchor_lower_than_real": true,
+    "focus_wrong_old_prototype_zero": true,
+    "normal_reference_triple_match": true
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "scenario_name": "track_a_bridge",
+  "u_recall": 0.7877997914494265,
+  "same_track_reentry_recovery": 0.0,
+  "same_prototype_reentry_recovery": 1.0,
+  "same_lineage_prototype_reentry_recovery": 1.0,
+  "same_track_after_concept_recovery": 0.0,
+  "same_track_after_lineage_recovery": 0.0,
+  "concept_recovered_events": 1,
+  "lineage_aware_concept_recovered_events": 1,
+  "concept_recovered_but_lineage_mismatch_rate": 0.0,
+  "continuation_bank_access_rate_given_concept_recovery": 0.0,
+  "new_track_with_old_lineage_rate": 0.0,
+  "pfr": 2.0,
+  "track_idsw": 129,
+  "memory_growth": 0.0,
+  "reentry_events": 1
+}

@@ -1,0 +1,122 @@
+{
+  "scope": "track_a_bridge_and_track_c_long_horizon",
+  "best_ablation": {
+    "ablation_name": "A0_E31_combined_baseline",
+    "global_top1": 0.35294117647058826,
+    "global_top3": 0.6470588235294118,
+    "global_top5": 0.7058823529411765,
+    "false_bundle_retrieval_rate": 0.6470588235294118,
+    "focus_top1_count": 3,
+    "focus_success_count": 3,
+    "regression_event_count": 0,
+    "improved_event_count": 0,
+    "unchanged_failure_count": 0,
+    "unchanged_success_count": 6,
+    "target_in_top3_but_lost_top1_count": 5,
+    "wrong_bundle_accessibility_too_high_count": 0,
+    "hub_bundle_dominance_count": 0,
+    "bundle552_top1_count": 1,
+    "proto0_top5_share": 0.17647058823529413,
+    "strict_anchor_real_svr": 0.7058823529411765,
+    "strict_anchor_shuffled_svr": 0.23529411764705882,
+    "wrong_old_prototype_visible_count": 2,
+    "unsafe_component_count": 0,
+    "selected_as_best": 1,
+    "eligible_for_best": 0
+  },
+  "passed_minimum": false,
+  "baseline_consistency": [
+    {
+      "source_stage": "E31_summary_best",
+      "config_hash": "68392eb91e7d",
+      "event_set": "track_a_bridge_and_track_c_long_horizon",
+      "proposal_detected_events": 17,
+      "global_top1": 0.29411764705882354,
+      "global_top3": 0.6470588235294118,
+      "global_top5": 0.7058823529411765,
+      "false_bundle_retrieval_rate": 0.7058823529411765,
+      "focus_top1_count": "",
+      "focus_success_count": 3,
+      "difference_reason": "matches the E31 published best-ablation metric family"
+    },
+    {
+      "source_stage": "E32_summary_best",
+      "config_hash": "c87d4d8448b1",
+      "event_set": "track_a_bridge_and_track_c_long_horizon",
+      "proposal_detected_events": 17,
+      "global_top1": 0.35294117647058826,
+      "global_top3": 0.6470588235294118,
+      "global_top5": 0.7058823529411765,
+      "false_bundle_retrieval_rate": 0.6470588235294118,
+      "focus_top1_count": 3,
+      "focus_success_count": 3,
+      "difference_reason": "E32 stateful calibration wrapper reported a stronger A0; E32b uses freshly recomputed local E31 scoring as the authority"
+    },
+    {
+      "source_stage": "E32a_summary_best",
+      "config_hash": "eec6bbb3f26b",
+      "event_set": "track_a_bridge_and_track_c_long_horizon",
+      "proposal_detected_events": 17,
+      "global_top1": 0.29411764705882354,
+      "global_top3": 0.6470588235294118,
+      "global_top5": 0.7058823529411765,
+      "false_bundle_retrieval_rate": 0.7058823529411765,
+      "focus_top1_count": 3,
+      "focus_success_count": 3,
+      "difference_reason": "matches the E32a recomputed conservative baseline"
+    },
+    {
+      "source_stage": "E32b_recomputed_A0",
+      "config_hash": "230a741b9084",
+      "event_set": "track_a_bridge_and_track_c_long_horizon",
+      "proposal_detected_events": 17,
+      "global_top1": 0.35294117647058826,
+      "global_top3": 0.6470588235294118,
+      "global_top5": 0.7058823529411765,
+      "false_bundle_retrieval_rate": 0.6470588235294118,
+      "focus_top1_count": 3,
+      "focus_success_count": 3,
+      "difference_reason": "this run uses E32b local E31 scoring path; use this row as the E32b baseline"
+    }
+  ],
+  "focus_events": [
+    {
+      "ablation_name": "A0_E31_combined_baseline",
+      "event_id": "M-RE-TC-012",
+      "baseline_target_rank": 1,
+      "target_bundle_rank_after": 1,
+      "target_bundle_retrieved_top1": 1,
+      "target_bundle_retrieved_top3": 1,
+      "target_bundle_retrieved_top5": 1,
+      "pattern_completion_success": 1,
+      "proto0_bundle_count_in_top5": 1,
+      "target_lost_reason": ""
+    },
+    {
+      "ablation_name": "A0_E31_combined_baseline",
+      "event_id": "M-RE-TC-013",
+      "baseline_target_rank": 1,
+      "target_bundle_rank_after": 1,
+      "target_bundle_retrieved_top1": 1,
+      "target_bundle_retrieved_top3": 1,
+      "target_bundle_retrieved_top5": 1,
+      "pattern_completion_success": 1,
+      "proto0_bundle_count_in_top5": 1,
+      "target_lost_reason": ""
+    },
+    {
+      "ablation_name": "A0_E31_combined_baseline",
+      "event_id": "M-RE-TC-014",
+      "baseline_target_rank": 1,
+      "target_bundle_rank_after": 1,
+      "target_bundle_retrieved_top1": 1,
+      "target_bundle_retrieved_top3": 1,
+      "target_bundle_retrieved_top5": 1,
+      "pattern_completion_success": 1,
+      "proto0_bundle_count_in_top5": 1,
+      "target_lost_reason": ""
+    }
+  ],
+  "bundle552_summary": "Bundle 552 appears in focus top3 22 times; generic_content_only=0; won_against_target=0. The swap gate blocks it when the challenger is generic or high-hub.",
+  "human_summary": "E3.2b 未通过：没有任何 top3 rerank 消融能安全超过 A0 baseline。当前 top3 内部判别仍不能可靠提升全局。"
+}

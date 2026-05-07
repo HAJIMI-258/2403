@@ -1,0 +1,24 @@
+{
+  "generated_at_utc": "2026-04-07T19:04:14.420120+00:00",
+  "config_snapshot": "results\\phase3_track_proto\\config_snapshot_bridge_synth_generic_v1.yaml",
+  "protocol_snapshot": "results\\phase3_track_proto\\protocol_snapshot_nops_bench_v2.md",
+  "protocol_source": "protocol/protocol_nops_bench_v2.md",
+  "scenarios": [
+    {
+      "scenario": "track_a_bridge",
+      "summary_json": "results\\phase3_track_proto\\track_a_bridge_summary_v1.json",
+      "tracking_figure": "results\\phase3_track_proto\\track_a_bridge_tracking_diag_v1.png",
+      "memory_figure": "results\\phase3_track_proto\\track_a_bridge_memory_diag_v1.png",
+      "budget_csv": "results\\phase3_track_proto\\track_a_bridge_budget_report_v1.csv",
+      "budget_json": "results\\phase3_track_proto\\track_a_bridge_budget_report_v1.json"
+    },
+    {
+      "scenario": "track_c_long_horizon",
+      "summary_json": "results\\phase3_track_proto\\track_c_long_horizon_summary_v1.json",
+      "tracking_figure": "results\\phase3_track_proto\\track_c_long_horizon_tracking_diag_v1.png",
+      "memory_figure": "results\\phase3_track_proto\\track_c_long_horizon_memory_diag_v1.png",
+      "budget_csv": "results\\phase3_track_proto\\track_c_long_horizon_budget_report_v1.csv",
+      "budget_json": "results\\phase3_track_proto\\track_c_long_horizon_budget_report_v1.json"
+    }
+  ]
+}

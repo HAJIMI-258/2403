@@ -1,0 +1,124 @@
+NOPS-OWR 第一部分后续修改与 Phase 2 推进文档
+基于 Phase 1 结果的后续增强、桥接数据设计与实验推进清单
+当前阶段判断
+核心问题
+下一阶段主线
+Go，但仅适合受限进入 Phase 2
+强漂移 + 遮挡场景偏弱；Baseline 2 仍具竞争力
+先补鲁棒性，再进入 bridge synthetic 与真实小流
+1. 当前阶段结论
+Phase 1 已完成的有效结论：
+• 对象性链条已成立：当前最小系统已经能够从连续流中产生可解释的 objectness 热图，并形成 proposal。
+• 时序身份稳定性已成立：tracked_idsw=18，相比 naive 版本 915 有数量级下降，说明 temporal identity 不是装饰模块。
+• prototype memory 已形成且未爆炸：代表性场景中 final_prototype_count=3、memory_growth=0.0040，系统已具备“在线形成概念而不是每帧新建类别”的雏形。
+• Go/No-Go 结论正确：项目可以继续，但当前只适合进入受限 Phase 2，不宜直接大规模扩展到复杂真实 benchmark。
+当前最主要的残留风险有两项：第一，hard_drift_occlusion 场景的 U-Recall 仍偏低（0.5398）；第二，Baseline 2 仍有明显竞争力，说明当前方法更像“闭环更完整”，还没有在复杂干扰场景下把性能差距彻底拉开。
+2. 为什么第一阶段先用简单 synthetic
+第一阶段使用简单几何 synthetic，并不是为了把项目最终停留在玩具环境里，而是为了把系统的四个底层机制先验证出来：objectness 能否涌现、ID 能否稳定、prototype 能否形成、memory 会不会爆炸。这个阶段的 synthetic 更像“受控实验场”，而不是“最终训练数据集”。
+因此，第一阶段结果只能说明“问题成立”，不能说明“系统已经具备真实复杂环境泛化能力”。如果直接把当前版本拿去面对工厂精密件、复杂重复纹理、反光、农田光照变化、沙尘遮挡等场景，大概率会出现明显退化。这不是路线错误，而是阶段目标不同。
+层级
+数据角色
+回答的问题
+第一层
+简单 synthetic / 受控环境
+这套闭环机制是否真的成立
+第二层
+bridge synthetic / 半真实合成流
+在接近真实干扰结构下，objectness、tracking、memory 是否仍稳定
+第三层
+真实小规模流式环境
+从 bridge synthetic 迁移到真实工况时，机制是否仍存活
+3. 第一部分后续修改总原则
+• 不直接跳真实复杂 benchmark，先做 bridge synthetic。
+• 不同时扩模块和扩数据，先针对现有失败点做最值钱的增强。
+• 不把 Phase 2 做成“更多功能”，而是做成“更强鲁棒性”。
+• 保持 problem definition 不变：仍然是 no-pretrain、no-offline-data、one-pass、pure-SNN、open-world self-bootstrapping recognition。
+4. Phase 2 的后续修改项
+Phase 2 只建议补两类增强项：一类增强 objectness 对背景漂移和复杂纹理的鲁棒性；一类增强 tracking 对遮挡和 re-entry 的稳定性。不要在这一阶段引入 concept graph、完整 split 体系或复杂 regret 机制。
+4.1 失败切片先行
+在修改模型之前，先对 hard_drift_occlusion 和 Baseline 2 的竞争帧做 failure slicing。建议按帧输出一个 failure_slices_v1.csv，至少包含以下字段：
+• frame_id
+• num_gt
+• num_prop
+• recall_hit
+• id_switch
+• occlusion_ratio
+• drift_strength
+• false_hot_area
+目的不是做报告，而是回答“到底输在哪类帧、哪类干扰、哪一段流程”。没有这一层切片，后续加模块很容易变成盲改。
+4.2 补入 habituation / background suppression
+建议在当前 objectness 三项（边界项、短时持续项、惊奇项）基础上，加入局部背景习惯化项，用于抑制缓慢漂移和重复背景纹理。公式保持简单：
+Hₜ₊₁(u) = ρHₜ(u) + (1 − ρ)Aₜ(u)
+Rₜ(u) = Aₜ(u) − λₕHₜ(u)
+Oₜ = αBₜ + βTₜ + γQₜ + δRₜ
+预期收益：减少背景漂移带来的假热点，提升 hard_drift_occlusion 场景的 U-Recall，并降低 false_hot_area。
+4.3 补入短时轨迹预测 + keepalive
+当前 temporal identity 已经有效，但遮挡后恢复仍弱。建议先补两个低风险增强：
+• 用上一时刻速度做线性位置预测。
+• 对 unmatched track 保留 k 帧，不立刻删除。
+预期收益：降低遮挡后的丢轨概率，提高 re-entry 后回到旧 ID 的成功率，同时不显著增加 memory pressure。
+5. Bridge Synthetic 数据设计（新增重点）
+第二阶段不建议继续停留在规则几何体和干净背景，而应尽快引入“半真实合成流”。Bridge synthetic 的目标不是伪造真实世界，而是在受控条件下把真实环境中的高频干扰系统化地加进来。
+5.1 工业版 bridge synthetic
+• 背景：金属、塑料、磨砂、网格、螺纹、重复零件边缘等高重复纹理。
+• 光照：局部强反光、镜面高亮、阴影扫过、对比度变化。
+• 目标：细长件、小缺口、小缺陷、不规则边缘、多尺度小目标。
+• 动态：小位移、局部遮挡、重复零件交叉、形态近似目标同时出现。
+工业版 bridge synthetic 主要观察：反光是否误触发 objectness、小目标 recall 是否明显掉、prototype 是否把不同小缺陷混成一类。
+5.2 农田版 bridge synthetic
+• 背景：叶片纹理、土壤纹理、枝条、杂草、重复自然纹理。
+• 光照：全局亮度漂移、局部阴影、逆光、颜色偏移、gamma 扰动。
+• 干扰：沙尘、模糊、传感器噪声、局部遮挡、风吹带来的非刚体形变。
+• 目标：不规则轮廓、边缘缺损、姿态连续变化、多尺度区域。
+农田版 bridge synthetic 主要观察：复杂背景下 objectness 是否被淹没、强漂移和遮挡下 ID 是否稳、normal/abnormal prototype 是否容易污染。
+6. Phase 2 必须盯住的指标与门槛
+模块目标
+核心指标
+当前风险
+Phase 2 通过线
+对象性鲁棒性
+U-Recall / Objectness AUPR / false_hot_area
+强漂移 + 遮挡场景偏弱
+hard_drift_occlusion 的 U-Recall ≥ 0.65
+身份稳定
+IDSW / re-entry 恢复率
+遮挡后恢复仍有风险
+IDSW 继续显著低于 naive，且遮挡后回到旧 ID 的比例提高
+概念形成
+Purity / PFR / final_prototypes
+Baseline 2 仍具竞争力
+在 PFR、Purity、memory_growth 上稳定优于 Baseline 2
+资源控制
+memory_growth / budget hit rate
+增强 tracking 后可能导致记忆膨胀
+引入新机制后 memory_growth 不明显恶化
+7. 推荐执行顺序
+阶段
+事项
+操作说明
+Step 1
+整理 failure slicing
+先把 hard_drift_occlusion 和 Baseline 2 的失败帧按类型切出来，生成 failure_slices_v1.csv 与代表性可视化。
+Step 2
+补 habituation/background suppression
+只改 objectness，观察 false_hot_area 和 hard_drift_occlusion U-Recall 是否明显改善。
+Step 3
+补轨迹预测与 keepalive
+只改 temporal identity，观察 IDSW、re-entry 恢复率和 unmatched track 生命周期。
+Step 4
+重新跑三场景 + baseline comparison
+比较 easy / multi-object-reentry / hard-drift-occlusion 三场景，并更新 baseline_comparison.csv。
+Step 5
+进入 bridge synthetic
+先工业版，再农田版；不要一口气跳真实 benchmark。
+Step 6
+决定是否进入真实小流 pilot
+只有当 bridge synthetic 也站住后，才进入真实工况小流验证。
+8. 本轮修改后的新增交付物
+• failure_slices_v1.csv：失败帧切片记录表。
+• hard_drift_occlusion_before_after.csv：加入 habituation 后的前后对比表。
+• tracking_reentry_eval_v1.csv：加入 keepalive / 预测后的 re-entry 恢复率统计。
+• bridge_synth_industrial.yaml 与 bridge_synth_farmland.yaml：两套桥接 synthetic 配置。
+• phase2_summary_v1.md：本轮增强后的 Go / No-Go 结论。
+9. 一句话结论
+第一部分已经完成“机制成立”的任务；后续修改不应继续堆新模块，而应先把鲁棒性补硬，再用 bridge synthetic 把简单受控环境推进到接近真实复杂干扰的半真实环境。

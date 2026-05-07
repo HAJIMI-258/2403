@@ -1,0 +1,41 @@
+config_path: configs\bridge_synth_generic_v1.yaml
+tracking_override:
+  keepalive_frames: 8
+  dormant_frames: 16
+  ghost_frames: 80
+  tau_g: 12
+  tau_res_short: 0.56
+  tau_res_long: 0.68
+  tau_continuation: 0.62
+  continuation_margin: 0.08
+  enable_identity_slots: false
+memory_override:
+  protect_linked_prototypes: true
+  enable_explicit_lineage: true
+  preserve_lineage_on_archive: true
+  preserve_lineage_on_replace: true
+  preserve_lineage_on_merge: true
+  allow_alias_lineage: true
+  enable_continuation_bank: true
+  bind_continuation_to: lineage
+  continuation_topk_per_proto: 4
+  continuation_topk_per_lineage: 4
+  min_track_age_for_continuation: 4
+  min_hits_for_continuation: 3
+  continuation_max_gap: 96
+  continuation_decay: 0.01
+  decay_patience: 24
+  enable_phase3d_dual_score: true
+  enable_phase3d_temp_attach: true
+  enable_phase3d_deferred_promotion: false
+  attach_accept_min: 0.28
+  promote_margin: 0.1
+  promote_support_min: 3
+  promotion_window: 8
+  promotion_stability_min: 0.6
+  post_promotion_cooldown: 8
+  temp_attach_ttl: 10
+  enable_phase3p_keep_head_default: false
+  enable_phase3p_grouped_gating: false
+  enable_phase3p_birth_suppression: false
+  enable_phase3p_full_stabilization: false

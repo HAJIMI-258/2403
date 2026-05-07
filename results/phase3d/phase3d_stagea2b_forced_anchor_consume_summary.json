@@ -1,0 +1,15 @@
+{
+  "target_event_id": 6,
+  "target_gt_object_id": 2,
+  "target_lineage_id": 2,
+  "baseline_candidate_pool_size_max": 4,
+  "baseline_anchor_candidate_pool_size_max": 3,
+  "baseline_restore_attempted_from_anchor_max": 1,
+  "baseline_attach_state_consumed_by_tracker_max": 0,
+  "forced_candidate_pool_size_max": 4,
+  "forced_anchor_candidate_pool_size_max": 3,
+  "forced_restore_attempted_from_anchor_max": 1,
+  "forced_attach_state_consumed_by_tracker_max": 0,
+  "forced_anchor_success_max": 1,
+  "pulled_off_zero_metrics": []
+}

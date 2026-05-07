@@ -1,0 +1,91 @@
+seed: 42
+
+dataset:
+  name: bridge_synth_industrial_v1
+  resolution: [320, 320]
+  sequence_length: 480
+  num_sequences: 6
+  num_objects_range: [2, 4]
+  shapes: [circle, square, triangle]
+  object_scale_range: [12, 40]
+  velocity_range: [0.8, 3.2]
+  spawn_margin: 20
+  occlusion_probability: 0.75
+  reentry_probability: 0.70
+  background_drift:
+    enabled: true
+    brightness_amplitude: 0.16
+    texture_noise_std: 0.05
+  appearance_perturbation:
+    enabled: true
+    scale_jitter: 0.18
+    intensity_jitter: 0.12
+    edge_blur_probability: 0.25
+  outputs:
+    - frame
+    - boxes
+    - masks
+    - instance_id
+    - concept_id
+
+bridge:
+  domain: industrial
+  background_patterns:
+    - metal_brushed
+    - matte_plastic
+    - threaded_grid
+    - repeated_edges
+  illumination_events:
+    - specular_highlight
+    - sweeping_shadow
+    - local_contrast_shift
+  target_styles:
+    - elongated_parts
+    - notch_defects
+    - irregular_edges
+    - multiscale_small_targets
+  evaluation_focus:
+    - false_objectness_under_reflection
+    - small_target_recall
+    - prototype_confusion_under_similar_shapes
+
+model:
+  spike_encoder:
+    edge_weight: 0.50
+    on_off_threshold: 0.10
+  objectness:
+    alpha_boundary: 1.00
+    beta_temporal: 0.60
+    gamma_surprise: 0.40
+    delta_residual: 0.55
+    temporal_decay: 0.82
+    surprise_decay: 0.90
+    habituation_decay: 0.94
+    habituation_lambda: 0.85
+    smoothing_kernel_size: 5
+    proposal_threshold: 0.45
+    min_area: 96
+    max_proposals: 8
+
+tracking:
+  iou_threshold: 0.30
+  max_center_distance: 48.0
+  iou_weight: 0.55
+  center_weight: 0.25
+  signature_weight: 0.20
+  max_missed_frames: 12
+  signature_momentum: 0.70
+  velocity_momentum: 0.65
+  use_motion_prediction: true
+  prediction_steps_cap: 3
+  reid_similarity_threshold: 0.92
+
+memory:
+  birth_threshold: 0.95
+  merge_threshold: 0.99
+  decay_rate: 0.02
+  budget_cap: 32
+  prototype_momentum: 0.75
+  decay_floor: 0.10
+  inactive_patience: 20
+

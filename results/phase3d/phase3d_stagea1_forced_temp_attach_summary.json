@@ -1,0 +1,51 @@
+{
+  "baseline": {
+    "num_events": 17,
+    "concept_recovered_events": 5,
+    "matched_lineage_events": 1,
+    "hinted_lineage_events": 16,
+    "attach_success_rate_given_matched_lineage": 1.0,
+    "attach_branch_enter_rate_given_matched_lineage": 1.0,
+    "temp_attach_usage_rate": 0.0,
+    "continuation_access_rate": 0.0,
+    "continuation_access_used_rate": 0.058823529411764705,
+    "same_track_after_attach": 0.0,
+    "same_track_reentry_recovery": 0.11764705882352941,
+    "same_track_after_concept_recovery": 0.4,
+    "same_prototype_reentry_recovery": 0.29411764705882354,
+    "pfr": 6.333333333333333,
+    "track_idsw": 378,
+    "drop_lineage_seed_before_memory_rate": 0.0,
+    "attach_not_consumed_rate": 0.0
+  },
+  "forced_temp_attach": {
+    "num_events": 17,
+    "concept_recovered_events": 7,
+    "matched_lineage_events": 1,
+    "hinted_lineage_events": 16,
+    "attach_success_rate_given_matched_lineage": 1.0,
+    "attach_branch_enter_rate_given_matched_lineage": 1.0,
+    "temp_attach_usage_rate": 0.058823529411764705,
+    "continuation_access_rate": 0.0,
+    "continuation_access_used_rate": 0.0,
+    "same_track_after_attach": 0.0,
+    "same_track_reentry_recovery": 0.058823529411764705,
+    "same_track_after_concept_recovery": 0.14285714285714285,
+    "same_prototype_reentry_recovery": 0.4117647058823529,
+    "pfr": 7.333333333333333,
+    "track_idsw": 381,
+    "drop_lineage_seed_before_memory_rate": 0.0,
+    "attach_not_consumed_rate": 0.0
+  },
+  "delta": {
+    "attach_branch_enter_rate_given_matched_lineage": 0.0,
+    "temp_attach_usage_rate": 0.058823529411764705,
+    "continuation_access_rate": 0.0,
+    "same_track_after_attach": 0.0
+  },
+  "inference": {
+    "lineage_seed_drop_blocks_attach_branch": false,
+    "forced_temp_attach_moves_execution_off_zero": true,
+    "downstream_consumption_still_missing": true
+  }
+}

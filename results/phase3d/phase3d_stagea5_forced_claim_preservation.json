@@ -1,0 +1,12 @@
+{
+  "target_event_id": 6,
+  "target_frame": 990,
+  "target_lineage_id": 2,
+  "baseline_target_lineage_visible": 0,
+  "preserved_target_lineage_visible": 0,
+  "baseline_claim_drop_stage": null,
+  "preserved_claim_drop_stage": null,
+  "baseline_final_lineage": "0",
+  "preserved_final_lineage": "0",
+  "preserved_target_rank": null
+}

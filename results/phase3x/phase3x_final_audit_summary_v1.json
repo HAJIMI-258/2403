@@ -1,0 +1,54 @@
+{
+  "continuation_write_success_rate": 0.9624413145539906,
+  "scenarios": {},
+  "continuation_survival_until_concept_recovery_rate": 0.4666666666666667,
+  "concept_recovered_but_lineage_mismatch_rate": 0.75,
+  "same_lineage_prototype_reentry_recovery": 0.23529411764705882,
+  "continuation_bank_access_rate_given_concept_recovery": 0.16666666666666666,
+  "continuation_bank_access_rate_given_same_lineage": 0.5,
+  "track_c_failure_stage_counts": {
+    "continuation_dead": 1,
+    "continuation_missing": 1,
+    "lineage_mismatch": 8,
+    "new_track_new_lineage": 2,
+    "proposal_missing": 1,
+    "track_restored": 4
+  },
+  "track_c_failure_stage_ratio": {
+    "continuation_dead": 0.058823529411764705,
+    "continuation_missing": 0.058823529411764705,
+    "lineage_mismatch": 0.47058823529411764,
+    "new_track_new_lineage": 0.11764705882352941,
+    "proposal_missing": 0.058823529411764705,
+    "track_restored": 0.23529411764705882
+  },
+  "track_c": {
+    "num_events": 17,
+    "same_track_reentry_recovery": 0.23529411764705882,
+    "same_prototype_reentry_recovery": 0.17647058823529413,
+    "same_lineage_prototype_reentry_recovery": 0.23529411764705882,
+    "same_track_after_concept_recovery": 0.3333333333333333,
+    "same_track_after_lineage_recovery": 0.5,
+    "candidate_pool_nonempty_rate": 0.16666666666666666,
+    "continuation_bank_nonempty_rate": 0.25
+  },
+  "track_a": {
+    "num_events": 0,
+    "same_track_reentry_recovery": 0.0,
+    "same_prototype_reentry_recovery": 0.0,
+    "same_lineage_prototype_reentry_recovery": 0.0,
+    "same_track_after_concept_recovery": 0.0,
+    "same_track_after_lineage_recovery": 0.0,
+    "candidate_pool_nonempty_rate": 0.0,
+    "continuation_bank_nonempty_rate": 0.0
+  },
+  "dominant_failure_stage": "lineage_mismatch",
+  "primary_loss_stage": "after_archive",
+  "answers": {
+    "continuation_write_success_rate": 0.9624413145539906,
+    "continuation_survival_until_concept_recovery_rate": 0.4666666666666667,
+    "concept_recovered_but_lineage_mismatch_rate": 0.75,
+    "lineage_aware_same_prototype_recovery_delta": 0.05882352941176469,
+    "continuation_loss_stage": "after_archive"
+  }
+}

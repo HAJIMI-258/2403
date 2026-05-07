@@ -1,0 +1,42 @@
+[
+  {
+    "scenario_name": "track_a_bridge",
+    "num_events": 1,
+    "same_track_reentry_recovery": 0.0,
+    "same_prototype_reentry_recovery": 0.0,
+    "same_track_after_concept_recovery": 0.0,
+    "concept_recovered_events": 0,
+    "prototype_gated_resurrection_attempt_rate": 0.0,
+    "resurrection_success_given_candidate_exists": 0.0,
+    "candidate_exists_events": 0,
+    "mean_candidate_pool_size": 0.0,
+    "candidate_pool_nonempty_rate": 0.0,
+    "continuation_bank_nonempty_rate": 0.0,
+    "continuation_attempt_rate": 0.0,
+    "continuation_success_rate": 0.0,
+    "slot_pool_nonempty_rate": 0.0,
+    "slot_resurrection_attempt_rate": 0.0,
+    "slot_resurrection_success_rate": 0.0,
+    "new_track_with_old_prototype_rate": 0.0
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "num_events": 17,
+    "same_track_reentry_recovery": 0.23529411764705882,
+    "same_prototype_reentry_recovery": 0.35294117647058826,
+    "same_track_after_concept_recovery": 0.3333333333333333,
+    "concept_recovered_events": 6,
+    "prototype_gated_resurrection_attempt_rate": 0.16666666666666666,
+    "resurrection_success_given_candidate_exists": 1.0,
+    "candidate_exists_events": 1,
+    "mean_candidate_pool_size": 0.47058823529411764,
+    "candidate_pool_nonempty_rate": 0.16666666666666666,
+    "continuation_bank_nonempty_rate": 0.16666666666666666,
+    "continuation_attempt_rate": 0.0,
+    "continuation_success_rate": 0.0,
+    "slot_pool_nonempty_rate": 0.0,
+    "slot_resurrection_attempt_rate": 0.0,
+    "slot_resurrection_success_rate": 0.0,
+    "new_track_with_old_prototype_rate": 0.0
+  }
+]

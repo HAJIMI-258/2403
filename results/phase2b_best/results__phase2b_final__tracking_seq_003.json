@@ -1,0 +1,111 @@
+{
+  "sequence_id": 3,
+  "num_frames_evaluated": 499,
+  "mean_u_recall": 0.7635270541082164,
+  "tracked_idsw": 53,
+  "naive_idsw_without_temporal_identity": 1117,
+  "idsw_reduction": 1064.0,
+  "unique_tracks_created": 30,
+  "max_active_tracks": 7,
+  "selected_frames": [
+    {
+      "frame_index": 32,
+      "u_recall": 1.0,
+      "active_track_count": 5,
+      "dormant_track_count": 1,
+      "cost_stats": {
+        "min": 0.04773273691534996,
+        "mean": 0.42621898651123047,
+        "max": 0.6459819078445435,
+        "candidate_pairs": 15
+      }
+    },
+    {
+      "frame_index": 178,
+      "u_recall": 1.0,
+      "active_track_count": 3,
+      "dormant_track_count": 1,
+      "cost_stats": {
+        "min": 0.12730874121189117,
+        "mean": 0.40876173973083496,
+        "max": 0.6143637299537659,
+        "candidate_pairs": 9
+      }
+    },
+    {
+      "frame_index": 348,
+      "u_recall": 1.0,
+      "active_track_count": 4,
+      "dormant_track_count": 1,
+      "cost_stats": {
+        "min": 0.009914194233715534,
+        "mean": 0.4002094268798828,
+        "max": 0.6113333702087402,
+        "candidate_pairs": 12
+      }
+    },
+    {
+      "frame_index": 440,
+      "u_recall": 1.0,
+      "active_track_count": 4,
+      "dormant_track_count": 1,
+      "cost_stats": {
+        "min": 0.015132136642932892,
+        "mean": 0.36500513553619385,
+        "max": 0.5749523043632507,
+        "candidate_pairs": 12
+      }
+    }
+  ],
+  "cost_matrix_stats": {
+    "min_cost": 0.0,
+    "mean_cost": 0.45008512555000063,
+    "max_cost": 0.8025085926055908
+  },
+  "dormant_track_stats": {
+    "mean_dormant_tracks": 0.7214428857715431,
+    "max_dormant_tracks": 4,
+    "reactivation_successes": 12
+  },
+  "reentry_recovery": {
+    "events": 4,
+    "recovered": 0,
+    "rate": 0.0
+  },
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "field": {
+      "wb": 0.35,
+      "wt": 0.2,
+      "wq": 0.25,
+      "wr": 0.2,
+      "tau_obj": 0.47,
+      "ema_eta": 0.82,
+      "hab_rho": 0.9,
+      "hab_lambda": 0.95,
+      "threshold_mode": "quantile_local",
+      "q_obj": 0.92,
+      "local_k": 0.95,
+      "smoothing_kernel_size": 5,
+      "min_area": 96,
+      "max_proposals": 8
+    },
+    "tracking": {
+      "beta_iou": 0.35,
+      "beta_center": 0.45,
+      "beta_feat": 0.2,
+      "max_match_cost": 0.62,
+      "keepalive_frames": 8,
+      "use_linear_prediction": true,
+      "use_dormant_reactivation": true,
+      "dormant_frames": 20,
+      "reactivation_cost": 0.68,
+      "reactivation_proto_sim": 0.55,
+      "signature_momentum": 0.7,
+      "velocity_momentum": 0.65
+    }
+  }
+}

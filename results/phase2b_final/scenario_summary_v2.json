@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "easy_single_object",
+    "u_recall": 0.9972144846796658,
+    "purity": 1.0,
+    "pfr": 0.0,
+    "idsw": 0,
+    "churn": 0.002793296089385475,
+    "memory_growth": 0.0,
+    "final_prototype_count": 1
+  },
+  {
+    "scenario": "multi_object_reentry",
+    "u_recall": 0.9439140811455847,
+    "purity": 0.6672443674176777,
+    "pfr": 0.0,
+    "idsw": 0,
+    "churn": 0.10406698564593315,
+    "memory_growth": 0.004784688995215311,
+    "final_prototype_count": 4
+  },
+  {
+    "scenario": "hard_drift_occlusion",
+    "u_recall": 0.6873508353221957,
+    "purity": 0.6933019976498237,
+    "pfr": 0.6666666666666666,
+    "idsw": 6,
+    "churn": 0.19118819776714494,
+    "memory_growth": 0.0023923444976076554,
+    "final_prototype_count": 3
+  }
+]

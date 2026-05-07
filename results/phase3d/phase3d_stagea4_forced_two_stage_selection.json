@@ -1,0 +1,17 @@
+{
+  "target_event_id": 6,
+  "target_frame": 990,
+  "target_lineage_id": 2,
+  "baseline_final_lineage": 0,
+  "baseline_final_source": "dormant",
+  "two_stage_final_lineage": 1,
+  "two_stage_final_source": "recovery_anchor",
+  "baseline_target_lineage_visible": 0,
+  "two_stage_target_lineage_visible": 1,
+  "baseline_target_lineage_match": 0,
+  "two_stage_target_lineage_match": 0,
+  "baseline_target_same_track_hint": 0,
+  "two_stage_target_same_track_hint": 0,
+  "baseline_target_same_prototype_hint": 0,
+  "two_stage_target_same_prototype_hint": 0
+}

@@ -1,0 +1,5 @@
+source_stage,config_hash,event_set,proposal_detected_events,global_top1,global_top3,global_top5,false_bundle_retrieval_rate,focus_top1_count,focus_success_count,difference_reason
+E31_summary_best,68392eb91e7d,track_a_bridge_and_track_c_long_horizon,17,0.29411764705882354,0.6470588235294118,0.7058823529411765,0.7058823529411765,,3,matches the E31 published best-ablation metric family
+E32_summary_best,c87d4d8448b1,track_a_bridge_and_track_c_long_horizon,17,0.35294117647058826,0.6470588235294118,0.7058823529411765,0.6470588235294118,3,3,E32 stateful calibration wrapper reported a stronger A0; E32b uses freshly recomputed local E31 scoring as the authority
+E32a_summary_best,eec6bbb3f26b,track_a_bridge_and_track_c_long_horizon,17,0.29411764705882354,0.6470588235294118,0.7058823529411765,0.7058823529411765,3,3,matches the E32a recomputed conservative baseline
+E32b_recomputed_A0,230a741b9084,track_a_bridge_and_track_c_long_horizon,17,0.35294117647058826,0.6470588235294118,0.7058823529411765,0.6470588235294118,3,3,this run uses E32b local E31 scoring path; use this row as the E32b baseline

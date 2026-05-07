@@ -1,0 +1,7 @@
+{
+  "cross_lineage_flagged_proposals": 11937,
+  "rerouted_proposals": 11937,
+  "proposals_reaching_resurrection": 11867,
+  "proposals_with_recovery_surface_seen": 11870,
+  "proposals_finalizing_on_best_recovery_lineage": 5643
+}

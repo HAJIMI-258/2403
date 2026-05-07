@@ -1,0 +1,18 @@
+{
+  "focus_events": 3,
+  "raw_lineage_visible_count": 0,
+  "canonical_lineage_visible_count": 3,
+  "target_anchor_visible_count": 3,
+  "owner_remap_explained_rate": 1.0,
+  "classifications": {
+    "M-RE-TC-012": "runtime_namespace_shift",
+    "M-RE-TC-013": "runtime_namespace_shift",
+    "M-RE-TC-014": "runtime_namespace_shift"
+  },
+  "proto6_first_runtime": 1,
+  "proto6_first_continuity": 1,
+  "proto6_ever_target3": false,
+  "track2_first_runtime": 1,
+  "track2_first_continuity": 1,
+  "track2_ever_target3": false
+}

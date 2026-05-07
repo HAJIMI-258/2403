@@ -1,0 +1,18 @@
+{
+  "stage": "binding_mode",
+  "bind_continuation_to": "prototype",
+  "allow_alias_lineage": true,
+  "continuation_topk_per_lineage": 4,
+  "track_c_concept_recovered_but_lineage_mismatch_rate": 0.25,
+  "track_c_continuation_bank_access_rate_given_concept_recovery": 0.18181818181818182,
+  "track_c_same_lineage_prototype_reentry_recovery": 0.7058823529411765,
+  "track_c_same_track_after_concept_recovery": 0.45454545454545453,
+  "track_c_same_prototype_reentry_recovery": 0.6470588235294118,
+  "track_c_pfr": 5.333333333333333,
+  "track_c_track_idsw": 375,
+  "track_c_memory_growth": 0.0020855057351407717,
+  "track_a_u_recall": 0.7877997914494265,
+  "track_a_same_prototype_reentry_recovery": 1.0,
+  "track_a_memory_growth": 0.003131524008350731,
+  "is_best": 1
+}

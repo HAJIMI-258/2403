@@ -1,0 +1,4 @@
+ablation_name,event_id,baseline_target_rank,target_bundle_rank_after,target_bundle_retrieved_top1,target_bundle_retrieved_top3,target_bundle_retrieved_top5,pattern_completion_success,proto0_bundle_count_in_top5,target_lost_reason
+A0_E31_combined_baseline,M-RE-TC-012,1,1,1,1,1,1,1,
+A0_E31_combined_baseline,M-RE-TC-013,1,1,1,1,1,1,1,
+A0_E31_combined_baseline,M-RE-TC-014,1,1,1,1,1,1,1,

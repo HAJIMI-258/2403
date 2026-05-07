@@ -1,0 +1,11 @@
+{
+  "target_event_id": 6,
+  "target_frame": 990,
+  "proposal_seen": 1,
+  "was_rerouted": 1,
+  "restore_attempted_after_reroute": 1,
+  "resurrection_candidate_seen": 1,
+  "final_assignment_lineage": 0,
+  "final_assignment_source": "resurrection_from_dormant_or_ghost",
+  "same_track_after_reroute": 0
+}

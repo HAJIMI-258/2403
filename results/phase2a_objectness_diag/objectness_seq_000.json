@@ -1,0 +1,56 @@
+{
+  "sequence_id": 0,
+  "num_frames_evaluated": 499,
+  "mean_u_recall": 0.2725450901803607,
+  "best_frame": {
+    "frame_index": 1,
+    "num_gt_boxes": 1,
+    "num_proposals": 1,
+    "u_recall": 1.0,
+    "mean_heatmap": 0.054280929267406464,
+    "max_heatmap": 1.0,
+    "normalized_unique_values": 916,
+    "normalized_histogram": [
+      59602,
+      3678,
+      336,
+      200,
+      201,
+      194,
+      172,
+      170,
+      196,
+      253,
+      371,
+      163
+    ],
+    "binary_ratio": 0.0177001953125,
+    "proposal_boxes": [
+      [
+        77,
+        164,
+        163,
+        249
+      ]
+    ]
+  },
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "objectness": {
+      "wb": 0.45,
+      "wt": 0.2,
+      "wq": 0.15,
+      "wr": 0.2,
+      "tau_obj": 0.58,
+      "ema_eta": 0.82,
+      "hab_rho": 0.94,
+      "hab_lambda": 0.85,
+      "smoothing_kernel_size": 5,
+      "min_area": 96,
+      "max_proposals": 8
+    }
+  }
+}

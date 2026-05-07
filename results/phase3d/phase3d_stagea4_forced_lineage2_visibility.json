@@ -1,0 +1,22 @@
+{
+  "target_event_id": 6,
+  "target_frame": 990,
+  "target_lineage_id": 2,
+  "target_proposal_id": 0,
+  "lineage2_claim_visible": 0,
+  "lineage2_claim_score": null,
+  "winning_lineage_id": 0,
+  "winning_claim_score": 0.7239339546990934,
+  "top_claims": [
+    {
+      "lineage_id": 0,
+      "claim_score_total": 0.7239339546990934,
+      "target_lineage_match": 0
+    },
+    {
+      "lineage_id": 1,
+      "claim_score_total": 0.5296043163019146,
+      "target_lineage_match": 0
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "scope": "track_a_bridge_and_track_c_long_horizon",
+  "best_ablation": {
+    "ablation_name": "A0_E31_combined_baseline",
+    "global_top1": 0.29411764705882354,
+    "global_top3": 0.6470588235294118,
+    "global_top5": 0.7058823529411765,
+    "false_bundle_retrieval_rate": 0.7058823529411765,
+    "focus_top1_count": 3,
+    "focus_success_count": 3,
+    "regression_event_count": 0,
+    "improved_event_count": 0,
+    "unchanged_failure_count": 0,
+    "unchanged_success_count": 5,
+    "proto0_top5_share": 0.17647058823529413,
+    "strict_anchor_real_svr": 0.7058823529411765,
+    "strict_anchor_shuffled_svr": 0.23529411764705882,
+    "wrong_old_prototype_visible_count": 2,
+    "unsafe_component_count": 0,
+    "selected_as_best": 1,
+    "target_in_top3_but_lost_top1_count": 6,
+    "wrong_bundle_accessibility_too_high_count": 5,
+    "hub_bundle_dominance_count": 0
+  },
+  "focus_events": [
+    {
+      "ablation_name": "A0_E31_combined_baseline",
+      "event_id": "M-RE-TC-012",
+      "baseline_target_rank": 1,
+      "target_bundle_rank_after": 1,
+      "target_bundle_retrieved_top1": 1,
+      "target_bundle_retrieved_top3": 1,
+      "target_bundle_retrieved_top5": 1,
+      "pattern_completion_success": 1,
+      "proto0_bundle_count_in_top5": 1,
+      "target_lost_reason": ""
+    },
+    {
+      "ablation_name": "A0_E31_combined_baseline",
+      "event_id": "M-RE-TC-013",
+      "baseline_target_rank": 1,
+      "target_bundle_rank_after": 1,
+      "target_bundle_retrieved_top1": 1,
+      "target_bundle_retrieved_top3": 1,
+      "target_bundle_retrieved_top5": 1,
+      "pattern_completion_success": 1,
+      "proto0_bundle_count_in_top5": 1,
+      "target_lost_reason": ""
+    },
+    {
+      "ablation_name": "A0_E31_combined_baseline",
+      "event_id": "M-RE-TC-014",
+      "baseline_target_rank": 1,
+      "target_bundle_rank_after": 1,
+      "target_bundle_retrieved_top1": 1,
+      "target_bundle_retrieved_top3": 1,
+      "target_bundle_retrieved_top5": 1,
+      "pattern_completion_success": 1,
+      "proto0_bundle_count_in_top5": 1,
+      "target_lost_reason": ""
+    }
+  ],
+  "passed_minimum": false,
+  "current_event_accessibility_mutation": 0,
+  "same_event_top1_changed_by_reconsolidation": 0,
+  "human_summary": "E3.2a 这轮没有通过最低门槛。问题不在候选池，而在保守校准对全局 false retrieval 的改善还不够，或者引入了新的 regression。 主要残留 failure 仍然是 target 已经在 top3 里，但没有拿下 top1。"
+}

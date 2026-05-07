@@ -1,0 +1,90 @@
+{
+  "sequence_id": 3,
+  "num_frames_evaluated": 499,
+  "mean_u_recall": 0.6235804943219774,
+  "tracked_idsw": 19,
+  "naive_idsw_without_temporal_identity": 908,
+  "idsw_reduction": 889.0,
+  "unique_tracks_created": 14,
+  "max_active_tracks": 4,
+  "selected_frames": [
+    {
+      "frame_index": 34,
+      "u_recall": 1.0,
+      "active_track_count": 3,
+      "cost_stats": {
+        "min": 0.029200218617916107,
+        "mean": 0.42806729674339294,
+        "max": 0.6570231318473816,
+        "candidate_pairs": 9
+      }
+    },
+    {
+      "frame_index": 269,
+      "u_recall": 1.0,
+      "active_track_count": 3,
+      "cost_stats": {
+        "min": 0.011860460042953491,
+        "mean": 0.4230114221572876,
+        "max": 0.6086289882659912,
+        "candidate_pairs": 9
+      }
+    },
+    {
+      "frame_index": 348,
+      "u_recall": 1.0,
+      "active_track_count": 3,
+      "cost_stats": {
+        "min": 0.018443100154399872,
+        "mean": 0.4236358404159546,
+        "max": 0.6614192128181458,
+        "candidate_pairs": 9
+      }
+    },
+    {
+      "frame_index": 418,
+      "u_recall": 1.0,
+      "active_track_count": 3,
+      "cost_stats": {
+        "min": 0.021562932059168816,
+        "mean": 0.41258522868156433,
+        "max": 0.6306676864624023,
+        "candidate_pairs": 9
+      }
+    }
+  ],
+  "cost_matrix_stats": {
+    "min_cost": 0.0,
+    "mean_cost": 0.3783194580393468,
+    "max_cost": 0.7461161613464355
+  },
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "field": {
+      "wb": 0.35,
+      "wt": 0.2,
+      "wq": 0.25,
+      "wr": 0.2,
+      "tau_obj": 0.47,
+      "ema_eta": 0.82,
+      "hab_rho": 0.94,
+      "hab_lambda": 0.85,
+      "smoothing_kernel_size": 5,
+      "min_area": 96,
+      "max_proposals": 8
+    },
+    "tracking": {
+      "beta_iou": 0.45,
+      "beta_center": 0.25,
+      "beta_feat": 0.3,
+      "max_match_cost": 0.72,
+      "keepalive_frames": 12,
+      "use_linear_prediction": true,
+      "signature_momentum": 0.7,
+      "velocity_momentum": 0.65
+    }
+  }
+}

@@ -1,0 +1,974 @@
+[
+  {
+    "scenario_name": "track_a_bridge",
+    "event_id": "M-ARC-TA-001",
+    "frame_idx": 465,
+    "proposal_detected": 1,
+    "proposal_id": 1,
+    "target_bundle_id": 81,
+    "target_bundle_exists": 1,
+    "old_track_id": 3,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        260,
+        252,
+        320,
+        320
+      ],
+      "support_shape": [
+        0.1875,
+        0.21250000596046448,
+        0.8823529481887817,
+        0.03984374925494194
+      ],
+      "appearance_proxy": [
+        0.49718642234802246,
+        0.02403978444635868,
+        0.3198302090167999,
+        0.31250032782554626,
+        0.053598321974277496,
+        0.29451784491539,
+        0.06775218993425369,
+        0.45668306946754456,
+        0.23057839274406433,
+        0.19842195510864258,
+        0.022204359993338585,
+        0.12293071299791336,
+        0.37599727511405945
+      ],
+      "local_context": [
+        0.8748949766159058,
+        0.8582090139389038,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.6746936440467834,
+      "frame_idx": 465
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-004",
+    "frame_idx": 40,
+    "proposal_detected": 0,
+    "proposal_id": 1,
+    "target_bundle_id": 219,
+    "target_bundle_exists": 1,
+    "old_track_id": 11,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        203,
+        200,
+        272,
+        245
+      ],
+      "support_shape": [
+        0.21562500298023224,
+        0.140625,
+        1.5333333015441895,
+        0.03032226487994194
+      ],
+      "appearance_proxy": [
+        0.09515843540430069,
+        0.07178204506635666,
+        0.09289303421974182,
+        0.19065362215042114,
+        0.14759451150894165,
+        0.3698440492153168,
+        0.11694655567407608,
+        0.5743146538734436,
+        0.28873199224472046,
+        0.25121307373046875,
+        0.02223133109509945,
+        0.2810479402542114,
+        0.4612758159637451
+      ],
+      "local_context": [
+        0.7201932668685913,
+        0.6669703722000122,
+        0.875
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.629153847694397,
+      "frame_idx": 40
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-005",
+    "frame_idx": 383,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 287,
+    "target_bundle_exists": 1,
+    "old_track_id": 5,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        170,
+        142,
+        179,
+        192
+      ],
+      "support_shape": [
+        0.02812499925494194,
+        0.15625,
+        0.18000000715255737,
+        0.00439453125
+      ],
+      "appearance_proxy": [
+        0.1360398679971695,
+        0.34444135427474976,
+        0.2504684031009674,
+        0.414018839597702,
+        0.1471218764781952,
+        0.26951730251312256,
+        0.11293298006057739,
+        0.18314017355442047,
+        0.29622867703437805,
+        0.3585277497768402,
+        0.0028619589284062386,
+        0.029306460171937943,
+        0.520546019077301
+      ],
+      "local_context": [
+        0.5379523038864136,
+        0.5175986886024475,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7992971539497375,
+      "frame_idx": 383
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-006",
+    "frame_idx": 606,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 336,
+    "target_bundle_exists": 1,
+    "old_track_id": 11,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        112,
+        3,
+        164,
+        86
+      ],
+      "support_shape": [
+        0.16249999403953552,
+        0.2593750059604645,
+        0.6265060305595398,
+        0.04214843735098839
+      ],
+      "appearance_proxy": [
+        0.12662510573863983,
+        0.07879965007305145,
+        0.10246429592370987,
+        0.2351072132587433,
+        0.16836537420749664,
+        0.3625296950340271,
+        0.10028178989887238,
+        0.5580272078514099,
+        0.28329798579216003,
+        0.2577514350414276,
+        0.029194815084338188,
+        0.10848994553089142,
+        0.5210000276565552
+      ],
+      "local_context": [
+        0.460976243019104,
+        0.15939222276210785,
+        0.625
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.752165675163269,
+      "frame_idx": 606
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-002",
+    "frame_idx": 727,
+    "proposal_detected": 1,
+    "proposal_id": 2,
+    "target_bundle_id": 359,
+    "target_bundle_exists": 1,
+    "old_track_id": 9,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        9,
+        156,
+        53,
+        209
+      ],
+      "support_shape": [
+        0.13750000298023224,
+        0.16562500596046448,
+        0.8301886916160583,
+        0.022773437201976776
+      ],
+      "appearance_proxy": [
+        0.5318174362182617,
+        0.03262683376669884,
+        0.3150424361228943,
+        0.26991626620292664,
+        0.04825851321220398,
+        0.29566285014152527,
+        0.05496029183268547,
+        0.17596828937530518,
+        0.3324747383594513,
+        0.4200490117073059,
+        0.012376676313579082,
+        0.1127956286072731,
+        0.3470039963722229
+      ],
+      "local_context": [
+        0.13169270753860474,
+        0.5445898175239563,
+        0.375
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.6384972333908081,
+      "frame_idx": 727
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-LG-TC-001",
+    "frame_idx": 945,
+    "proposal_detected": 1,
+    "proposal_id": 1,
+    "target_bundle_id": 410,
+    "target_bundle_exists": 1,
+    "old_track_id": 3,
+    "old_prototype_id": 3,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        72,
+        248,
+        163,
+        320
+      ],
+      "support_shape": [
+        0.28437501192092896,
+        0.22499999403953552,
+        1.2638888359069824,
+        0.06398437172174454
+      ],
+      "appearance_proxy": [
+        0.48666051030158997,
+        0.026998722925782204,
+        0.30725258588790894,
+        0.31519559025764465,
+        0.06600652635097504,
+        0.2783559560775757,
+        0.09540510922670364,
+        0.4468972086906433,
+        0.21081988513469696,
+        0.1840563714504242,
+        0.03581821545958519,
+        0.17688007652759552,
+        0.40881627798080444
+      ],
+      "local_context": [
+        0.3652620315551758,
+        0.8642439842224121,
+        0.25
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7302947044372559,
+      "frame_idx": 945
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-LG-TC-007",
+    "frame_idx": 990,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 427,
+    "target_bundle_exists": 1,
+    "old_track_id": 6,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        286,
+        43,
+        314,
+        51
+      ],
+      "support_shape": [
+        0.08749999850988388,
+        0.02500000037252903,
+        3.5,
+        0.0021875000093132257
+      ],
+      "appearance_proxy": [
+        0.44572824239730835,
+        0.1007174476981163,
+        0.32919853925704956,
+        0.3264440596103668,
+        0.05417366325855255,
+        0.25932174921035767,
+        0.13495109975337982,
+        0.30279937386512756,
+        0.26232755184173584,
+        0.12981081008911133,
+        0.0010500330245122313,
+        0.4200131595134735,
+        0.36617550253868103
+      ],
+      "local_context": [
+        0.9340460300445557,
+        0.150575652718544,
+        0.875
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7628417015075684,
+      "frame_idx": 990
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-008",
+    "frame_idx": 1102,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 459,
+    "target_bundle_exists": 1,
+    "old_track_id": 12,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        41,
+        51,
+        119,
+        142
+      ],
+      "support_shape": [
+        0.24375000596046448,
+        0.28437501192092896,
+        0.8571428656578064,
+        0.06931640952825546
+      ],
+      "appearance_proxy": [
+        0.05783126503229141,
+        0.0862431451678276,
+        0.0886697843670845,
+        0.17435695230960846,
+        0.19585032761096954,
+        0.36086535453796387,
+        0.14589379727840424,
+        0.5521019697189331,
+        0.28422820568084717,
+        0.2539028525352478,
+        0.04957045242190361,
+        0.1532427817583084,
+        0.5339283347129822
+      ],
+      "local_context": [
+        0.23652411997318268,
+        0.3286513090133667,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7466140389442444,
+      "frame_idx": 1102
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-009",
+    "frame_idx": 1106,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 459,
+    "target_bundle_exists": 1,
+    "old_track_id": 12,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        42,
+        3,
+        117,
+        143
+      ],
+      "support_shape": [
+        0.234375,
+        0.4375,
+        0.5357142686843872,
+        0.1025390625
+      ],
+      "appearance_proxy": [
+        0.09976127743721008,
+        0.11295527219772339,
+        0.12574352324008942,
+        0.2360619753599167,
+        0.20564019680023193,
+        0.3541354835033417,
+        0.17578718066215515,
+        0.4287557005882263,
+        0.32123473286628723,
+        0.32783088088035583,
+        0.0789191722869873,
+        0.10307809710502625,
+        0.5438763499259949
+      ],
+      "local_context": [
+        0.2393377721309662,
+        0.22277890145778656,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7066543102264404,
+      "frame_idx": 1106
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-010",
+    "frame_idx": 1317,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 523,
+    "target_bundle_exists": 1,
+    "old_track_id": 446,
+    "old_prototype_id": 3,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        171,
+        241,
+        251,
+        303
+      ],
+      "support_shape": [
+        0.25,
+        0.19374999403953552,
+        1.2903225421905518,
+        0.04843749850988388
+      ],
+      "appearance_proxy": [
+        0.03677557408809662,
+        0.1414327323436737,
+        0.10253754258155823,
+        0.21513856947422028,
+        0.17859981954097748,
+        0.32790207862854004,
+        0.15500408411026,
+        0.5456425547599792,
+        0.23887118697166443,
+        0.2152416706085205,
+        0.036813884973526,
+        0.2451705038547516,
+        0.5438968539237976
+      ],
+      "local_context": [
+        0.6865165829658508,
+        0.8829852342605591,
+        0.625
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7156268358230591,
+      "frame_idx": 1317
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-011",
+    "frame_idx": 1319,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 523,
+    "target_bundle_exists": 1,
+    "old_track_id": 446,
+    "old_prototype_id": 3,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        114,
+        56,
+        174,
+        112
+      ],
+      "support_shape": [
+        0.1875,
+        0.17499999701976776,
+        1.0714285373687744,
+        0.03281249850988388
+      ],
+      "appearance_proxy": [
+        0.04570184275507927,
+        0.22135387361049652,
+        0.1640014499425888,
+        0.2613411247730255,
+        0.1843053549528122,
+        0.320188045501709,
+        0.17450979351997375,
+        0.19547699391841888,
+        0.3560571074485779,
+        0.46258702874183655,
+        0.02544761635363102,
+        0.20773564279079437,
+        0.5138086676597595
+      ],
+      "local_context": [
+        0.4391718804836273,
+        0.26225391030311584,
+        0.75
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.6625118255615234,
+      "frame_idx": 1319
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-003",
+    "frame_idx": 1418,
+    "proposal_detected": 1,
+    "proposal_id": 1,
+    "target_bundle_id": 554,
+    "target_bundle_exists": 1,
+    "old_track_id": 0,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        118,
+        199,
+        198,
+        277
+      ],
+      "support_shape": [
+        0.25,
+        0.24375000596046448,
+        1.0256410837173462,
+        0.06093750149011612
+      ],
+      "appearance_proxy": [
+        0.08444803953170776,
+        0.05503217875957489,
+        0.0904969722032547,
+        0.15504249930381775,
+        0.12248972803354263,
+        0.39292171597480774,
+        0.12670543789863586,
+        0.6458901762962341,
+        0.2874463200569153,
+        0.272539883852005,
+        0.046605758368968964,
+        0.19610576331615448,
+        0.3968118131160736
+      ],
+      "local_context": [
+        0.5326762199401855,
+        0.792423665523529,
+        0.75
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.5188354849815369,
+      "frame_idx": 1418
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-012",
+    "frame_idx": 1451,
+    "proposal_detected": 1,
+    "proposal_id": 1,
+    "target_bundle_id": 544,
+    "target_bundle_exists": 1,
+    "old_track_id": 2,
+    "old_prototype_id": 6,
+    "alignment_classification": "runtime_namespace_shift",
+    "target_anchor_uid": "track_c_long_horizon::inst_2::old_track_2::old_proto_6::e1_lineage_3",
+    "cue": {
+      "box": [
+        23,
+        154,
+        101,
+        233
+      ],
+      "support_shape": [
+        0.24375000596046448,
+        0.24687500298023224,
+        0.9873417615890503,
+        0.060175780206918716
+      ],
+      "appearance_proxy": [
+        0.09574277698993683,
+        0.12443879246711731,
+        0.1346374750137329,
+        0.24083997309207916,
+        0.19446268677711487,
+        0.32561615109443665,
+        0.18681883811950684,
+        0.516008734703064,
+        0.25198492407798767,
+        0.20538973808288574,
+        0.04972230643033981,
+        0.2039562612771988,
+        0.551776647567749
+      ],
+      "local_context": [
+        0.1911991834640503,
+        0.5933308005332947,
+        0.875
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.6677805781364441,
+      "frame_idx": 1451
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-013",
+    "frame_idx": 1453,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 544,
+    "target_bundle_exists": 1,
+    "old_track_id": 2,
+    "old_prototype_id": 6,
+    "alignment_classification": "runtime_namespace_shift",
+    "target_anchor_uid": "track_c_long_horizon::inst_2::old_track_2::old_proto_6::e1_lineage_3",
+    "cue": {
+      "box": [
+        15,
+        136,
+        105,
+        211
+      ],
+      "support_shape": [
+        0.28125,
+        0.234375,
+        1.2000000476837158,
+        0.06591796875
+      ],
+      "appearance_proxy": [
+        0.07540187984704971,
+        0.10076536238193512,
+        0.10337032377719879,
+        0.21808435022830963,
+        0.16661156713962555,
+        0.3535359501838684,
+        0.18660233914852142,
+        0.5465205907821655,
+        0.28069472312927246,
+        0.222443088889122,
+        0.051065120846033096,
+        0.23240305483341217,
+        0.5047506093978882
+      ],
+      "local_context": [
+        0.17443983256816864,
+        0.5140497088432312,
+        0.75
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.6515628099441528,
+      "frame_idx": 1453
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-014",
+    "frame_idx": 1554,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 590,
+    "target_bundle_exists": 1,
+    "old_track_id": 0,
+    "old_prototype_id": 6,
+    "alignment_classification": "runtime_namespace_shift",
+    "target_anchor_uid": "track_c_long_horizon::inst_2::old_track_0::old_proto_6::e1_lineage_3",
+    "cue": {
+      "box": [
+        232,
+        52,
+        315,
+        127
+      ],
+      "support_shape": [
+        0.2593750059604645,
+        0.234375,
+        1.1066666841506958,
+        0.060791015625
+      ],
+      "appearance_proxy": [
+        0.16228386759757996,
+        0.0452173575758934,
+        0.1315237432718277,
+        0.2054508775472641,
+        0.16597138345241547,
+        0.36307981610298157,
+        0.15448516607284546,
+        0.5701733827590942,
+        0.28349769115448,
+        0.22969147562980652,
+        0.04288555681705475,
+        0.19517694413661957,
+        0.4803245961666107
+      ],
+      "local_context": [
+        0.8132128715515137,
+        0.24319462478160858,
+        0.625
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.68086838722229,
+      "frame_idx": 1554
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-015",
+    "frame_idx": 1715,
+    "proposal_detected": 1,
+    "proposal_id": 2,
+    "target_bundle_id": 628,
+    "target_bundle_exists": 1,
+    "old_track_id": 1,
+    "old_prototype_id": 7,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        77,
+        28,
+        130,
+        89
+      ],
+      "support_shape": [
+        0.16562500596046448,
+        0.19062499701976776,
+        0.868852436542511,
+        0.03157226741313934
+      ],
+      "appearance_proxy": [
+        0.10980063676834106,
+        0.07470972090959549,
+        0.11612886935472488,
+        0.24001996219158173,
+        0.1835772693157196,
+        0.37185800075531006,
+        0.1225673258304596,
+        0.21889103949069977,
+        0.4211080074310303,
+        0.5194664597511292,
+        0.023108653724193573,
+        0.15898454189300537,
+        0.45095938444137573
+      ],
+      "local_context": [
+        0.35698240995407104,
+        0.21656738221645355,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.6161246299743652,
+      "frame_idx": 1715
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-016",
+    "frame_idx": 1727,
+    "proposal_detected": 1,
+    "proposal_id": 0,
+    "target_bundle_id": 638,
+    "target_bundle_exists": 1,
+    "old_track_id": 327,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        129,
+        0,
+        149,
+        62
+      ],
+      "support_shape": [
+        0.0625,
+        0.19374999403953552,
+        0.32258063554763794,
+        0.01210937462747097
+      ],
+      "appearance_proxy": [
+        0.16511687636375427,
+        0.0960373729467392,
+        0.15079760551452637,
+        0.3377469778060913,
+        0.15582849085330963,
+        0.32513582706451416,
+        0.18387597799301147,
+        0.49811694025993347,
+        0.25948479771614075,
+        0.2094850242137909,
+        0.008433105424046516,
+        0.05616220086812973,
+        0.5480256080627441
+      ],
+      "local_context": [
+        0.42014962434768677,
+        0.0972972959280014,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7869280576705933,
+      "frame_idx": 1727
+    }
+  },
+  {
+    "scenario_name": "track_c_long_horizon",
+    "event_id": "M-RE-TC-017",
+    "frame_idx": 1733,
+    "proposal_detected": 1,
+    "proposal_id": 1,
+    "target_bundle_id": 640,
+    "target_bundle_exists": 1,
+    "old_track_id": 327,
+    "old_prototype_id": 0,
+    "alignment_classification": "",
+    "target_anchor_uid": "",
+    "cue": {
+      "box": [
+        110,
+        27,
+        186,
+        106
+      ],
+      "support_shape": [
+        0.23749999701976776,
+        0.24687500298023224,
+        0.9620253443717957,
+        0.05863281339406967
+      ],
+      "appearance_proxy": [
+        0.0861140713095665,
+        0.1029546931385994,
+        0.11522247642278671,
+        0.2444915622472763,
+        0.15571391582489014,
+        0.35200923681259155,
+        0.16971342265605927,
+        0.5525234341621399,
+        0.27158287167549133,
+        0.24022385478019714,
+        0.04204557463526726,
+        0.17246702313423157,
+        0.5135297775268555
+      ],
+      "local_context": [
+        0.44270408153533936,
+        0.24155612289905548,
+        1.0
+      ],
+      "motion_signature": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "proposal_quality": 0.7161204814910889,
+      "frame_idx": 1733
+    }
+  }
+]

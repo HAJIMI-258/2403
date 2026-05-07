@@ -1,0 +1,11 @@
+{
+  "num_events": 18,
+  "proposal_detected_events": 17,
+  "num_bundles": 695,
+  "num_frames_processed": 17,
+  "num_cached_proposals": 105,
+  "num_cached_cues": 18,
+  "num_focus_events": 3,
+  "cache_build_time_sec": 711.4423658847809,
+  "cache_version": "v1"
+}

@@ -1,0 +1,88 @@
+{
+  "sequence_id": 3,
+  "num_frames_evaluated": 499,
+  "metrics": {
+    "u_recall": 0.6282565130260521,
+    "purity": 0.6993464052287581,
+    "pfr": 0.6666666666666666,
+    "idsw": 12,
+    "churn": 0.05087014725568944,
+    "memory_growth": 0.004016064257028112
+  },
+  "memory": {
+    "final_prototype_count": 3,
+    "max_prototype_count": 5,
+    "budget_cap": 32,
+    "budget_prune_count": 0,
+    "top_hits": [
+      {
+        "prototype_id": 1,
+        "hits": 600,
+        "strength": 4.0,
+        "active": true
+      },
+      {
+        "prototype_id": 2,
+        "hits": 329,
+        "strength": 4.0,
+        "active": true
+      },
+      {
+        "prototype_id": 0,
+        "hits": 172,
+        "strength": 3.6894726399999995,
+        "active": false
+      }
+    ],
+    "actions": {
+      "birth": 6,
+      "merge": 800,
+      "reuse": 299
+    }
+  },
+  "reentry_reconnect": {
+    "events": 4,
+    "reconnected": 2,
+    "rate": 0.5
+  },
+  "representative_frame": {
+    "frame_index": 467,
+    "u_recall": 1.0,
+    "memory_size": 3
+  },
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "objectness": {
+      "alpha_boundary": 1.0,
+      "beta_temporal": 0.6,
+      "gamma_surprise": 0.4,
+      "temporal_decay": 0.82,
+      "surprise_decay": 0.9,
+      "smoothing_kernel_size": 5,
+      "proposal_threshold": 0.45,
+      "min_area": 96,
+      "max_proposals": 8
+    },
+    "tracking": {
+      "iou_threshold": 0.3,
+      "max_center_distance": 48.0,
+      "iou_weight": 0.55,
+      "center_weight": 0.25,
+      "signature_weight": 0.2,
+      "max_missed_frames": 12,
+      "signature_momentum": 0.7
+    },
+    "memory": {
+      "birth_threshold": 0.95,
+      "merge_threshold": 0.99,
+      "decay_rate": 0.02,
+      "budget_cap": 32,
+      "prototype_momentum": 0.75,
+      "decay_floor": 0.1,
+      "inactive_patience": 20
+    }
+  }
+}

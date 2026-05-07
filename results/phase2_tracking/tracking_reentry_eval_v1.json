@@ -1,0 +1,46 @@
+[
+  {
+    "scenario": "multi_object_reentry",
+    "mode": "before",
+    "u_recall": 0.5743834526650755,
+    "idsw": 41,
+    "reentry_events": 3,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 2.324582338902148,
+    "created_tracks": 79
+  },
+  {
+    "scenario": "multi_object_reentry",
+    "mode": "after",
+    "u_recall": 0.5743834526650755,
+    "idsw": 46,
+    "reentry_events": 3,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 3.7517899761336517,
+    "created_tracks": 35
+  },
+  {
+    "scenario": "hard_drift_occlusion",
+    "mode": "before",
+    "u_recall": 0.43277645186953057,
+    "idsw": 45,
+    "reentry_events": 2,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 1.8973747016706444,
+    "created_tracks": 62
+  },
+  {
+    "scenario": "hard_drift_occlusion",
+    "mode": "after",
+    "u_recall": 0.43277645186953057,
+    "idsw": 18,
+    "reentry_events": 2,
+    "recovered_old_id": 0,
+    "reentry_recovery_rate": 0.0,
+    "mean_active_tracks": 2.6443914081145583,
+    "created_tracks": 20
+  }
+]

@@ -1,0 +1,821 @@
+
+NOPS-OWR 全新实验规划书
+面向 no-pretrain / no-offline-data / one-pass / pure-SNN / open-world self-bootstrapping recognition 的可证伪实验体系
+版本：v3.0（重新设计版）
+日期：2026-04-27
+文档性质：实验规划书，不是普通开发路线图。本文以可证伪假设、事件级 benchmark、分层指标、审计流水线和失败归因为核心，目标是让每一次系统改动都能被明确验证。
+
+目录（章节级）
+0. 执行摘要
+1. 实验问题的重新定义
+2. 总体实验哲学：可证伪，而不是堆指标
+3. 主假设体系
+4. 实验平台总架构
+5. 事件账本与 benchmark 事件族
+6. 分层指标体系
+7. 基线、对照组与负对照
+8. 阶段化实验计划
+9. 消融矩阵与反事实实验
+10. 统计与结果判读规范
+11. 失败归因与诊断树
+12. 审计日志与数据结构规范
+13. 可视化与论文图表计划
+14. 实验运行规范与产物目录
+15. 阶段准入/退出门槛
+16. 论文证据链设计
+17. 风险控制与纠偏规则
+18. 第一批优先执行实验清单
+附录 A. 指标字典
+附录 B. 事件命名规范
+附录 C. 周报与实验报告模板
+
+0. 执行摘要
+这是一份全新整理的实验规划书。它不延续上一版以“后续开发路线”为中心的写法，而是把 NOPS-OWR 当前最关键的问题重新定义为一个可实验验证、可逐层证伪、可复现实验的研究体系。核心目标不是证明系统“总体涨点”，而是证明系统是否真正具备开放世界流式识别中的三类能力：看见对象、维持身份、在长间隔后通过记忆召回旧连续体。
+当前系统已经不是一个普通视觉识别原型。它已有 spike/event-like 编码、连续 objectness、support-region proposal、tracking、prototype memory、lineage、continuation、anchor、budget 和大量审计脚本。真正需要实验验证的是：这些结构是否组成了一个可靠的“知觉—身份—情景连续性记忆—语义概念记忆”闭环。
+本规划书的中心判断是：后续实验必须从“最终分数评估”转向“机制级评估”。如果一个改动提高了 same-lineage，但压低 same-track-after-concept，它不是简单变好；如果一个改动提高了 same-prototype，但是靠压制 recovery path 得到，它可能是错误稳定；如果一个改动让 claim-builder 分数变好，但正确 continuity source 从未进入候选池，它没有修复根因。
+因此，本文把实验体系重构为五层：感知层、身份层、概念层、连续性记忆层、记忆治理层。每一层都有独立事件族、指标、消融、负对照和失败归因规则。系统每一次更新，都必须回答“它到底修了哪一层，破坏了哪一层，是否只是制造了表面稳定”。
+0.1 本规划书的核心结论
+不要把 overall recall 当作主证据。NOPS-OWR 的主证据应该是事件级、层级化、可审计的机制证据。
+当前第一组实验不应围绕 promotion 调参，而应围绕 continuity source visibility 展开。正确旧源没有进入 source pool 时，后续 ranking 与 attach 的一切讨论都是伪问题。
+same-lineage、same-prototype、same-track 必须分开评估。三者分别代表概念重认、原型连续、个体身份连续，不能互相替代。
+必须加入负对照。比如故意打乱 continuity owner、随机化 claim source、禁用 provenance，以证明系统不是靠偶然相似或阈值偏置在工作。
+实验产物必须能回放。每个 hard event 都应有 source pool、claim ranking、attach state、promotion state 和 memory state 的完整 trace。
+0.2 本文档与普通实验计划的区别
+普通实验计划常见结构是：列 benchmark、列指标、跑 baseline、做 ablation。这个结构对闭集识别或普通 tracking 足够，但对 NOPS-OWR 不够。因为 NOPS-OWR 的失败往往不是单点错误，而是源于多层身份结构之间的错配：runtime owner 与 continuity owner 被混用，概念归属与身份接回被混用，temporary attach 与 semantic head promotion 被混用，prototype 实体与 lineage 主干被混用。
+因此，本规划书以“机制断点”为基本实验对象。每个实验不是只问指标涨没涨，而是问：候选是否可见、来源是否被保留、claim 是否可解释、attach 是否独立于 promotion、记忆是否在 budget 压力下保留关键恢复入口。
+1. 实验问题的重新定义
+1.1 从“识别准确率”转向“持续识别能力”
+本项目不应再被实验上定义为“识别模型准确率提升问题”。更准确的定义是：在无预训练、无离线数据、单遍流式输入、纯 SNN 风格约束下，系统能否通过自身经历形成对象、身份、概念与记忆，并在遮挡、漂移、重入、预算压力下保持可恢复性。
+因此，实验对象不是单个预测结果，而是一个随时间演化的内部状态系统。一个成功系统至少要同时满足三类要求：第一，感知层形成对象支持区域；第二，身份层维持或恢复对象连续性；第三，记忆层保存并召回能够支撑旧身份恢复的 continuity source。
+1.2 实验要验证的因果链
+后续实验应围绕以下因果链展开，而不是围绕散乱指标展开：
+1.   连续 objectness 与 support region 是否足以稳定形成对象候选；
+2.   对象候选是否能在短时内绑定到正确 active identity；
+3.   当短时 identity 断开时，lineage 是否仍能维持旧概念主干；
+4.   当对象 long-gap re-entry 时，正确 continuity source 是否进入候选池；
+5.   claim-builder 是否能在看见正确 source 后给出合理排序；
+6.   temporary attach 是否能在不立即 promotion 的情况下恢复旧连续性；
+7.   deferred promotion 是否能在持续证据充分时更新长期头节点；
+8.   memory governance 是否能在预算压力下保留关键恢复 source。
+1.3 哪些结果不能算强证据
+为了避免误判，以下结果不能单独作为系统进步的强证据：
+overall recall 上涨，但 source visibility 没有变化；
+same-lineage 上涨，但 same-track-after-concept 下跌；
+same-prototype 上涨，但 continuation access 下跌；
+FP/frame 下降，但 recall 路径被 suppression 饿死；
+head churn 下降，但 re-entry attach 被系统性阻断；
+单个 hard case 成功，但没有 trace 证明正确 continuity source 进入并被使用。
+2. 总体实验哲学：可证伪，而不是堆指标
+NOPS-OWR 的实验体系必须具备可证伪性。也就是说，每个主张都要有对应的反例设计、负对照和失败判据。只做成功案例回放，或者只比较最佳配置的最终分数，都不足以证明系统实现了类脑式持续识别。
+2.1 分层可证伪原则
+每个实验都必须明确自己试图证伪哪一层假设。比如，若要证明 dual-owner 枚举有效，不能只看 same-track；必须先看正确 continuity owner 是否重新进入 source pool。若要证明 episodic bundle 有效，不能只看 same-lineage；必须看 long-gap 条件下 bundle access 与 attach 成功之间的关系。
+2.2 最小改动原则
+一次实验尽量只改变一个结构因素。比如阶段 A 中只开放 runtime owner + continuity owner 的双 source 枚举，先不要同时改 ranking、attach threshold、promotion gate 和 budget policy。否则，即使指标上涨，也无法判断原因。
+2.3 对抗性负对照原则
+所有看起来有效的新机制都必须经受负对照。比如，dual-owner 枚举若真的有效，则随机打乱 continuity owner 后应当显著破坏 long-gap recovery；episodic bundle 若真的有效，则禁用 temporal gap compatibility 后应当提高 false attach；deferred promotion 若真的有效，则 immediate promotion 应当带来更高 head churn 或 false promotion。
+2.4 事件级配对比较原则
+不要只比较两个系统的全局均值。对于 hard re-entry，最强证据是同一 event_id 在 baseline 与改动版本下的配对对比：source 是否从不可见变为可见，claim rank 是否从缺失变为进入 top-k，attach state 是否从 none 进入 temporary_attach，最终是否保持 same-lineage 或 same-track。
+3. 主假设体系
+下表定义后续实验要验证的主假设。每个假设都必须配备必要证据、反证条件和推荐实验。
+假设
+名称
+主张
+必要证据
+反证/弱化条件
+H1
+对象形成假设
+连续 objectness + support-region proposal 足以为后续 identity 和 memory 提供稳定对象候选。
+bbox_tightness、support_coverage、FP/frame、region_persistence 稳定；hard re-entry 失败不主要归因于 perception。
+support region 经常缺失或 drift，导致后续 source 正确也无法 attach。
+H2
+双 owner 可见性假设
+runtime owner 与 continuity owner 解耦是 long-gap recovery 的必要条件。
+dual-owner 后正确 continuity source 进入 source pool，visibility failure 显著下降。
+正确 source 已可见但恢复仍失败，则 H2 只证明必要性，不证明充分性。
+H3
+lineage 主干假设
+lineage 比 prototype 更适合作为概念主身份。
+same-lineage、lineage mismatch、concept reuse 优于 prototype-only binding。
+lineage 引入导致 false merge 大幅上升且无法被 attach/promotion 修正。
+H4
+episodic continuity 假设
+long-gap re-entry 需要 episodic bundle，而不是单一 prototype similarity。
+bundle_visibility、continuation_access、same-track-after-concept 随 gap 条件改善。
+bundle 被访问但不影响 attach，或只提高 false attach。
+H5
+attach/promotion 解耦假设
+temporary attach 与 head promotion 分离可缓解 head stability 与 recovery 的冲突。
+same-track-after-concept 上升，同时 head_churn 与 false_promotion 不恶化。
+attach 成功只能靠 immediate promotion，或 delayed promotion 导致恢复断裂。
+H6
+记忆治理假设
+layer-wise budget + protection + consolidation 能在预算压力下保留关键恢复源。
+budget sweep 中 protected-source survival 与 recall under pressure 优于 flat budget。
+预算越紧，关键 source 越早被删，说明治理策略无效。
+H7
+过程审计假设
+source provenance 与状态机 trace 能把失败稳定归因到具体层。
+失败切片中 unknown/mixed failure 比例下降；同一 event 可复现诊断。
+日志足够多但仍无法判断源在哪一步丢失。
+H8
+自举约束假设
+系统在 no-pretrain/no-offline-data/one-pass 约束下仍可形成可恢复内部概念。
+不依赖外部类别标签或 VLM 兜底，仍能在事件族 benchmark 中形成稳定 lineage 与 recall。
+恢复能力主要来自外部语义或离线先验，而非内部经验结构。
+表 1：NOPS-OWR 后续实验的主假设体系
+4. 实验平台总架构
+实验平台必须从“跑一次 runner，输出若干指标”升级为“事件账本 + 审计总线 + 指标引擎 + 产物存储 + 报告生成”的结构。否则系统越复杂，越难知道每次改动到底修了什么。
+4.1 五个核心组件
+组件
+中文名
+职责
+Event Ledger
+事件账本
+把每个测试片段拆成带 event_id 的事件，记录目标、类型、预期结果、允许歧义和关键帧范围。
+Episode Runner
+事件运行器
+按 event_id 重放输入流，支持单事件 replay、批量 benchmark、阶段化 config 对照。
+Audit Bus
+审计总线
+统一收集 objectness、track、lineage、source pool、claim、attach、promotion、budget 等 trace。
+Metric Engine
+指标引擎
+按事件级、层级、阶段级聚合指标，输出配对比较、置信区间和 failure slicing。
+Artifact Store
+产物仓库
+保存配置、日志、可视化、事件报告、表格和论文图。
+表 2：实验平台的五个核心组件
+4.2 推荐数据流
+实验数据流示意
+Input stream -> Episode Runner -> Perception/Identity/Memory Pipeline             -> Audit Bus -> Event Trace Store             -> Metric Engine -> Failure Slicing / Paired Comparison             -> Report Generator -> Tables / Figures / Case Replay
+4.3 实验平台的最低要求
+每个 benchmark 结果必须能追溯到 event_id，而不是只给 sequence-level 均值。
+每个 event 必须能导出 source pool，且保留 runtime_owner 与 continuity_owner 的 provenance。
+每个 attach 决策必须能导出 attach state transition。
+每个 prototype/lineage/bundle 的关键更新必须有 owner transition trace。
+每个实验必须记录 config_hash、git_commit、stage_tag 和随机种子。
+5. 事件账本与 benchmark 事件族
+后续 benchmark 的基本单位应从“整段视频”改为“事件”。一个事件可以是短遮挡、长间隔重入、同类交叉、概念漂移、预算压缩等。事件化以后，系统能精确回答哪个机制在什么事件上失败，而不是笼统说某段 benchmark 不行。
+5.1 Event Ledger 字段
+字段
+说明
+event_id
+唯一事件编号，例如 M3-LG-017。
+sequence_id
+所属输入序列或 synthetic episode 名称。
+event_family
+P/I/C/M/G 五大事件族之一。
+event_type
+具体事件类型，例如 long_gap_reentry_after_archive。
+frame_start / frame_end
+事件观察范围。
+target_lineage_id
+如果有目标旧概念，记录目标 lineage。
+target_track_id
+如果需要旧实例恢复，记录目标 track。
+expected_outcome
+same-lineage、same-track、new-branch、reject-attach 等。
+ambiguity_level
+事件允许的歧义等级，例如 low/medium/high。
+required_traces
+本事件必须导出的 trace 类型。
+表 3：事件账本字段规范
+5.2 五大 benchmark 事件族
+族
+名称
+实验目标
+典型事件
+P
+Perception Object Formation
+测试 objectness、support region、bbox refinement 是否稳定。
+support 缺失、背景误检、overgrown component、fragmented support。
+I
+Identity Maintenance
+测试短时 identity continuity 与 active/dormant 状态转换。
+短遮挡、短重入、同类交叉、局部漂移。
+C
+Concept Lineage
+测试 lineage 是否作为概念主干稳定工作。
+旧概念新外观、概念漂移、false split、false merge。
+M
+Memory Recovery
+测试 long-gap re-entry 与 episodic continuity recall。
+after_archive re-entry、continuity owner conflict、distractor re-entry。
+G
+Governance / Budget
+测试长期运行、预算、巩固、遗忘和保护策略。
+budget pressure、memory compression、protected source survival。
+表 4：五大 benchmark 事件族
+5.3 事件类型清单
+下面的事件清单可以直接作为后续 benchmark 构建索引。每一类至少保留 5–20 个事件，hard long-gap 类事件应优先保留逐事件 replay 能力。
+编号
+事件类型
+说明
+P1
+object_appearance_low_contrast
+低对比对象首次出现，测试 objectness 起点。
+P2
+background_texture_false_region
+背景纹理产生假 support，测试 habituation 与 region quality。
+P3
+support_fragmentation
+同一对象 support 被切碎，测试 region merge/refine。
+P4
+support_overgrowth
+support 膨胀覆盖背景，测试 compactness/fill ratio。
+I1
+short_occlusion_recover
+短遮挡后回连，测试 active/dormant。
+I2
+multi_instance_crossing
+同类对象交叉，测试 ID switch。
+I3
+local_motion_jump
+运动突变，测试 active match cost。
+C1
+same_concept_appearance_drift
+同一概念逐步变形，测试 lineage 维持。
+C2
+old_concept_new_instance
+旧概念新个体，测试 same-lineage 与 same-track 分离。
+C3
+similar_concepts_false_merge
+相似概念误合并，测试 lineage gating。
+M1
+long_gap_reentry
+长间隔重入，测试 continuity recall。
+M2
+reentry_after_archive
+archive 后重入，测试 continuity owner 保留。
+M3
+continuity_owner_conflict
+runtime owner 与 continuity owner 冲突，测试 dual-owner。
+M4
+long_gap_with_distractor
+长间隔后有干扰物，测试 false attach。
+G1
+budget_pressure_recall
+预算压缩下恢复，测试 protected source。
+G2
+forgetting_damage
+遗忘策略对 hard cases 的损伤。
+表 5：首批建议事件类型
+6. 分层指标体系
+指标体系必须服务于归因。后续所有指标分五层输出：感知层、身份层、概念层、连续性记忆层、治理层。每个总指标都必须能按事件族、gap 长度、预算压力、干扰强度切片。
+层
+指标
+定义
+用途
+感知
+proposal_recall
+目标对象是否形成有效 proposal。
+判断 perception 是否是失败源。
+感知
+support_coverage
+support region 对对象区域的覆盖。
+判断 support 是否足够给后续 memory 用。
+感知
+bbox_tightness
+refined bbox 与对象/support 的紧致度。
+判断 proposal 是否 object-aligned。
+身份
+same_track
+严格旧 track 恢复率。
+衡量实例级连续性。
+身份
+ID_switch_rate
+短时身份切换率。
+定位 tracking 层问题。
+概念
+same_lineage
+是否恢复到旧概念主干。
+衡量概念重认。
+概念
+lineage_mismatch
+概念归属错误比例。
+定位 false split/merge。
+记忆
+source_visibility_rate
+正确 continuity source 是否进入候选池。
+阶段 A 第一指标。
+记忆
+continuation_access
+旧 continuation/bundle 是否被访问。
+衡量 episodic recall。
+记忆
+same_track_after_concept
+归入旧 lineage 后是否接回旧 track。
+区分概念重认和实例恢复。
+记忆
+false_episodic_attach
+错误接入旧 continuity chain 的比例。
+控制恢复路径副作用。
+治理
+protected_source_survival
+关键 source 在预算压力下的存活率。
+衡量 protection 策略。
+治理
+memory_growth_slope
+记忆规模增长斜率。
+防止长期运行爆炸。
+治理
+forgetting_damage
+遗忘对 hard recall 的损害。
+衡量遗忘是否误删关键源。
+表 6：分层指标体系
+6.1 必须新增的核心指标
+下面这些指标应优先实现，因为它们直接针对当前系统主断点。
+关键指标定义
+Source Visibility Rate (SVR) = #events where target continuity source is enumerated / #events requiring recoveryClaim Coverage@k = #events where target source appears in top-k claim candidates / #events where target source is visibleSame-Track-After-Concept (STAC) = #events with correct old-track attach after correct lineage routing / #events with correct lineage routingFalse Episodic Attach Rate (FEAR) = #events incorrectly attached to old continuity / #events with attach attemptHead Churn Rate (HCR) = #head changes over evaluated frames / #active lineage framesProtected Source Survival (PSS) = #protected sources alive at recovery time / #protected sources expected alive
+6.2 指标判读顺序
+每次实验结果应按固定顺序解读：先看 perception 是否够用；再看 source visibility；再看 same-lineage；再看 same-track-after-concept；再看 false attach、head churn 和 budget damage；最后才看 overall recall。这个顺序能避免被表面涨点误导。
+7. 基线、对照组与负对照
+实验设计必须包含正常基线、结构增强组、消融组和负对照。没有负对照的机制主张不可靠。
+编号
+配置
+说明
+实验目的
+B0
+Current baseline
+当前系统，不增加新的 dual-owner 枚举与 episodic bundle。
+确定当前失败切片。
+B1
+Perception-stable baseline
+固定当前 support-region/refined-bbox 表达，冻结 perception。
+避免后续 identity/memory 实验被 perception 改动污染。
+B2
++ Dual-owner visibility
+runtime owner + continuity owner 双 source 枚举，不改 ranking。
+验证 source visibility 是否恢复。
+B3
++ Claim ranking repair
+在 B2 基础上调 claim score，不改 attach/promotion。
+验证看得见后是否选得中。
+B4
++ Episodic bundle
+引入 bundle 写入/召回，替代轻量 continuation。
+验证 long-gap memory recall。
+B5
++ Decoupled attach/promotion
+temporary attach 与 head promotion 分离。
+验证恢复路径与 head stability 是否解耦。
+B6
++ Layer-wise governance
+分层 budget、protection、consolidation、forgetting。
+验证长期运行能力。
+表 7：建议基线与结构增强组
+7.1 负对照设计
+编号
+负对照
+预期用途
+NC1
+打乱 continuity_owner_lineage_id
+如果 dual-owner 真的有效，打乱后 long-gap recovery 应显著下降。
+NC2
+随机化 source pool 排序
+如果 claim-builder 真的有效，随机排序应破坏 top-k claim coverage。
+NC3
+禁用 source provenance
+如果 provenance 是必要审计工具，失败归因 unknown/mixed 比例应上升。
+NC4
+只保 runtime owner
+复现当前主断点，证明 continuity owner 枚举必要。
+NC5
+immediate promotion
+测试 deferred promotion 的价值；预期 head churn 或 false promotion 上升。
+NC6
+aggressive forgetting
+测试 protection 策略价值；预期 protected source survival 与 hard recall 下降。
+表 8：负对照实验
+8. 阶段化实验计划
+阶段化实验计划按机制依赖顺序安排。每个阶段都有明确问题、操作变量、固定指标、通过条件和失败后的下一步。
+阶段
+名称
+操作
+主指标
+退出条件
+E0
+Instrumentation Freeze
+先冻结日志和事件账本。
+所有关键对象有 trace；event_id 可回放。
+未通过则不得进入机制实验。
+E1
+Baseline Forensic Audit
+对当前系统做失败体检。
+五层 failure slicing；Track A/C 配对分析。
+得到主失败层分布。
+E2
+Dual-owner Visibility
+只改 source enumeration，不改 ranking。
+SVR、owner overwrite、source pool provenance。
+正确 continuity source 可见。
+E3
+Claim-builder Challenge
+在 source 可见后评估 ranking。
+Claim Coverage@k、claim rank、抢占来源。
+看得见后能进入可 attach 区间。
+E4
+Episodic Bundle Recall
+引入 bundle 写入与召回。
+bundle_visibility、continuation_access、gap-conditioned recall。
+long-gap recovery 明显改善。
+E5
+Attach/Promotion Decoupling
+temporary attach 与 deferred promotion。
+STAC、FEAR、HCR、promotion delay。
+恢复不再被 head stability 压死。
+E6
+Memory Governance
+分层预算、保护、巩固、遗忘。
+PSS、memory_growth_slope、forgetting_damage。
+预算压力下关键 source 保留。
+E7
+Integrated Long-run
+全链路长期运行。
+全指标、事件族总表、负对照。
+形成论文级证据链。
+表 9：阶段化实验计划总览
+8.1 E2：Dual-owner Visibility 实验细化
+这是当前最优先实验。它的目的不是马上提高 same-track，而是证明正确旧 continuity source 能重新进入候选池。
+操作变量：runtime-owner only vs runtime+continuity dual-owner enumeration。
+固定条件：ranking、attach threshold、promotion 策略保持不变。
+核心事件：M2 reentry_after_archive、M3 continuity_owner_conflict、M1 long_gap_reentry。
+主指标：SVR、Claim Coverage@k、source_drop_reason、owner overwrite count。
+通过条件：目标 continuity source 在主要 hard events 中从不可见变为可见，且 provenance 不丢失。
+8.2 E4：Episodic Bundle Recall 实验细化
+E4 在 E2/E3 之后执行。只有当 source 可见性恢复后，episodic bundle 的价值才可被干净评估。
+操作变量：轻量 continuation handle vs episodic continuity bundle。
+写入时机：active->dormant、pre-archive、identity conflict 前、long-gap 高风险消失边界。
+召回维度：continuity lineage、gap compatibility、support shape、motion signature、concept compatibility。
+主指标：bundle visibility、bundle access precision/recall、gap-conditioned recall、STAC、FEAR。
+通过条件：在 long-gap 与 after_archive 事件中 STAC 提升，同时 FEAR 不显著恶化。
+8.3 E5：Attach/Promotion 解耦实验细化
+E5 的实验重点是证明 temporary attach 可以先恢复旧连续性，而不立即篡改 semantic head。
+对照组：coupled attach+promotion、immediate promotion、decoupled attach + deferred promotion。
+主指标：STAC、head churn、false promotion、attach survival across frames、promotion delay。
+关键判断：若 STAC 上升但 head churn 不上升，说明解耦有效；若 STAC 依赖 immediate promotion，说明 attach state 设计仍不充分。
+9. 消融矩阵与反事实实验
+消融必须围绕结构机制，而不是围绕零散参数。下面的矩阵可作为后续论文表格的原型。
+编号
+消融项
+操作
+验证目标
+A1
+binary objectness
+关闭连续 objectness，回退硬阈值。
+验证 perception 改造价值。
+A2
+bbox-only proposal
+关闭 support-region proposal。
+验证 object-aligned representation 对后续 memory 的作用。
+A3
+prototype-only concept
+禁用 lineage-level binding。
+验证 lineage 主干必要性。
+A4
+runtime-owner only
+禁用 continuity owner 枚举。
+验证当前主断点。
+A5
+dual-owner without provenance
+保留双枚举但去掉来源记录。
+验证审计可解释性。
+A6
+continuation handle only
+不使用 episodic bundle。
+验证 bundle 的长间隔价值。
+A7
+no anchor
+禁用 recovery anchor。
+验证最小恢复源作用。
+A8
+coupled attach-promotion
+attach 成功立即 promotion。
+验证解耦必要性。
+A9
+flat budget
+所有 memory 共用一个预算。
+验证 layer-wise governance。
+A10
+no protection
+禁用 protected-source reserve。
+验证保护关键 source 的价值。
+表 10：结构消融矩阵
+9.1 反事实实验
+反事实实验用于回答“如果关键机制被破坏，系统是否按预期失败”。这比只展示成功曲线更有说服力。
+把正确 continuity_lineage_id 替换为相邻错误 lineage：预期 same-lineage 可能仍可，但 same-track-after-concept 下降。
+保留正确 source，但在 claim-builder 中降低其 priority：预期 SVR 不变，Claim Coverage@k 下降。
+保留 attach，但强制 immediate promotion：预期短期 same-prototype 可能上升，head churn 与 false promotion 上升。
+保留 bundle，但随机打乱 gap metadata：预期 false episodic attach 上升。
+保留 budget，但移除 protected-source reserve：预期 memory growth 可控但 long-gap recall 受损。
+10. 统计与结果判读规范
+即使实验多为 synthetic/controlled episodes，也必须采用严谨结果判读。尤其要避免只报告最佳 run 或只看全局均值。
+10.1 事件级配对比较
+所有关键机制实验都应采用 event-level paired comparison。对于每个 event_id，记录 baseline 与 variant 的层级结果，然后统计从失败到成功、从不可见到可见、从错误 attach 到正确 attach 的转换比例。
+10.2 随机性与置信区间
+如果 synthetic episode 含随机运动、干扰物、噪声或预算顺序，应至少固定多个 seeds，并报告 bootstrap confidence intervals。若数据量暂时较小，也应报告事件数、成功数和失败数，而不是只给小数。
+10.3 结果判读优先级
+1.   先看感知层是否足以支持后续模块；
+2.   再看正确 continuity source 是否可见；
+3.   再看 claim-builder 是否把正确 source 排进 top-k；
+4.   再看 attach 是否发生且是否能跨帧存活；
+5.   再看是否 promotion，以及 promotion 是否造成 head churn；
+6.   最后看整体 U-Recall、PFR 或总体 recovery。
+10.4 报告格式要求
+每张结果表必须包含 raw numerator/denominator，不能只给小数。比如 same-track-after-concept = 9/17，而不是只写 0.529。这样能避免少量事件导致的假稳定。
+11. 失败归因与诊断树
+失败归因必须标准化。后续所有 failed events 应进入统一分类，不允许只写 mixed failure。mixed 只能作为临时类别，且必须说明无法拆开的原因。
+代码
+失败类型
+定义
+下一步
+F0
+perception_absent
+目标对象没有形成有效 proposal。
+回 perception，检查 objectness/support。
+F1
+proposal_bad_quality
+proposal 存在但 support/bbox 不足以支撑匹配。
+修 region refine 或 quality gating。
+F2
+active_match_wrong
+短时 identity 绑定错误。
+修 identity cost/reroute。
+F3
+lineage_routing_wrong
+概念主干归属错误。
+修 lineage binding/split/merge。
+F4
+source_invisible
+正确 continuity source 未进入候选池。
+修 dual-owner/enumeration。
+F5
+source_filtered
+正确 source 进入后被过滤。
+检查 threshold/dedup/budget。
+F6
+claim_rank_wrong
+正确 source 可见但排序低。
+修 claim score。
+F7
+attach_blocked
+正确 claim 存在但 attach 状态未触发。
+修 attach state gate。
+F8
+promotion_error
+attach 后 promotion 错误。
+修 deferred promotion。
+F9
+memory_governance_damage
+source 被遗忘或预算误删。
+修 protection/consolidation。
+表 11：失败归因分类
+11.1 诊断树
+失败诊断树
+If no proposal: F0/F1Else if active match wrong before gap: F2Else if lineage wrong: F3Else if target continuity source not in source pool: F4Else if source in pool but filtered: F5Else if source rank too low: F6Else if claim good but no attach: F7Else if attach good but head/prototype wrong: F8Else if source disappeared due to budget/forgetting: F9Else: mixed, require manual event replay
+12. 审计日志与数据结构规范
+日志不是附属物，而是实验本体的一部分。没有 trace 的成功案例不能算强证据。
+日志
+用途
+关键字段
+event_trace.jsonl
+每个 event 的总体状态与最终结果。
+event_id、frames、expected_outcome、actual_outcome、failure_code。
+source_pool_trace.jsonl
+claim-builder 前的所有候选 source。
+source_kind、runtime_owner、continuity_owner、visibility_score、filter_reason。
+owner_transition_trace.jsonl
+prototype/anchor/continuation 的 owner 变化。
+before/after runtime owner、before/after continuity owner、code_location。
+claim_trace.jsonl
+source 到 claim 的排序与分数。
+claim_score、rank、selected_flag、evidence_breakdown。
+attach_state_trace.jsonl
+attach 状态机变化。
+none/tentative/temporary/verified/promoted/rejected。
+promotion_trace.jsonl
+head promotion 与 lineage head 变化。
+old_head、新 head、delay、evidence_frames、reason。
+memory_governance_trace.jsonl
+budget、保护、巩固、遗忘事件。
+operation、object_id、layer、priority、damage_flag。
+表 12：审计日志规范
+12.1 ClaimSourceRecord 建议 schema
+ClaimSourceRecord
+{  event_id: str,  frame_idx: int,  proposal_id: str,  source_kind: enum(runtime_owner, continuity_owner, anchor, continuation, prototype_head, dormant_track),  source_object_id: str,  source_runtime_owner_lineage_id: int,  source_continuity_lineage_id: int,  raw_visibility_score: float,  filtered_flag: bool,  filter_stage: str,  filter_reason: str,  claim_score: float,  claim_rank: int,  selected_flag: bool}
+12.2 AttachStateRecord 建议 schema
+AttachStateRecord
+{  event_id: str,  frame_idx: int,  attach_id: str,  source_object_id: str,  target_lineage_id: int,  previous_state: enum,  new_state: enum,  evidence_summary: dict,  promotion_allowed: bool,  promotion_triggered: bool,  reject_reason: str}
+13. 可视化与论文图表计划
+可视化不只是展示效果，而是实验诊断工具。后续至少要固定三类可视化：单事件回放、时间线、记忆结构图。
+编号
+图名
+用途
+图 1
+总体四流框架
+展示 perception / identity / episodic memory / semantic lineage 的数据流。
+图 2
+source visibility 修复前后
+展示 runtime-only 与 dual-owner 的 source pool 对比。
+图 3
+hard re-entry 事件时间线
+展示 objectness、track state、lineage、source、attach、promotion。
+图 4
+same-lineage vs same-track
+证明概念重认和实例恢复不同。
+图 5
+attach/promotion 状态机
+展示 temporary attach 与 deferred promotion。
+图 6
+budget sweep
+展示记忆分层占用与 recall under pressure。
+表 13：优先论文图表
+13.1 单事件回放模板
+上半部分：关键帧、support region、refined bbox、active track id。
+中间部分：source pool，区分 runtime owner、continuity owner、anchor、continuation。
+下半部分：claim ranking、attach state、promotion state、最终 lineage/prototype/track。
+右侧附表：event expected outcome、actual outcome、failure_code、source_drop_reason。
+14. 实验运行规范与产物目录
+为了保证可复现，所有实验运行都应使用固定目录结构与命名规范。
+推荐实验目录
+experiments/  configs/    stage_E2_dual_owner.yaml  event_ledgers/    track_c_long_gap_events.yaml  runs/    2026-04-27_E2_dual_owner_seed001/      config.yaml      metrics.json      event_trace.jsonl      source_pool_trace.jsonl      attach_state_trace.jsonl      figures/      reports/  reports/    stage_E2_summary.md    paper_tables/
+14.1 每次实验必须记录
+experiment_name、stage_tag、git_commit、config_hash、seed。
+benchmark_subset、event_ids、event_family。
+primary metrics、secondary metrics、failure slicing。
+是否产生可视化、是否产生逐事件 replay。
+与前一版本相比的 paired comparison。
+14.2 推荐命令接口
+推荐 CLI
+run_event --event-id M3-LG-017 --config configs/stage_E2_dual_owner.yamlrun_suite --ledger event_ledgers/track_c_long_gap_events.yaml --config configs/stage_E2_dual_owner.yamlinspect_source_pool --event-id M3-LG-017 --frame 705inspect_owner_history --prototype-id 3compare_event --event-id M3-LG-017 --baseline B0 --variant B2make_failure_report --run runs/2026-04-27_E2_dual_owner_seed001
+15. 阶段准入/退出门槛
+门槛
+名称
+通过条件
+未通过动作
+G0
+审计准入
+event trace、source trace、owner trace 可用。
+否则不进入机制实验。
+G1
+source 可见性
+关键 long-gap events 中目标 continuity source 可见。
+否则继续修 enumeration。
+G2
+claim 可排序
+目标 source 可进入 top-k，且错误抢占可解释。
+否则修 claim scoring。
+G3
+episodic 可召回
+bundle access 与 STAC 在 long-gap 事件上改善。
+否则修 bundle 写入/检索。
+G4
+attach 可独立
+temporary attach 能成立且不立即 promotion。
+否则修 attach state machine。
+G5
+promotion 稳定
+STAC 提升同时 head churn 不恶化。
+否则修 deferred promotion。
+G6
+治理可长期运行
+budget sweep 中 protected sources 存活且 memory growth 可控。
+否则修 protection/consolidation。
+表 14：阶段准入/退出门槛
+16. 论文证据链设计
+最终论文不应只讲“我们提出一个 memory module”。更强的证据链应当按机制逐级展开。
+编号
+论文主张
+对应证据
+主张 1
+object-aligned support region 比粗 bbox 更适合作为在线对象形成基础。
+P 族 benchmark + perception 消融。
+主张 2
+lineage 是比单 prototype 更稳定的概念主身份。
+C 族 benchmark + prototype-only 消融。
+主张 3
+long-gap recovery 的第一断点是 continuity source visibility。
+E2 source visibility before/after + 负对照 NC4。
+主张 4
+episodic continuity bundle 能支持旧经历召回。
+E4 gap-conditioned recall + bundle 消融。
+主张 5
+attach/promotion 解耦能缓解稳定性与恢复冲突。
+E5 STAC vs HCR tradeoff + immediate promotion 负对照。
+主张 6
+分层记忆治理能在预算压力下保留关键恢复能力。
+E6 budget sweep + protected-source 消融。
+表 15：论文主张与证据映射
+17. 风险控制与纠偏规则
+编号
+风险
+表现
+纠偏
+风险 1
+表面稳定
+通过强 suppression 降低 FP 或 head churn，但 recovery path 被压死。
+任何 head 稳定改动必须同时看 STAC 和 continuation access。
+风险 2
+候选污染
+dual-owner 枚举导致 source pool 变脏，false attach 上升。
+先允许可见性恢复，再通过 claim scoring 和 attach state 控制。
+风险 3
+概念/实例混淆
+same-lineage 上升被误读为 same-track 恢复。
+所有报告必须并列输出 same-lineage、same-prototype、same-track。
+风险 4
+过早 promotion
+为了恢复 old prototype，导致 head churn 增加。
+使用 temporary attach 与 deferred promotion 分离。
+风险 5
+预算误伤
+forgetting 删除关键 source。
+引入 protected-source reserve 与 forgetting damage 指标。
+风险 6
+日志泛滥但不可用
+trace 很多却无法回答问题。
+每个 trace 必须服务于 failure_code 与 decision tree。
+表 16：实验风险与纠偏规则
+18. 第一批优先执行实验清单
+下面是最先应该执行的一组实验。它们的顺序比数量更重要。不要跳过 E0/E1 直接做复杂 memory。
+顺序
+实验
+动作
+产物
+1
+建立 event ledger
+把 Track A、Track C 和已知 hard cases 全部事件化。
+event_ledger.yaml
+2
+跑 current baseline forensic audit
+按五层 failure slicing 输出当前失败分布。
+stage_E1_report
+3
+做 owner overwrite trace
+定位 prototype/continuation/anchor 的 owner 改写点。
+owner_transition_trace
+4
+runtime-only vs dual-owner
+只改枚举，不改 ranking。
+SVR before/after
+5
+source visible but attach fail 分析
+把失败从 visibility 转移到 ranking/attach 层。
+claim failure report
+6
+episodic bundle 最小实现实验
+只在 long-gap hard cases 写入/检索 bundle。
+bundle lifecycle
+7
+temporary attach 实验
+允许 attach 不 promotion。
+attach state trace
+8
+budget pressure micro benchmark
+测试关键 source 是否被误删。
+budget sweep report
+表 17：第一批优先实验清单
+18.1 最重要的第一周目标
+第一周最重要的目标不是提升分数，而是让每个 hard re-entry 事件都能回答三个问题：正确 continuity source 是否存在；是否进入了 source pool；如果没有进入，是哪个函数、哪个过滤器、哪个 owner overwrite 导致它消失。只要这三个问题能稳定回答，后续实验就会从盲调进入机制调试。
+附录 A. 指标字典
+缩写
+名称
+解释
+SVR
+Source Visibility Rate
+正确 continuity source 进入 source pool 的事件比例。
+CC@k
+Claim Coverage@k
+正确 source 在 claim ranking top-k 中出现的比例。
+STAC
+Same-Track-After-Concept
+正确归入旧 lineage 后进一步恢复旧 track 的比例。
+FEAR
+False Episodic Attach Rate
+错误 attach 到旧 continuity chain 的比例。
+HCR
+Head Churn Rate
+lineage head 在单位活跃时间内变更频率。
+PSS
+Protected Source Survival
+受保护 source 在需要恢复时仍存活的比例。
+FD
+Forgetting Damage
+启用遗忘后 hard recall 相对无遗忘基线的下降。
+附录 B. 事件命名规范
+建议使用 FAMILY-SCENE-ID 的格式。例如：
+事件 ID 示例
+P-OBJ-001   perception object appearance eventI-OCC-004   short occlusion identity eventC-DRIFT-006 concept drift eventM-LG-017    long-gap memory recovery eventM-ARC-009   reentry after archive eventG-BUD-003   budget pressure event
+附录 C. 周报与实验报告模板
+每周实验报告建议固定为以下结构：
+1.   本周目标：本周试图证伪/验证哪个假设。
+2.   实验配置：baseline、variant、config_hash、event set、seeds。
+3.   主结果：按五层指标报告 raw counts 与比例。
+4.   事件级配对：列出成功转换、失败转换和异常转换。
+5.   失败切片：按 F0-F9 分类。
+6.   关键 replay：至少展示 2 个成功事件与 2 个失败事件。
+7.   结论：当前失败是否已经从 visibility 转移到 ranking/attach/promotion/governance。
+8.   下周动作：只列 1–3 个最重要的结构性动作。
+结语：这份实验规划书的真正用途
+这份文档的用途不是让项目看起来更大，而是让项目不再靠感觉推进。NOPS-OWR 的难点在于系统内部已经出现多层身份与记忆结构，单一指标无法判断真实进步。后续每个改动都必须被事件化、分层化、可回放、可证伪。
+如果这套实验体系执行到位，后续开发会出现一个很关键的变化：你不再需要问“这次为什么没涨点”，而是能直接看到正确 continuity source 是没进候选、被过滤、排序低、attach 被挡、promotion 错误，还是被 budget/forgetting 误伤。到那时，系统才真正具备研究级可控性。

@@ -1,0 +1,58 @@
+{
+  "sequence_id": 2,
+  "num_frames_evaluated": 499,
+  "mean_u_recall": 0.5627922511690047,
+  "tracked_idsw": 53,
+  "naive_idsw_without_temporal_identity": 833,
+  "idsw_reduction": 780.0,
+  "unique_tracks_created": 33,
+  "max_active_tracks": 7,
+  "selected_frames": [
+    {
+      "frame_index": 1,
+      "u_recall": 0.3333333333333333,
+      "active_track_count": 3
+    },
+    {
+      "frame_index": 167,
+      "u_recall": 1.0,
+      "active_track_count": 5
+    },
+    {
+      "frame_index": 333,
+      "u_recall": 0.3333333333333333,
+      "active_track_count": 2
+    },
+    {
+      "frame_index": 499,
+      "u_recall": 1.0,
+      "active_track_count": 4
+    }
+  ],
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "objectness": {
+      "alpha_boundary": 1.0,
+      "beta_temporal": 0.6,
+      "gamma_surprise": 0.4,
+      "temporal_decay": 0.82,
+      "surprise_decay": 0.9,
+      "smoothing_kernel_size": 5,
+      "proposal_threshold": 0.45,
+      "min_area": 96,
+      "max_proposals": 8
+    },
+    "tracking": {
+      "iou_threshold": 0.3,
+      "max_center_distance": 48.0,
+      "iou_weight": 0.55,
+      "center_weight": 0.25,
+      "signature_weight": 0.2,
+      "max_missed_frames": 12,
+      "signature_momentum": 0.7
+    }
+  }
+}

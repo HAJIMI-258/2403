@@ -1,0 +1,50 @@
+{
+  "sequence_id": 2,
+  "num_frames_evaluated": 499,
+  "mean_u_recall": 0.5627922511690047,
+  "best_frame": {
+    "frame_index": 50,
+    "num_gt_boxes": 3,
+    "num_proposals": 3,
+    "u_recall": 1.0,
+    "mean_heatmap": 0.08252383768558502,
+    "max_heatmap": 1.0,
+    "proposal_boxes": [
+      [
+        198,
+        145,
+        244,
+        190
+      ],
+      [
+        0,
+        171,
+        82,
+        256
+      ],
+      [
+        114,
+        136,
+        192,
+        214
+      ]
+    ]
+  },
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "objectness": {
+      "alpha_boundary": 1.0,
+      "beta_temporal": 0.6,
+      "gamma_surprise": 0.4,
+      "temporal_decay": 0.82,
+      "surprise_decay": 0.9,
+      "smoothing_kernel_size": 5,
+      "proposal_threshold": 0.45,
+      "min_area": 96,
+      "max_proposals": 8
+    }
+  }
+}

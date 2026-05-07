@@ -1,0 +1,489 @@
+NOPS-OWR 后续开发规划与阶段A落地实施文档
+面向 pure-SNN 开放世界持续识别系统的研发路线、方法正文、实验体系与伪代码修改方案
+版本：v2  |  输出形式：正式研发文档（DOCX）
+0. 文档定位
+本文档不是泛泛而谈的“研究设想”，而是面向当前系统状态整理的一份正式执行文档。它服务于四个层面：第一，作为后续代码迭代的主路线图，约束研发顺序，避免再度发散；第二，作为实验设计说明书，把每一轮改动对应到明确的验证项、失败切片与指标输出；第三，作为论文写作储备稿，把问题定义、方法结构、技术路线和实验叙事提前沉淀为可直接改写的正文；第四，作为阶段管理文档，把每个阶段的目标、输入、输出、退出条件与风险点写清楚。
+本文档的总基调只有一个：不再继续用“更像大脑的名词”掩盖系统真正的结构断点，而是沿着已经被你定位出来的主故障链条，逐层修复 continuity source、记忆分层、episodic recall、attach/promotion 解耦与记忆治理。
+1. 总体目标与问题定义
+本项目总目标保持不变：构建一个 no-pretrain、no-offline-data、one-pass、pure-SNN、open-world self-bootstrapping recognition 的持续识别系统。它不是传统监督检测器，不是 anomaly detection，也不是依赖外部 VLM/CLIP/知识库闭环兜底的系统。系统必须在流式输入中自行形成 object、track、prototype、lineage，并在遮挡、漂移、重入之后尽量恢复旧概念与旧身份。
+这项任务的真正难点不在于“单帧上把一个东西认出来”，而在于如何让系统经历“看见—维持—消失—回忆—重认—再固化”的全过程。换句话说，系统需要同时回答四个问题：当前是否形成了可分离的对象性单元；当前输入与哪个活跃对象最可能是同一实例；若目标在长间隔后再次出现，它是否应接回旧概念甚至旧身份；若旧概念无法完整解释当前输入，系统应当延续旧概念、在旧概念内分叉，还是建立全新概念主干。
+你当前系统最重要的事实不是“还没做记忆”，而是“已经做出了一部分记忆结构，但还没有把记忆做成稳定可召回、可分层、可解释的记忆系统”。因此，后续开发的关键不是从零加模块，而是把已有 prototype、lineage、continuation、anchor、budget、审计链，重构成真正有层级的感知—身份—情景连续性—语义概念体系。
+2. 方法论原则
+1. 坚持问题边界不漂移。所有新增模块都必须服务于开放世界流式持续识别，而不是滑回闭集检测、纯分类、离线知识库匹配或传统 anomaly detection。
+2. 先修结构断点，再做性能优化。当前已经定位到 continuity identity key 在上游被 runtime owner 过早覆盖，所以后续不应优先继续调 promotion、gating 或 tie-break，而应先恢复正确 continuity source 的可见性。
+3. 先分层，再调参。perception、identity、episodic continuity、semantic concept 的职责没有拆清前，大多数阈值优化都只会制造局部假改善。
+4. 评估必须看过程，不只看结果。后续所有实验都必须能回答：source 是否进入候选池；source 在何处被过滤；attach 是否真正发生；promotion 是否只是表面稳定换来的结果。
+5. 允许阶段性不追求统一最优。短期内可以接受 same-lineage 先于 same-track 提升，也可以接受 attach 先于 promotion 稳定；只要系统是在往层级化记忆结构推进，这种阶段性不平衡就是合理的。
+3. 总体系统重构蓝图
+3.1 四条主链
+后续系统不应再被理解为“一个 tracking 管线外加几个 memory patch”，而应明确拆成四条主链：感知链、身份链、情景连续性记忆链、语义概念链。四条链条各自解决的问题不同，但又在关键时刻相互支撑。
+3.1.1 感知链（Perception Stream）
+感知链从相邻帧生成 spike/event-like 表达，并在连续场中形成 objectness、support region 与 refined proposal。它负责解决“有没有对象正在形成对象性单元”这一问题。后续对感知链的优化应聚焦于连续 objectness、support region 质量、局部边界一致性与背景习惯化，而不是退回到简单的二值 proposal。
+3.1.2 身份链（Identity Stream）
+身份链负责活跃对象的局部同一性维持，包括 active match、reroute、dormant/ghost/retired 状态迁移、短间隔重入与局部身份连续性。它回答的是“当前最可能是谁”，而不是“这个东西长期属于哪个概念”。
+3.1.3 情景连续性记忆链（Episodic Continuity Stream）
+这条链是后续最关键的新增重点。它负责在对象消失前后保留可恢复的连续性线索，让系统在 long-gap re-entry 时能够凭借“过去那段经历的痕迹”把对象接回旧连续体，而不是只靠当前 appearance 与某个 prototype 做静态匹配。
+3.1.4 语义概念链（Semantic Concept Stream）
+语义概念链以 lineage 为概念主身份，负责组织 prototype family、head、alias、archive、split/merge 与概念成熟度。它回答的是“这大体上还是不是原来的那个概念主干”，而不是“它当前是不是原来的那条轨迹”。
+3.2 三级记忆体系
+为了真正逼近“模仿人脑看东西并记东西”的工程表达，系统后续必须至少区分三级记忆。第一层是工作记忆 working memory，对应当前活跃对象及其最近时间窗内的局部状态；第二层是情景连续性记忆 episodic continuity memory，对应某一对象在某一段经历中的压缩摘要，它是 long-gap re-entry 的核心；第三层是概念记忆 semantic concept memory，对应 lineage 级概念主干，用于长期概念延续、概念分化与概念重认。
+一旦这三层不再混在一个 prototype memory 里，你就能更清楚地区分 runtime owner 与 continuity owner、temporary attach 与 head promotion、same-lineage 与 same-track、recall failure 与 concept routing failure。这是整个系统从原型迈向论文级结构的前提。
+4. 当前系统问题清单
+• 感知层已经显著改善，但它不是当前主瓶颈。你已经把 proposal 从粗块状框推进到 support region + refined bbox，说明“看见对象”的基础并不差，后续只是持续修边而已。
+• identity continuity 与 concept continuity 仍有纠缠。系统已经证明 concept recovery 可以修起来，但 old track continuity 仍不稳，这说明“知道这是旧概念”和“能把它接回旧实例”仍是两回事。
+• head stability 与 recovery attach 被绑在同一决策上。你已经观察到更强的 head/group gating 虽能拉高 strict prototype continuity，却会饿死 recovery path，这不是参数问题，而是结构耦合。
+• continuity source 的身份键过早被覆盖，这是当前主 blocker。prototype 在最早可观察的 create/inherit 边界就被写成 runtime owner=0、continuity owner=0，导致真正的 continuity lineage 根本进不了 preserve-input / claim-builder。
+• 记忆分层尚不明确。prototype memory 当前同时承担短时状态、长期概念、continuity source、archive 管理与 budget 治理，原型期可行，但已成为进一步提升的结构性障碍。
+• 预算控制与恢复路径缺少合理契约。birth suppression、prototype protection、decay、slot、continuation bank 都已经加进来了，但还没有形成“哪些记忆必须保护、哪些可压缩、哪些可遗忘”的分层治理策略。
+5. 总体开发阶段划分
+后续建议分六个主阶段推进，每个阶段都只解决一种主矛盾，而不搞多目标混打。
+1. 阶段 A：修复 continuity source 键空间，恢复正确旧来源的可见性。
+2. 阶段 B：重构记忆分层与数据结构职责，拆清 perception / identity / episodic / semantic 边界。
+3. 阶段 C：建立可恢复的 episodic continuity memory，使系统具备长间隔旧经历召回能力。
+4. 阶段 D：实现 decoupled attach / deferred promotion，解开恢复接入与主头稳定的冲突。
+5. 阶段 E：建立类脑式记忆巩固、保护、摘要化与遗忘策略，实现长期可运行。
+6. 阶段 F：封装 benchmark、论文叙事、审计可视化与可复现实验基座。
+这六个阶段不是平行选项，而是顺序依赖关系。当前最早、最硬的动作只有一个：把 continuity owner 从“被 runtime owner 覆盖掉的附属字段”变成真正可枚举、可追踪、可参与 claim-builder 的 recovery source。
+6. 阶段A：修复 continuity source 键空间
+阶段A的目标不是全面涨点，而是把系统从“正确旧来源根本不可见”推进到“正确旧来源重新进入候选池”。如果这一步没有修通，后面再做 ranking、attach 甚至 promotion 调优，很多时候都是在错误候选集内做无意义比较。
+6.1 核心设计思想
+显式区分 runtime_owner_lineage_id 与 continuity_lineage_id。前者表示当前运行期由哪个概念主干管理对象；后者表示该对象承载的历史连续性归属。任何时候，都不允许 runtime owner 自动无条件覆盖 continuity owner。
+6.2 阶段A必须达成的状态
+• 正确 continuity lineage 在对象创建、继承、archive、attach 等边界不再被默认覆盖。
+• preserve-input 与 claim-builder 能同时枚举 runtime-owner sources 与 continuity-owner sources。
+• 每个 source 的 provenance 可追踪，可区分它来自 runtime owner、continuity owner、anchor、continuation 还是 dormant track。
+• 在关键 hard re-entry 事件中，可以明确回答：正确旧来源是否进入候选池，若未进入，是在哪一层被过滤；若已进入，为何没有 attach。
+7. 阶段B：记忆分层与数据结构职责重构
+阶段B的核心不是立刻改算法，而是重构对象边界。Track 不再直接承担长期概念逻辑；prototype 不再被视为唯一的概念主身份；lineage 上升为概念主干；continuation 与 anchor 成为情景记忆正式公民。
+建议引入四类正式对象：ActivePerceptUnit，承载当前感知对象；ActiveIdentityToken，承载当前活跃身份与工作记忆；EpisodicContinuityBundle，承载一段可恢复经历的摘要；ConceptLineageRecord，承载长期概念骨架。这样，错误就能被准确归因到感知、身份、episodic recall 或 semantic routing，而不再全部堆在 prototype memory 上。
+8. 阶段C：建立 episodic continuity memory
+阶段C要做的不是再加一个普通 memory bank，而是把 continuation / anchor 从补丁对象升级为真正的情景连续性记忆层。它要保留的不仅是“这是谁”，更是“它曾以什么样的轨迹、support、motion 和 gap 规律存在过”。
+后续建议把 episode 写成 bundle。每个 bundle 至少包含：continuity lineage、来源 track/prototype、消失前 support 摘要、motion 摘要、gap 统计、可触发 re-entry 的 hints、访问历史与保护优先级。召回时不能只看 prototype similarity，而要同时考虑 continuity lineage、gap compatibility、support compatibility、motion phase、concept compatibility 与历史 recall 成功记录。
+9. 阶段D：实现 decoupled attach / deferred promotion
+系统必须把三件事拆开：matched lineage、temporary recovery attach、deferred head promotion。即，先判断它是不是旧概念，再判断是否有足够 episodic evidence 支持接回旧连续体，最后才决定要不要更新主头。
+这一步建议引入 attach 状态机，例如 none、tentative_attach、temporary_attach、verified_attach、promoted_attach、rejected_attach。fast path 只更新 working / episodic buffer，slow path 在跨多个时间窗一致后才允许 promotion 影响 semantic head。这样，系统可以先把旧连续性接回来，而不是一接回来就扰动长期概念主头。
+10. 阶段E：建立记忆巩固、保护、摘要化与遗忘策略
+如果没有分层记忆治理，开放世界自举系统最终要么 memory explosion，要么为压缩 budget 把关键 continuity source 一起删掉。阶段E必须把预算控制从“限制总量”升级成“按层治理”。
+建议区分 working memory budget、episodic snippet budget、episodic bundle budget、semantic lineage budget 与 protected source reserve。对应操作包括四类：consolidation，把多段经历压缩成稳定 bundle；protection，对高价值 continuity handle 与熟悉 lineage 提高保护级别；abstraction，把低层细节压缩成摘要；forgetting，只在低访问、低价值、无关键恢复用途的记忆上执行释放。
+11. 阶段F：benchmark、论文叙事与系统封装
+阶段F不是简单“跑个总榜”，而是把事件族 benchmark、统一日志、审计面板、failure slicing、对照实验和可视化回放全部做起来。最终应形成三个层面的交付：一套可复现实验基座，一套论文叙事清晰的主结果与消融体系，以及一套能随时定位 long-gap re-entry 失败原因的工程工具链。
+12. 开发顺序与时间安排建议
+• 第1段（2~3个迭代周期）：完成双 owner 字段接入、overwrite trace、dual-source enumeration 与关键 hard events 的 visibility replay。
+• 第2段（2~4个迭代周期）：完成 perception / identity / episodic / semantic 四层对象与目录重构，确保职责边界清晰。
+• 第3段（3~5个迭代周期）：引入 episodic continuity bundle，跑通 gap-triggered recall。
+• 第4段（2~4个迭代周期）：完成 attach state machine 与 deferred promotion 机制，控制 head churn。
+• 第5段（2~4个迭代周期）：完成 layer-wise budget、consolidation 与 forgetting 机制。
+• 第6段（持续进行）：沉淀 benchmark、方法图、结果图与论文草稿。
+13. 每阶段固定实验方法
+为了避免继续陷入“改了很多但不知道哪里起作用”的状态，后续每轮实验都必须固定四组工作流：基础回归组、逐事件 replay 组、分层归因组和压力组。
+1. 基础回归组：固定跑 base quickcheck、Track A、Track C、普通 easy case 与一个 background distractor case，保证结构改动不会把系统直接打崩。
+2. 逐事件 replay 组：对关键 re-entry 事件输出 support、active candidates、source pool、claim ranking、attach state 与最终 lineage/prototype/track 判决。
+3. 分层归因组：每次失败都要归因到 perception、identity、continuity visibility、attach/ranking、memory governance 五类之一。
+4. 压力组：长期运行、gap duration sweep、background distractor sweep、budget sweep、false attach sensitivity sweep。
+14. 指标体系重建建议
+14.1 感知层指标
+• proposal recall
+• support coverage
+• bbox tightness
+• FP per frame
+• region persistence
+• motion agreement
+14.2 身份层指标
+• active match accuracy
+• same-track
+• ID switch rate
+• dormant resurrection success
+• local reentry success
+14.3 概念层指标
+• same-lineage
+• same-prototype
+• lineage mismatch
+• concept reuse rate
+• false split / false merge
+14.4 连续性记忆层指标
+• continuity source visibility
+• continuation access rate
+• anchor hit rate
+• same-track-after-concept
+• false episodic attach rate
+• claim-builder coverage
+14.5 记忆治理层指标
+• memory growth slope
+• protected-source survival
+• consolidation yield
+• bundle compression ratio
+• forgetting damage
+• recall under budget pressure
+后续解读任何实验时，必须遵守一个顺序：先看 source visibility 是否恢复，再看 same-lineage 是否改善，再看 same-track-after-concept 是否提升，然后才看 false attach / head churn，最后再看 overall recall。否则很容易被表面点数误导。
+15. 工程化建议
+• 配置分层：至少拆成 perception config、identity config、episodic memory config、semantic memory config、attach/promotion config、budget config、audit config。
+• 日志标准化：统一 percept id、track id、prototype id、lineage id、bundle id、attach id 的命名规则与 trace id 链路。
+• 审计工具标准化：建议实现 dump_source_visibility、dump_attach_transition、dump_lineage_head_history、dump_memory_budget_state、dump_failure_slice_report 等统一接口。
+• 可视化工具统一：逐帧 overlay、lineage tree、bundle access 时间线、attach/promotion 状态迁移图、memory occupancy 堆叠图。
+16. 风险控制与常见误区
+• 继续用更多启发式补丁掩盖结构错误。只要 continuity key 还没修干净，很多 ranking 调整都只是延后暴露错误。
+• 把概念恢复误当成实例恢复。same-lineage 提升不等于系统已经拥有真正的旧身份召回能力。
+• 过早追逐总体点数。当前阶段更重要的是建立可解释闭环，而不是用 suppression 和 gating 换表面稳定。
+• 把脑科学术语当方案。所谓海马体模块、前额叶门控，若不能对应到具体对象、字段、状态机与指标，就是包装而不是方法。
+• 忽视记忆治理。没有 consolidation、protection、compression 与 forgetting，任何 self-bootstrapping system 最终都会在长期运行中崩溃。
+17. 预期成果形式
+• 算法成果：pure-SNN open-world streaming recognition 框架、dual-owner continuity 建模、episodic continuity memory、decoupled attach/promotion、layer-wise memory governance。
+• 实验成果：Track A / Track C 等 hard cases 的全链审计、long-gap re-entry benchmark、budget stress benchmark、事件级 failure slicing。
+• 工程成果：可复现实验 runner、统一日志与审计平台、可视化 replay 工具、结构清晰的代码目录。
+• 论文成果：主论文一篇，以及 continuity、episodic memory、attach/promotion、memory governance 等子方向储备。
+18. 最终执行建议
+把整份规划压缩成一句话，就是：后续开发不再围绕“再加什么脑式模块”展开，而是沿着“修 continuity source → 分层记忆 → 建 episodic recall → 解耦 attach 与 promotion → 做巩固与遗忘 → 封装 benchmark 与论文”这条唯一主线推进。
+当前最优先的动作仍然只有一件：先让 continuity owner 真正成为可枚举、可保留、可参与 claim-builder 的 recovery source。在这一步之前，不必继续大面积调 promotion，也不必再堆新的表征模块。因为当前最致命的问题不是“不够像脑”，而是“记忆来源在最早入口就被写坏了”。
+19. 直接落地的下一步任务清单（精简执行版）
+1. 给 PrototypeState、Continuation、Anchor 加双 owner 字段。
+2. 检查 prototype create / inherit / archive / attach 路径，禁止 runtime owner 自动覆盖 continuity owner。
+3. 修改 preserve-input / claim-builder，source pool 同时枚举 runtime owner 与 continuity owner。
+4. 对 Track C 全部关键 re-entry 事件输出 source visibility trace。
+5. 验证旧 continuity lineage 是否重新进入候选，若未进入，定位过滤层；若已进入，分析 attach/ranking。
+6. source 修通后，开始目录级重构：perception / identity / episodic / semantic。
+7. 正式引入 episodic continuity bundle，替代过轻量 continuation handle。
+8. 引入 attach state machine，拆开 attach 与 promotion。
+9. 再进入 layer-wise budget 与 forgetting 机制。
+10. 最后统一 benchmark、图表和论文叙事。
+20. 阶段A详细开发任务书（可直接执行版）
+本部分面向当前代码体系直接落地。目标只有一个：修复 continuity source 键空间，使正确 continuity owner 能够进入 preserve-input、claim-builder 与 attach 路径。当前阶段不以全面冲分为目标，而以恢复“正确旧连续性来源的可见性”为唯一优先级。
+20.1 阶段A交付物
+• 双 owner 身份字段进入核心身份对象。
+• prototype create / inherit / archive / attach 全路径 overwrite 审计完成。
+• preserve-input / claim-builder 支持 runtime owner 与 continuity owner 双路径枚举。
+• Track C 全部 re-entry 事件的 source visibility trace。
+• 阶段A结果报告，明确当前失败属于 visibility failure、attach ranking failure 还是后续 promotion failure。
+• 最小回归脚本与最小调试命令。
+20.2 阶段A判定标准
+阶段A不要求 overall benchmark 全面上涨，不要求 strict same-track 立刻大幅提升，也不要求 head promotion 已经稳定。阶段A必须满足的只有：正确 continuity source 可见、source provenance 可追踪、source 被过滤或未 attach 的位置可解释。
+20.3 核心对象级改动
+• PrototypeState：新增 runtime_owner_lineage_id、continuity_lineage_id、continuity_source_type、continuity_inherited_from_prototype_id、continuity_inherited_from_track_id、continuity_key_frozen_until、continuity_last_verified_frame、continuity_conflict_flag。
+• IdentityContinuation：新增 continuation_id、continuity_lineage_id、runtime_visible_owner_ids、source_prototype_ids、source_track_ids、continuity_origin_event、last_visibility_frame、last_access_frame、source_drop_reason、source_suppressed_by_budget 等字段。
+• RecoveryIdentityAnchor：新增 anchor_id、continuity_lineage_id、runtime_owner_lineage_id、anchor_strength、anchor_origin_frame、anchor_origin_track_id、anchor_survival_priority、anchor_last_enumerated_frame 等字段。
+• ClaimSourceRecord：作为阶段A最重要的新对象，用于记录每一个进入 claim-builder 的来源，包括 source_kind、source_object_id、source_lineage_id、source_runtime_owner_id、source_continuity_owner_id、raw_visibility_score、filter_stage、filter_reason、claim_score、claim_rank 与 final_selected_flag。
+20.4 关键函数入口排查清单
+• prototype 创建与分配入口：_create_prototype、_allocate_lineage、birth_new_prototype、create_prototype_from_track、materialize_prototype_from_attach。
+• archive / retire / resurrect 入口：archive_prototype、retire_track、resurrect_track、restore_from_dormant、continuation_from_archive。
+• attach 与 re-entry 入口：attempt_recovery_attach、build_claims_for_reentry、bind_prototypes、reroute_on_cross_lineage_preemption、attach_to_existing_lineage。
+这些入口都必须做 overwrite trace。检查重点不是“最终值是什么”，而是“在什么时间、由哪个函数、以什么理由，把 continuity key 写成了 runtime owner 的值”。
+21. 论文式技术方案正文（Method 草稿）
+本部分采用论文 method 风格组织，用于后续直接改写为正文。
+21.1 任务定义
+本文研究开放世界流式持续识别问题。与传统监督检测或闭集分类不同，系统在整个运行过程中不依赖外部预训练语义分类器、离线静态知识库或预定义类别空间，而是在流式视觉输入中自主完成对象形成、身份维持、记忆写入、概念抽象与延迟召回。给定连续输入序列，系统需要联合输出当前 perceptual objects、其 active identities、可能关联的 concept lineages，以及在目标遮挡、消失、漂移或重入后恢复旧连续性身份的判定结果。
+21.2 总体框架
+本文提出一种面向 pure-SNN 开放世界持续识别的四流协同框架。感知流负责将连续视觉输入编码为脉冲式时空变化表达，并形成连续 objectness 场、support region 与 refined proposals；身份流负责短时间范围内的 active identity 维持与状态转移；情景连续性记忆流为跨间隔重识别保留 continuity source；语义概念流以 lineage 为概念主身份，组织 prototype 家族演化与概念连续性。
+21.3 脉冲式感知编码与连续对象形成
+系统不再过早二值化 objectness，而是把边界响应、时间持续性、突发性与背景习惯化共同编码为连续 objectness score。基于该连续场，系统先抽取 support regions，再进行 region refinement 与 refined bounding box 拟合，从而把 proposal 从粗糙块状框推进为更接近真实对象支持区域的 object-aligned representation。
+21.4 身份流
+身份流通过连续 cost-based 匹配维护 ActiveIdentityTokens，并显式区分 active、dormant、ghost 与 retired 状态。该流的职责仅限于回答“当前最可能是谁”，不直接负责长期概念主权。
+21.5 概念流：lineage 作为概念主身份
+为了避免 prototype 同时承担实例表征与概念主权，系统以 lineage 作为长期概念主身份，负责组织 prototype family、head、alias、archive、split/merge 等概念级关系。prototype 被降为经验实体，从而允许系统区分“同一概念的不同当前头节点”和“真正的新概念分化”。
+21.6 连续性记忆流：从 continuation handle 到 episodic bundle
+仅靠 active identity 与 concept lineage 仍不足以解决 long-gap re-entry。为此，系统维护 continuation 与 recovery anchor，并逐步将其组织为 episodic continuity bundles。每个 bundle 表征一段对象经历的压缩摘要，包含 continuity lineage、来源 track/prototype、消失前 support 与 motion 摘要、gap 统计、访问记录与保护优先级。
+21.7 runtime owner 与 continuity owner 解耦
+本文显式区分 runtime owner 与 continuity owner。前者表示当前运行期谁在管理对象，后者表示该对象承载的历史连续性归属。系统在关键 create / inherit / archive / attach 边界维护双 owner 字段，并在 preserve-input / claim-builder 阶段同时枚举 runtime-owner sources 与 continuity-owner sources，以恢复 long-gap recovery 所需的旧来源可见性。
+21.8 claim-builder、attach 与 deferred promotion
+当 active matching 无法充分解释当前 proposal 时，系统触发 continuity-aware claim-builder，联合考虑 source visibility、gap compatibility、support compatibility、concept consistency 等多维证据构造 source pool。系统随后先做概念层归属，再基于 episodic 证据决定是否 temporary attach，最后仅在跨多个时间窗一致时才允许 promotion 影响 semantic head，从而避免把恢复接入与长期主头更新绑在一起。
+21.9 记忆治理
+系统采用分层预算与记忆治理机制，把 working memory、episodic snippets、episodic bundles、semantic lineages 与 protected sources 纳入不同层级预算。通过 consolidation、protection、abstraction 与 forgetting 四类操作，系统在长期运行中避免 memory explosion，同时保留关键 continuity recall 能力。
+22. 完整实验与指标设计文档（执行版）
+22.1 benchmark 事件族
+• B1 基础对象形成：小目标、低对比边界、背景纹理干扰、support overgrowth、fragmented support。
+• B2 短时身份维持：轻微遮挡、中短 gap、同类多实例交叉、motion abrupt change。
+• B3 长间隔 re-entry：long-gap disappear and re-entry、appearance drift、archive 后回归、背景干扰假重入、old concept / old instance ambiguity。
+• B4 概念漂移与概念分化：旧概念新外观、渐进漂移、概念分叉、false merge。
+• B5 预算与长期运行：长时间流式运行、高对象周转、受限预算、压缩后反复 recall。
+22.2 统一实验单位
+后续实验最小单位应当是事件而不是整段视频。每个事件必须具有 event_id、frame_start、frame_end、event_type、target lineages、target continuity requirement、expected outcome。这样每一次失败都能被精确指向，而不是笼统说“这段视频没过”。
+22.3 消融设计
+• 感知层消融：binary objectness vs continuous objectness；bbox-only vs support-region proposal；without background habituation。
+• 概念层消融：prototype-only binding vs lineage-level binding；without alias/archive/head-preserving gating。
+• 连续性记忆层消融：runtime-owner only vs dual-owner enumeration；without anchor；without continuation；handle vs bundle。
+• attach/promotion 消融：coupled attach-promotion vs decoupled attach + deferred promotion；immediate promotion vs delayed promotion。
+• 记忆治理消融：no budget、flat budget、layer-wise budget、without protection、without consolidation、aggressive forgetting。
+22.4 图表清单
+• 图1 总体框架图；图2 感知流到 support-region proposal 流程；图3 四层对象关系图；图4 dual-owner 解耦示意图；图5 attach/promotion 状态机；图6 Track A vs Track C 时间线；图7 source visibility 修复前后对比；图8 same-lineage vs same-track 分离对照；图9 attach delay 与 head churn 权衡；图10 budget 压力下记忆占用与 recall 曲线。
+• 表1 总体 benchmark；表2 事件族 benchmark；表3 continuity-memory 消融；表4 attach/promotion 消融；表5 budget 治理消融；表6 failure slicing 统计。
+22.5 结果解读规范
+任何实验解读都必须先看 source visibility，再看 same-lineage，再看 same-track-after-concept，然后看 false attach / head churn，最后才看 overall recall。只要次序反了，就很容易把错误的局部优化误判成系统性改进。
+23. 阶段A按文件/类/函数的伪代码修改方案（继续落地版）
+下面这一部分是本次继续补充的核心。它不再停留在“对象字段应该怎么设计”，而是直接把阶段A往“代码怎么改、伪代码怎么写、调试命令怎么落、日志怎么出”的层面推进。考虑到你当前项目代码命名已经相对固定，本部分按模块、类、函数入口来组织。即使你的最终文件名与这里略有差异，也应尽量保持职责映射一致。
+23.1 目录级重构建议（阶段A只做最小必要变更）
+• spike_encoder.py：保持输入编码职责，不在此阶段引入 continuity 逻辑，只补 trace id 贯穿字段。
+• field.py：保留 continuous objectness、support region 与 proposal refinement 逻辑，必要时为每个 proposal 生成稳定 proposal_id，供后续 source visibility trace 关联。
+• temporal_identity.py：作为阶段A的主战场，负责 active matching、状态迁移、re-entry 入口与 claim-builder 调用。
+• prototype_memory.py：作为 dual-owner 字段接入、prototype create/inherit/archive 行为修复的主战场。
+• budget.py：阶段A暂不大改，只新增 source 被 budget 抑制时的审计记录接口。
+• audit/ 或现有 results/metrics/trace 模块：增加 owner transition、source pool、claim ranking、attach decision 等结构化输出。
+如果你暂时不想大动目录，至少也要在现有模块内部形成这条边界：field.py 管 proposal；temporal_identity.py 管 active identity 与 re-entry；prototype_memory.py 管 prototype/lineage/continuation；审计模块统一落 trace。阶段A先不做大规模文件拆分，但要让这几层职责在代码中可见。
+23.2 关键类与字段修改方案
+23.2.1 PrototypeState 伪代码
+下面给出 PrototypeState 建议字段与初始化伪代码。
+class PrototypeState:
+def __init__(self, prototype_id, runtime_owner_lineage_id, *,
+continuity_lineage_id=None,
+source_type="birth",
+inherited_from_prototype_id=None,
+inherited_from_track_id=None,
+inherited_from_anchor_id=None):
+self.prototype_id = prototype_id
+self.runtime_owner_lineage_id = runtime_owner_lineage_id
+self.continuity_lineage_id = (
+continuity_lineage_id
+if continuity_lineage_id is not None
+else runtime_owner_lineage_id
+)
+self.continuity_source_type = source_type
+self.continuity_inherited_from_prototype_id = inherited_from_prototype_id
+self.continuity_inherited_from_track_id = inherited_from_track_id
+self.continuity_inherited_from_anchor_id = inherited_from_anchor_id
+self.continuity_key_frozen_until = None
+self.continuity_last_verified_frame = None
+self.continuity_conflict_flag = False
+这里最重要的不是字段数量，而是初始化逻辑：只有在没有明确 continuity source 的时候，continuity_lineage_id 才默认等于 runtime_owner_lineage_id。一旦对象来自旧 continuation、旧 anchor 或旧 attach，就必须把 continuity_lineage_id 从 source 显式继承过来。
+23.2.2 IdentityContinuation 伪代码
+class IdentityContinuation:
+def __init__(self, continuation_id, continuity_lineage_id):
+self.continuation_id = continuation_id
+self.continuity_lineage_id = continuity_lineage_id
+self.runtime_visible_owner_ids = set()
+self.source_prototype_ids = set()
+self.source_track_ids = set()
+self.source_anchor_ids = set()
+self.continuity_origin_event = None
+self.last_visibility_frame = None
+self.last_access_frame = None
+self.last_attach_attempt_frame = None
+self.source_drop_reason = None
+self.source_suppressed_by_budget = False
+self.source_suppressed_by_dedup = False
+阶段A里 continuation 的核心职责不是“更聪明地选中 attach”，而是“在系统内部持续存在并可被枚举”。所以它需要携带 visibility、access、drop reason 与 suppression 来源。
+23.2.3 ClaimSourceRecord 伪代码
+@dataclass
+class ClaimSourceRecord:
+event_id: str
+frame_idx: int
+proposal_id: int
+source_kind: str
+source_object_id: str
+source_lineage_id: int | None
+source_runtime_owner_id: int | None
+source_continuity_owner_id: int | None
+raw_visibility_score: float = 0.0
+filtered_flag: bool = False
+filter_stage: str | None = None
+filter_reason: str | None = None
+claim_score: float = 0.0
+claim_rank: int | None = None
+final_selected_flag: bool = False
+后续几乎所有“为什么没接上”的问题，都应该先落到 ClaimSourceRecord 再分析，而不是直接看最终预测结果。
+23.3 prototype_memory.py 的修改主线
+23.3.1 _create_prototype()
+这个函数是阶段A的最高优先级入口。你必须明确区分三种创建来源：纯 birth、新 runtime owner 下的 materialization、来自旧 continuity source 的继承式创建。三者不能共用“continuity_lineage_id = runtime_owner_lineage_id”的默认路径。
+def _create_prototype(self, *, runtime_owner_lineage_id, frame_idx,
+continuity_source=None, birth_reason="direct_birth"):
+continuity_lineage_id = runtime_owner_lineage_id
+source_type = "birth"
+if continuity_source is not None:
+continuity_lineage_id = continuity_source.continuity_lineage_id
+source_type = continuity_source.source_kind
+proto = PrototypeState(
+prototype_id=self._next_prototype_id(),
+runtime_owner_lineage_id=runtime_owner_lineage_id,
+continuity_lineage_id=continuity_lineage_id,
+source_type=source_type,
+inherited_from_prototype_id=getattr(continuity_source, "prototype_id", None),
+inherited_from_track_id=getattr(continuity_source, "track_id", None),
+inherited_from_anchor_id=getattr(continuity_source, "anchor_id", None),
+)
+self.audit.log_owner_transition(
+frame_idx=frame_idx,
+event_type="prototype_create",
+prototype_id=proto.prototype_id,
+before_runtime_owner=None,
+after_runtime_owner=proto.runtime_owner_lineage_id,
+before_continuity_owner=None,
+after_continuity_owner=proto.continuity_lineage_id,
+source_type=source_type,
+birth_reason=birth_reason,
+)
+return proto
+这里的关键点有两个：一是 continuity_source 如果存在，就必须优先继承 continuity_lineage_id；二是 owner transition 一定要在 create 时落盘，否则你后面只能看到结果，看不到最早覆盖点。
+23.3.2 _allocate_lineage()
+当前很多系统会在 allocate lineage 时顺手把 continuity key 一起重写，这一步必须阻断。正确做法是：allocate lineage 可以更新 runtime owner，但不应默认重写 continuity owner。
+def _allocate_lineage(self, proto, new_runtime_owner_lineage_id, frame_idx, *,
+allow_rewrite_continuity=False,
+rewrite_reason=None):
+old_runtime = proto.runtime_owner_lineage_id
+old_cont = proto.continuity_lineage_id
+proto.runtime_owner_lineage_id = new_runtime_owner_lineage_id
+if allow_rewrite_continuity:
+proto.continuity_lineage_id = new_runtime_owner_lineage_id
+self.audit.log_owner_transition(
+frame_idx=frame_idx,
+event_type="allocate_lineage",
+prototype_id=proto.prototype_id,
+before_runtime_owner=old_runtime,
+after_runtime_owner=proto.runtime_owner_lineage_id,
+before_continuity_owner=old_cont,
+after_continuity_owner=proto.continuity_lineage_id,
+source_type="allocate_lineage",
+rewrite_reason=rewrite_reason,
+)
+默认 allow_rewrite_continuity=False。只有在你明确确认“旧连续性彻底放弃”时，才允许这条路径改 continuity owner，而且必须带 rewrite_reason。
+23.3.3 archive / resurrect 路径
+archive 不是删除历史连续性，而是把活跃对象转成可被未来召回的 source。因此 archive 时不能丢 continuity provenance。resurrect 时应优先恢复 continuity owner，再考虑 runtime owner 是否需要切换。
+def archive_prototype(self, proto, frame_idx):
+bundle = self._build_continuity_bundle_from_proto(proto, frame_idx)
+self.continuation_bank.register(bundle)
+self.audit.log_archive_event(
+frame_idx=frame_idx,
+prototype_id=proto.prototype_id,
+runtime_owner=proto.runtime_owner_lineage_id,
+continuity_owner=proto.continuity_lineage_id,
+bundle_id=bundle.bundle_id,
+)
+def resurrect_from_bundle(self, bundle, runtime_owner_lineage_id, frame_idx):
+return self._create_prototype(
+runtime_owner_lineage_id=runtime_owner_lineage_id,
+frame_idx=frame_idx,
+continuity_source=bundle,
+birth_reason="resurrect_from_bundle",
+)
+23.4 temporal_identity.py 的修改主线
+23.4.1 build_reentry_source_pool()
+阶段A中，真正的战场不在最终 attach，而在 source pool。你要先让正确旧来源进入候选池，再谈 ranking。建议把 source pool 枚举明确拆成多路：active identities、dormant tracks、runtime-owner prototypes、continuity-owner prototypes、anchors、continuations/bundles。
+def build_reentry_source_pool(self, proposal, frame_idx, event_id):
+sources = []
+sources.extend(self._enumerate_active_sources(proposal, frame_idx))
+sources.extend(self._enumerate_dormant_sources(proposal, frame_idx))
+sources.extend(self._enumerate_runtime_owner_sources(proposal, frame_idx))
+sources.extend(self._enumerate_continuity_owner_sources(proposal, frame_idx))
+sources.extend(self._enumerate_anchor_sources(proposal, frame_idx))
+sources.extend(self._enumerate_continuation_sources(proposal, frame_idx))
+records = []
+for src in sources:
+rec = ClaimSourceRecord(
+event_id=event_id,
+frame_idx=frame_idx,
+proposal_id=proposal.proposal_id,
+source_kind=src.kind,
+source_object_id=src.object_id,
+source_lineage_id=src.lineage_id,
+source_runtime_owner_id=getattr(src, "runtime_owner_lineage_id", None),
+source_continuity_owner_id=getattr(src, "continuity_lineage_id", None),
+raw_visibility_score=src.visibility_score,
+)
+records.append(rec)
+return self._dedup_preserve_provenance(records)
+你当前最容易犯的错是做双路枚举后立刻 aggressive dedup，结果把 provenance 合并丢了。正确做法是：允许 source pool 暂时变脏，只要 provenance 保住即可。
+23.4.2 _enumerate_continuity_owner_sources()
+这一层是阶段A最关键的新入口。它不是简单“再枚举一遍 prototype”，而是要基于 continuity owner 的视角去找所有可能承载旧连续性的 source。
+def _enumerate_continuity_owner_sources(self, proposal, frame_idx):
+out = []
+candidate_lineages = self.memory.lookup_lineages_by_continuity_hint(proposal)
+for lineage_id in candidate_lineages:
+protos = self.memory.get_prototypes_by_continuity_owner(lineage_id)
+bundles = self.memory.get_bundles_by_continuity_owner(lineage_id)
+anchors = self.memory.get_anchors_by_continuity_owner(lineage_id)
+for obj in [*protos, *bundles, *anchors]:
+out.append(self._make_source_from_object(
+obj=obj,
+proposal=proposal,
+frame_idx=frame_idx,
+source_kind="continuity_owner",
+))
+return out
+这里需要注意，candidate_lineages 的来源不能完全依赖 runtime hints。至少在阶段A，应允许 proposal 的 gap、support、历史 attach 记录或 bundle hints 给 continuity lookup 提供入口。
+23.4.3 filter_source_pool()
+过滤阶段应当结构化，不能“一个 if 太低就 continue”。你需要把每次过滤理由显式记录下来，否则后面根本无法区分是 visibility、budget、dedup 还是 consistency 阶段砍掉了正确旧来源。
+def filter_source_pool(self, records, proposal, frame_idx):
+kept = []
+for rec in records:
+if rec.raw_visibility_score < self.cfg.min_source_visibility:
+rec.filtered_flag = True
+rec.filter_stage = "visibility"
+rec.filter_reason = "score_below_threshold"
+continue
+if self.budget.should_suppress_source(rec):
+rec.filtered_flag = True
+rec.filter_stage = "budget"
+rec.filter_reason = "budget_suppression"
+continue
+if not self._passes_basic_consistency(rec, proposal):
+rec.filtered_flag = True
+rec.filter_stage = "consistency"
+rec.filter_reason = "basic_consistency_failed"
+continue
+kept.append(rec)
+return kept
+23.4.4 rank_claims() 与 attempt_recovery_attach()
+阶段A里 ranking 不需要一下子做得很复杂，但要把 concept consistency 与 continuity evidence 分开打分，避免把“旧概念可见”和“旧连续体可接回”混成一个分数。
+def rank_claims(self, records, proposal):
+for rec in records:
+rec.claim_score = (
+0.35 * self.score_visibility(rec, proposal) +
+0.25 * self.score_gap_compatibility(rec, proposal) +
+0.20 * self.score_support_compatibility(rec, proposal) +
+0.20 * self.score_concept_consistency(rec, proposal)
+)
+return sorted(records, key=lambda x: x.claim_score, reverse=True)
+def attempt_recovery_attach(self, ranked_records, proposal, frame_idx):
+top = ranked_records[0] if ranked_records else None
+if top is None:
+return None
+attach_state = "tentative_attach"
+if top.claim_score >= self.cfg.attach_threshold:
+attach_state = "temporary_attach"
+self.audit.log_attach_decision(
+frame_idx=frame_idx,
+proposal_id=proposal.proposal_id,
+selected_source=top.source_object_id,
+selected_kind=top.source_kind,
+selected_runtime_owner=top.source_runtime_owner_id,
+selected_continuity_owner=top.source_continuity_owner_id,
+attach_state=attach_state,
+claim_score=top.claim_score,
+)
+return attach_state, top
+阶段A里的 attach_state 先不用很多档，能先区分 no attach、tentative_attach、temporary_attach 就够了。你的主要目标不是立刻稳定 promotion，而是让“正确旧来源已经进入并被选为 attach 候选”这件事先发生。
+23.5 budget.py 的最小改动
+阶段A不建议大改 budget 策略，但必须让 budget 的抑制可审计。否则你可能会把 visibility 已恢复的 source 误判成枚举问题，实际却是 budget 在下游把它压掉了。
+def should_suppress_source(self, claim_record):
+suppress = self._raw_budget_rule(claim_record)
+if suppress:
+self.audit.log_budget_suppression(
+source_object_id=claim_record.source_object_id,
+source_kind=claim_record.source_kind,
+source_runtime_owner_id=claim_record.source_runtime_owner_id,
+source_continuity_owner_id=claim_record.source_continuity_owner_id,
+)
+return suppress
+23.6 审计输出与日志格式建议
+阶段A后续排障效率的高低，很大程度上不取决于你打了多少 print，而取决于是否有结构化审计输出。建议至少固定以下文件：
+• prototype_owner_transitions.jsonl：记录 owner transition 的全量事件。
+• continuity_key_overwrite_events.csv：只记录 continuity owner 发生变化的关键事件，便于快速聚焦。
+• source_visibility_trace.jsonl：逐事件记录 source pool 枚举、过滤与保留情况。
+• claim_builder_source_breakdown.csv：记录 source kind、source owner、visibility score、claim score、rank。
+• attach_decisions.jsonl：记录每个 proposal 的 attach_state 与选中来源。
+• budget_suppression_trace.csv：记录被 budget 压制的 source。
+这些文件名不是绝对必须，但字段语义必须固定。这样后续无论你是自己看，还是让我继续帮你分析，都能迅速定位问题。
+23.7 最小调试命令与可视化工具
+• inspect_event --event-id E123：输出单事件完整回放。
+• dump_source_pool --frame 705 --proposal 3：看某一时刻某一 proposal 的 source pool。
+• dump_owner_history --prototype 3：追 prototype 从创建到当前的 runtime/continuity owner 变化。
+• compare_before_after_stageA --case track_c_long_horizon：对比修复前后 visibility 与 attach 变化。
+• render_event_timeline --event-id E123：自动画出 support、track state、source visibility、attach state 的时间线。
+这几条命令的价值不在于“命令行好看”，而在于把调试从手翻零散日志，变成围绕单个事件的结构化回放。
+23.8 阶段A的最小验证闭环
+做完以上修改后，阶段A的最小验证闭环应当固定为：第一，选择 Track C 中一个已知 hard re-entry 事件；第二，确认修复前正确 continuity lineage 不可见；第三，接入 dual-owner + dual-source enumeration；第四，确认正确 continuity lineage 重新进入 source pool；第五，观察它是在 ranking、attach 还是 budget 阶段掉出；第六，输出一页事件分析报告。
+只有当这条闭环能稳定跑通，你才应该进入阶段B的对象分层重构。否则，很容易在结构问题没修干净时就把系统改得更复杂。
+23.9 阶段A完成后，下一阶段的衔接点
+当阶段A完成后，最理想的现象不是“整体点数暴涨”，而是错误形态发生转移：从“看不见正确旧来源”，转移成“看得见了，但 attach/ranking 还不够稳”。一旦出现这种转移，说明你已经把问题从最早入口推进到了更后面的机制层，这才有资格进入 episodic bundle、attach state machine 与 deferred promotion 的正式实现。
+24. 附录：建议的阶段A日报/周报模板
+为了后续持续推进，最后附一个极简但高价值的日报/周报模板。每次阶段A改动后，只要按下面五项记录，就能快速形成研发轨迹。
+1. 本次改动对象：改了哪些类、哪些函数、哪些字段。
+2. 本次主要假设：本轮认为真正的断点在哪里。
+3. 本次主要证据：哪几个事件证明这个判断成立或不成立。
+4. 本次结果分类：visibility restored / ranking failed / attach failed / budget suppressed / no effect。
+5. 下轮动作：下一轮是继续修 visibility、进入 ranking，还是开始准备 episodic bundle。

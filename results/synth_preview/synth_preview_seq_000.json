@@ -1,0 +1,30 @@
+{
+  "sequence_id": 0,
+  "num_frames": 500,
+  "resolution": [
+    256,
+    256
+  ],
+  "preview_frame_indices": [
+    0,
+    166,
+    332,
+    499
+  ],
+  "first_frame_annotations": {
+    "boxes": [
+      [
+        78,
+        165,
+        159,
+        245
+      ]
+    ],
+    "instance_ids": [
+      0
+    ],
+    "concept_ids": [
+      0
+    ]
+  }
+}

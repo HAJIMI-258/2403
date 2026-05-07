@@ -1,0 +1,94 @@
+{
+  "sequence_id": 2,
+  "num_frames_evaluated": 499,
+  "metrics": {
+    "u_recall": 0.5627922511690047,
+    "purity": 0.9294258373205742,
+    "pfr": 1.0,
+    "idsw": 15,
+    "churn": 0.11094377510040153,
+    "memory_growth": 0.004016064257028112
+  },
+  "memory": {
+    "final_prototype_count": 4,
+    "max_prototype_count": 6,
+    "budget_cap": 32,
+    "budget_prune_count": 0,
+    "top_hits": [
+      {
+        "prototype_id": 1,
+        "hits": 402,
+        "strength": 4.0,
+        "active": true
+      },
+      {
+        "prototype_id": 0,
+        "hits": 297,
+        "strength": 4.0,
+        "active": true
+      },
+      {
+        "prototype_id": 2,
+        "hits": 208,
+        "strength": 4.0,
+        "active": true
+      },
+      {
+        "prototype_id": 3,
+        "hits": 205,
+        "strength": 2.271904703800237,
+        "active": false
+      }
+    ],
+    "actions": {
+      "birth": 6,
+      "reuse": 82,
+      "merge": 1039
+    }
+  },
+  "reentry_reconnect": {
+    "events": 4,
+    "reconnected": 0,
+    "rate": 0.0
+  },
+  "representative_frame": {
+    "frame_index": 57,
+    "u_recall": 1.0,
+    "memory_size": 3
+  },
+  "config": {
+    "encoder": {
+      "edge_weight": 0.5,
+      "on_off_threshold": 0.1
+    },
+    "objectness": {
+      "alpha_boundary": 1.0,
+      "beta_temporal": 0.6,
+      "gamma_surprise": 0.4,
+      "temporal_decay": 0.82,
+      "surprise_decay": 0.9,
+      "smoothing_kernel_size": 5,
+      "proposal_threshold": 0.45,
+      "min_area": 96,
+      "max_proposals": 8
+    },
+    "tracking": {
+      "iou_threshold": 0.3,
+      "max_center_distance": 48.0,
+      "iou_weight": 0.55,
+      "center_weight": 0.25,
+      "signature_weight": 0.2,
+      "max_missed_frames": 12,
+      "signature_momentum": 0.7
+    },
+    "memory": {
+      "birth_threshold": 0.95,
+      "merge_threshold": 0.99,
+      "decay_rate": 0.02,
+      "budget_cap": 32,
+      "prototype_momentum": 0.75,
+      "decay_floor": 0.1,
+      "inactive_patience": 20
+    }
+  }
+}

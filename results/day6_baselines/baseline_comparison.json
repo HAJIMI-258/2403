@@ -1,0 +1,103 @@
+{
+  "sequence_ids": [
+    2,
+    3
+  ],
+  "per_sequence": {
+    "minimal_nops_owr": [
+      {
+        "u_recall": 0.545758183032732,
+        "purity": 0.3992583436341162,
+        "pfr": 0.0,
+        "idsw": 0,
+        "churn": 0.0,
+        "memory_growth": 0.0,
+        "final_memory_size": 1,
+        "sequence_id": 2
+      },
+      {
+        "u_recall": 0.6235804943219774,
+        "purity": 0.3809001097694841,
+        "pfr": 0.0,
+        "idsw": 0,
+        "churn": 0.004016064257028112,
+        "memory_growth": 0.002008032128514056,
+        "final_memory_size": 2,
+        "sequence_id": 3
+      }
+    ],
+    "baseline_frame_diff_cc": [
+      {
+        "u_recall": 0.6516366065464261,
+        "purity": 0.9607438016528925,
+        "pfr": 10.666666666666666,
+        "idsw": 74,
+        "churn": 0.0796017402945114,
+        "memory_growth": 0.23293172690763053,
+        "final_memory_size": 119,
+        "sequence_id": 2
+      },
+      {
+        "u_recall": 0.6496325985303941,
+        "purity": 0.9768421052631578,
+        "pfr": 15.666666666666666,
+        "idsw": 113,
+        "churn": 0.08451736237880819,
+        "memory_growth": 0.30522088353413657,
+        "final_memory_size": 153,
+        "sequence_id": 3
+      }
+    ],
+    "baseline_edge_cluster": [
+      {
+        "u_recall": 0.5961923847695391,
+        "purity": 0.7762711864406779,
+        "pfr": 0.6666666666666666,
+        "idsw": 13,
+        "churn": 0.070281124497992,
+        "memory_growth": 0.006024096385542169,
+        "final_memory_size": 5,
+        "sequence_id": 2
+      },
+      {
+        "u_recall": 0.6556446225784903,
+        "purity": 0.45255474452554745,
+        "pfr": 1.0,
+        "idsw": 4,
+        "churn": 0.03714859437751004,
+        "memory_growth": 0.006024096385542169,
+        "final_memory_size": 4,
+        "sequence_id": 3
+      }
+    ]
+  },
+  "aggregated": {
+    "minimal_nops_owr": {
+      "u_recall": 0.5846693386773547,
+      "purity": 0.3900792267018002,
+      "pfr": 0.0,
+      "idsw": 0.0,
+      "churn": 0.002008032128514056,
+      "memory_growth": 0.001004016064257028,
+      "final_memory_size": 1.5
+    },
+    "baseline_frame_diff_cc": {
+      "u_recall": 0.6506346025384101,
+      "purity": 0.9687929534580252,
+      "pfr": 13.166666666666666,
+      "idsw": 93.5,
+      "churn": 0.08205955133665979,
+      "memory_growth": 0.26907630522088355,
+      "final_memory_size": 136.0
+    },
+    "baseline_edge_cluster": {
+      "u_recall": 0.6259185036740147,
+      "purity": 0.6144129654831127,
+      "pfr": 0.8333333333333333,
+      "idsw": 8.5,
+      "churn": 0.05371485943775102,
+      "memory_growth": 0.006024096385542169,
+      "final_memory_size": 4.5
+    }
+  }
+}

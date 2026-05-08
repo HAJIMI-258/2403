@@ -1,0 +1,18 @@
+{
+  "stage": "EXT-4B",
+  "source_stage": "EXT-4A",
+  "num_events": 62,
+  "geometry_plus_appearance_improved": 2,
+  "geometry_plus_appearance_regressed": 0,
+  "external_branch_plus_appearance_improved": 1,
+  "external_branch_plus_appearance_regressed": 3,
+  "geometry_passive_top1": 0.5,
+  "geometry_plus_appearance_top1": 0.532258064516129,
+  "external_branch_top1": 0.5967741935483871,
+  "external_branch_plus_appearance_top1": 0.5645161290322581,
+  "appearance_margin_positive_rate": 0.532258064516129,
+  "mean_appearance_margin": -0.03037750288363426,
+  "severe_negative_margin_count": 13,
+  "appearance_safe_for_main_merge": 0,
+  "next_recommendation": "run larger multi-category full-pixel validation; treat current crop appearance as auxiliary diagnostic only"
+}

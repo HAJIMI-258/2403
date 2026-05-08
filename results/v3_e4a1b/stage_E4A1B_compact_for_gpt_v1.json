@@ -1,0 +1,27 @@
+{
+  "stage": "E4A.1b",
+  "best_ablation": "A0_passive_E34r_baseline",
+  "best_active_ablation": "A1_center_true_same_space_w030",
+  "passed_minimum": false,
+  "global_top1": 0.4117647058823529,
+  "global_top3": 0.6470588235294118,
+  "global_top5": 0.7647058823529411,
+  "false_bundle_retrieval_rate": 0.5882352941176471,
+  "focus_success_count": 3,
+  "true_descriptor_available_rate": 1.0,
+  "true_descriptor_degenerate_rate": 0.0,
+  "true_same_space_margin_positive_rate": 0.29411764705882354,
+  "mean_true_same_space_margin": 0.002752247978659237,
+  "active_resolved_event_count": 0,
+  "active_false_rescue_count": 0,
+  "random_true_same_space_gain": 0.0,
+  "neighbor_true_same_space_gain": 0.0,
+  "combined_true_same_space_gain": 0.0,
+  "negative_controls_passed": 0,
+  "main_failure_counts": {
+    "target_not_in_top5": 68,
+    "target_in_top3_but_lost_top1": 68,
+    "target_in_top5_but_lost_top3": 34
+  },
+  "next_recommendation": "true same-space margin improves, but negative controls are not clean; do not integrate yet. Tighten descriptor binding/control or move to stronger local descriptor with strict controls."
+}

@@ -1,0 +1,22 @@
+{
+  "execute": true,
+  "repo_id": "l-lt/LaSOT",
+  "categories": [
+    "dog"
+  ],
+  "total_size_gb": 1.9891517264768481,
+  "rows": [
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "dog",
+      "filename": "dog.zip",
+      "size_bytes": 2135835403,
+      "size_gb": 1.9891517264768481,
+      "downloaded": 1,
+      "extracted": 1,
+      "local_zip": "data\\external\\lasot_zips\\dog.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    }
+  ]
+}

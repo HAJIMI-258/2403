@@ -1,0 +1,22 @@
+{
+  "stage": "EXT-4",
+  "purpose": "LaGOT-to-LaSOT full-pixel readiness and download manifest",
+  "lagot_sequences": 294,
+  "unique_lasot_sequences": 280,
+  "total_lagot_reentry_events": 1213,
+  "lasot_pixel_ready_sequences": 4,
+  "pixel_ready_events": 62,
+  "external_full_pixel_ready": 1,
+  "hf_manifest_available": 1,
+  "hf_repo": "l-lt/LaSOT",
+  "download_required": 0,
+  "large_download_requires_user_confirmation": 1,
+  "recommended_first_categories": [
+    "dog",
+    "kite",
+    "coin",
+    "motorcycle",
+    "bottle"
+  ],
+  "next_recommendation": "run EXT-4 full-pixel appearance validation on pixel-ready sequences"
+}

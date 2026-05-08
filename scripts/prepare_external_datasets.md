@@ -62,7 +62,43 @@ data/external/lasot/<sequence_name>/img/*.jpg
 data/external/lasot/<sequence_name>/groundtruth.txt
 ```
 
-The smoke adapter reads this standard layout.
+The adapter also supports the common category-nested layout:
+
+```text
+data/external/lasot/<category>/<sequence_name>/img/*.jpg
+data/external/lasot/<category>/<sequence_name>/groundtruth.txt
+```
+
+For EXT-4 full-pixel validation, LaGOT sequence names are mapped to LaSOT sequence names by stripping the `lagot_` prefix and final object suffix. For example:
+
+```text
+lagot_airplane-13_0 -> airplane-13
+lagot_bear-17_1 -> bear-17
+```
+
+The repo includes a helper for the HuggingFace mirror `l-lt/LaSOT`. Category zips are multi-GB files, so the helper is dry-run by default:
+
+```powershell
+python scripts/download_lasot_hf_categories.py --categories airplane
+```
+
+To actually download and extract a selected category:
+
+```powershell
+python scripts/download_lasot_hf_categories.py --categories airplane --execute
+```
+
+Run the readiness gate before downloading large files:
+
+```powershell
+python experiments/run_ext4_full_pixel_readiness.py
+```
+
+It writes a category download manifest to:
+
+```text
+results/ext4/stage_EXT4_lasot_download_manifest_v1.csv
+```
 
 ## TAO
 

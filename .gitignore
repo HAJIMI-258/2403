@@ -48,3 +48,7 @@ _tmp_*.txt
 
 # Large external datasets downloaded locally for benchmark runs
 data/external/lagot_annotations/
+data/external/lasot/
+data/external/lasot_zips/
+data/external/lvos/
+data/external/tao/

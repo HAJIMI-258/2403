@@ -1,0 +1,92 @@
+{
+  "hf_repo": "l-lt/LaSOT",
+  "recommended_first_categories": [
+    "dog",
+    "kite",
+    "coin",
+    "motorcycle",
+    "bottle"
+  ],
+  "top_categories": [
+    {
+      "category": "dog",
+      "lagot_event_count": 62,
+      "hf_zip_size_gb": 1.9891517264768481,
+      "events_per_gb": 31.16906527276999,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories dog",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories dog --execute"
+    },
+    {
+      "category": "kite",
+      "lagot_event_count": 40,
+      "hf_zip_size_gb": 2.0313952807337046,
+      "events_per_gb": 19.69089934360421,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories kite",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories kite --execute"
+    },
+    {
+      "category": "coin",
+      "lagot_event_count": 31,
+      "hf_zip_size_gb": 1.646974178031087,
+      "events_per_gb": 18.822395890298452,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories coin",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories coin --execute"
+    },
+    {
+      "category": "motorcycle",
+      "lagot_event_count": 49,
+      "hf_zip_size_gb": 2.800704585388303,
+      "events_per_gb": 17.495597449170603,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories motorcycle",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories motorcycle --execute"
+    },
+    {
+      "category": "bottle",
+      "lagot_event_count": 52,
+      "hf_zip_size_gb": 3.5891171265393496,
+      "events_per_gb": 14.488242697763042,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories bottle",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories bottle --execute"
+    },
+    {
+      "category": "goldfish",
+      "lagot_event_count": 52,
+      "hf_zip_size_gb": 3.66451002843678,
+      "events_per_gb": 14.190164468503951,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories goldfish",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories goldfish --execute"
+    },
+    {
+      "category": "volleyball",
+      "lagot_event_count": 47,
+      "hf_zip_size_gb": 3.314648536965251,
+      "events_per_gb": 14.179482221373362,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories volleyball",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories volleyball --execute"
+    },
+    {
+      "category": "bicycle",
+      "lagot_event_count": 34,
+      "hf_zip_size_gb": 2.8875920986756682,
+      "events_per_gb": 11.774516219099423,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories bicycle",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories bicycle --execute"
+    },
+    {
+      "category": "hat",
+      "lagot_event_count": 39,
+      "hf_zip_size_gb": 3.4052423061802983,
+      "events_per_gb": 11.452929481469639,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories hat",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories hat --execute"
+    },
+    {
+      "category": "guitar",
+      "lagot_event_count": 23,
+      "hf_zip_size_gb": 2.1482893023639917,
+      "events_per_gb": 10.706193050763995,
+      "download_command_dry_run": "python scripts/download_lasot_hf_categories.py --categories guitar",
+      "download_command_execute": "python scripts/download_lasot_hf_categories.py --categories guitar --execute"
+    }
+  ]
+}

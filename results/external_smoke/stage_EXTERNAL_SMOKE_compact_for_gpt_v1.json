@@ -1,0 +1,10 @@
+{
+  "dataset_name": "lvos_hf_sample",
+  "num_sequences_loaded": 3,
+  "num_frames_loaded": 60,
+  "num_objects": 10,
+  "num_reentry_events": 0,
+  "num_occlusion_events": 0,
+  "adapter_passed": 1,
+  "missing_files": []
+}

@@ -1,0 +1,20 @@
+{
+  "stage": "EXT-4A",
+  "pixel_subset": "LaSOT dog category linked to LaGOT annotations",
+  "num_events": 62,
+  "best_variant": "A4_external_trajectory_heavy",
+  "best_top1": 0.5967741935483871,
+  "best_top3": 0.7741935483870968,
+  "best_top5": 0.9516129032258065,
+  "geometry_passive_top1": 0.5,
+  "external_geometry_branch_top1": 0.5967741935483871,
+  "best_appearance_variant": "A5_external_trajectory_plus_appearance_w010",
+  "best_appearance_top1": 0.5645161290322581,
+  "appearance_helped_vs_geometry_passive": 1,
+  "appearance_beats_external_geometry_branch": 0,
+  "appearance_margin_positive_rate": 0.532258064516129,
+  "mean_appearance_margin": -0.03037750288363426,
+  "full_pixel_validation_ready": 1,
+  "safe_main_merge": 0,
+  "next_recommendation": "appearance helps current passive but does not beat external geometry branch; run larger multi-category full-pixel validation and descriptor failure audit"
+}

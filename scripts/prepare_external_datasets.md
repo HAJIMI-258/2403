@@ -6,6 +6,7 @@ Expected local paths:
 
 ```text
 data/external/lvos/
+data/external/lagot_annotations/
 data/external/lasot/
 data/external/tao/
 data/external/hf_lvosv1_sample/
@@ -27,6 +28,20 @@ PY
 ```
 
 This file is small and usable for adapter smoke testing. It is not sufficient for final model claims because it contains point trajectories, not full images/masks.
+
+## LaGOT Annotations
+
+LaGOT is a public LaSOT-derived multi-object annotation benchmark. It is useful for oracle-proposal memory-only event mining because it provides real sequence boxes and object identities, but it does not include raw video pixels.
+
+```powershell
+git clone --depth 1 https://github.com/google-research-datasets/LaGOT.git data/external/lagot_annotations
+```
+
+The raw annotation repository is large because it includes tracker results. Keep it local; do not commit it into this repository. EXT-1 reads:
+
+```text
+data/external/lagot_annotations/data/lagot_motchallenge_format.zip
+```
 
 ## LVOS
 

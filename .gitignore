@@ -45,3 +45,6 @@ tensorboard/
 
 # Local extraction scratch files
 _tmp_*.txt
+
+# Large external datasets downloaded locally for benchmark runs
+data/external/lagot_annotations/

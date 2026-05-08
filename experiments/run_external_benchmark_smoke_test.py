@@ -10,13 +10,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from datasets.external.lasot_adapter import LaSOTAdapter
+from datasets.external.lagot_adapter import LaGOTAdapter
 from datasets.external.lvos_adapter import LVOSAdapter
 from datasets.external.tao_adapter import TAOAdapter
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Smoke test external video-memory adapters.")
-    p.add_argument("--dataset", default="lvos_hf_sample", choices=["lvos_hf_sample", "lvos", "lasot", "tao"])
+    p.add_argument("--dataset", default="lvos_hf_sample", choices=["lvos_hf_sample", "lagot_annotations", "lvos", "lasot", "tao"])
     p.add_argument("--root", default="")
     p.add_argument("--output-dir", default="results/external_smoke")
     p.add_argument("--artifact-version", default="v1")
@@ -27,6 +28,8 @@ def parse_args() -> argparse.Namespace:
 def adapter_for(name: str, root: str):
     if name == "lvos_hf_sample":
         return LVOSAdapter(root or "data/external/hf_lvosv1_sample")
+    if name == "lagot_annotations":
+        return LaGOTAdapter(root or "data/external/lagot_annotations")
     if name == "lvos":
         return LVOSAdapter(root or "data/external/lvos")
     if name == "lasot":

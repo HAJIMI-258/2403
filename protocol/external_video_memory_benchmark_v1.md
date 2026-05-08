@@ -19,9 +19,10 @@ The external benchmark gate exists to test whether persistent object memory work
 ## Priority Datasets
 
 1. LVOS / long-term VOS style datasets: closest to long-gap memory and re-entry.
-2. LaSOT / GOT-10k / TrackingNet: long-horizon single-object tracking, useful for support trajectory and active evidence.
-3. TAO / MOT / BDD100K / KITTI / nuScenes: multi-object identities and real scene complexity.
-4. Agriculture / industrial inspection datasets: later transfer targets; many public sets are still single-frame and need longitudinal task construction.
+2. LaGOT annotations: public LaSOT-derived multi-object boxes/identities; useful for oracle-proposal memory-only event mining before full pixels are connected.
+3. LaSOT / GOT-10k / TrackingNet: long-horizon single-object tracking, useful for support trajectory and active evidence.
+4. TAO / MOT / BDD100K / KITTI / nuScenes: multi-object identities and real scene complexity.
+5. Agriculture / industrial inspection datasets: later transfer targets; many public sets are still single-frame and need longitudinal task construction.
 
 ## Unified Adapter Output
 
@@ -71,3 +72,11 @@ For initial adapter validation, the repo uses a small public HuggingFace LVOS-st
 - Source: `allenai/molmo2-single-object-track`, subset `lvosv1`
 - Local path: `data/external/hf_lvosv1_sample/train-00000-of-00001.parquet`
 - Limitation: point trajectories only; no raw video frames or masks. This is smoke-test data, not final benchmark evidence.
+
+## Current External Event-Mining Dataset
+
+EXT-1 additionally supports LaGOT MOTChallenge-format annotations:
+
+- Source: `google-research-datasets/LaGOT`
+- Local path: `data/external/lagot_annotations/`
+- Limitation: annotations only; raw LaSOT pixels must be downloaded separately from the official LaSOT distribution. EXT-1 therefore treats LaGOT as oracle-proposal / geometry-only memory evaluation, not full perception evaluation.

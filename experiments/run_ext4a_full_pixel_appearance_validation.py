@@ -33,11 +33,13 @@ from experiments.ext1_utils import (
 VARIANTS = [
     "A0_nops_geometry_passive",
     "A1_appearance_nn",
-    "A2_geometry_plus_appearance_w010",
-    "A3_geometry_plus_appearance_w020",
-    "A4_external_trajectory_heavy",
-    "A5_external_trajectory_plus_appearance_w010",
-    "A6_external_trajectory_plus_appearance_w020",
+    "A2_geometry_plus_appearance_w005",
+    "A3_geometry_plus_appearance_w010",
+    "A4_geometry_plus_appearance_w020",
+    "A5_external_trajectory_heavy",
+    "A6_external_trajectory_plus_appearance_w005",
+    "A7_external_trajectory_plus_appearance_w010",
+    "A8_external_trajectory_plus_appearance_w020",
 ]
 
 
@@ -221,15 +223,19 @@ def score_variant(variant: str, comps: dict[str, dict[str, Any]], app_scores: di
         return geom
     if variant == "A1_appearance_nn":
         return app
-    if variant == "A2_geometry_plus_appearance_w010":
+    if variant == "A2_geometry_plus_appearance_w005":
+        return {iid: z_geom.get(iid, 0.0) + 0.05 * z_app.get(iid, 0.0) for iid in comps}
+    if variant == "A3_geometry_plus_appearance_w010":
         return {iid: z_geom.get(iid, 0.0) + 0.10 * z_app.get(iid, 0.0) for iid in comps}
-    if variant == "A3_geometry_plus_appearance_w020":
+    if variant == "A4_geometry_plus_appearance_w020":
         return {iid: z_geom.get(iid, 0.0) + 0.20 * z_app.get(iid, 0.0) for iid in comps}
-    if variant == "A4_external_trajectory_heavy":
+    if variant == "A5_external_trajectory_heavy":
         return ext
-    if variant == "A5_external_trajectory_plus_appearance_w010":
+    if variant == "A6_external_trajectory_plus_appearance_w005":
+        return {iid: z_ext.get(iid, 0.0) + 0.05 * z_app.get(iid, 0.0) for iid in comps}
+    if variant == "A7_external_trajectory_plus_appearance_w010":
         return {iid: z_ext.get(iid, 0.0) + 0.10 * z_app.get(iid, 0.0) for iid in comps}
-    if variant == "A6_external_trajectory_plus_appearance_w020":
+    if variant == "A8_external_trajectory_plus_appearance_w020":
         return {iid: z_ext.get(iid, 0.0) + 0.20 * z_app.get(iid, 0.0) for iid in comps}
     raise ValueError(variant)
 

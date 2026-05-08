@@ -9,8 +9,8 @@ Current result:
 - LaGOT sequences linked: `294`
 - Unique LaSOT sequences needed: `280`
 - LaGOT re-entry events: `1213`
-- Pixel-ready LaSOT sequences: `4`
-- Pixel-ready events: `62`
+- Pixel-ready LaSOT sequences: `20`
+- Pixel-ready events: `234`
 - HuggingFace LaSOT manifest available: `1`
 
 ## Download Policy

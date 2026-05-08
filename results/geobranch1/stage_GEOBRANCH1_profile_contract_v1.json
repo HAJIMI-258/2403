@@ -1,0 +1,32 @@
+{
+  "stage": "GEO-BRANCH-1",
+  "profile_name": "external_geometry_branch_v1",
+  "scope": "external_annotation_oracle_proposal_geometry_only",
+  "proposal_mode": "oracle_gt_box_memory_only",
+  "primary_variant": "A2_trajectory_heavy",
+  "score_formula": {
+    "description": "Trajectory-heavy geometry memory score from EXT-2.",
+    "score": "0.85 * trajectory_score + 0.15 * shape_score"
+  },
+  "allowed_use": [
+    "LaGOT annotation geometry-only memory benchmark",
+    "oracle-proposal event mining",
+    "external geometry failure analysis",
+    "baseline/profile comparison"
+  ],
+  "forbidden_use": [
+    "main NOPS merge",
+    "synthetic anchor/canonical/episodic path replacement",
+    "active evidence integration",
+    "attach or promotion decision",
+    "full perception claims without raw pixels"
+  ],
+  "guard_summary": {
+    "external_branch_valid": 1,
+    "main_merge_valid": 0,
+    "synthetic_regression_passed": 0,
+    "safe_external_geometry_branch": 1,
+    "safe_main_merge": 0,
+    "full_pixel_validation_available": 0
+  }
+}

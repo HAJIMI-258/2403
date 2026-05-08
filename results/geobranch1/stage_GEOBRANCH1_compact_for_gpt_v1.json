@@ -1,0 +1,17 @@
+{
+  "stage": "GEO-BRANCH-1",
+  "profile_name": "external_geometry_branch_v1",
+  "branch_created": 1,
+  "allowed_scope": "external_annotation_oracle_proposal_geometry_only",
+  "external_branch_valid": 1,
+  "external_a0_top1": 0.640560593569662,
+  "external_branch_top1": 0.7279472382522671,
+  "external_support_reference_top1": 0.7485572959604286,
+  "external_top1_delta": 0.08738664468260511,
+  "synthetic_regression_passed": 0,
+  "safe_external_geometry_branch": 1,
+  "safe_main_merge": 0,
+  "requires_lasot_pixels_for_full_validation": 1,
+  "active_evidence_integrated": 0,
+  "next_recommendation": "use only as isolated external geometry profile; next do EXT-4 full-pixel appearance validation or keep profile quarantined"
+}

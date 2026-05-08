@@ -1,0 +1,38 @@
+{
+  "profile_name": "external_geometry_branch_v1",
+  "stage": "GEO-BRANCH-1",
+  "scope": "external_annotation_oracle_proposal_geometry_only",
+  "allowed_datasets": [
+    "lagot_annotations"
+  ],
+  "proposal_mode": "oracle_gt_box_memory_only",
+  "primary_variant": "A2_trajectory_heavy",
+  "score_formula": {
+    "description": "Trajectory-heavy geometry memory score from EXT-2.",
+    "score": "0.85 * trajectory_score + 0.15 * shape_score"
+  },
+  "allowed_use": [
+    "LaGOT annotation geometry-only memory benchmark",
+    "oracle-proposal event mining",
+    "external geometry failure analysis",
+    "baseline/profile comparison"
+  ],
+  "forbidden_use": [
+    "main NOPS merge",
+    "synthetic anchor/canonical/episodic path replacement",
+    "active evidence integration",
+    "attach or promotion decision",
+    "full perception claims without raw pixels"
+  ],
+  "required_guards": {
+    "synthetic_regression_passed": false,
+    "safe_main_merge": false,
+    "requires_full_pixel_validation_before_main_merge": true
+  },
+  "known_limitations": [
+    "Validated on LaGOT annotations without raw pixels.",
+    "Uses oracle GT boxes as proposals.",
+    "Regresses synthetic focus/anchor path in SYN-REG-1.",
+    "Does not validate appearance descriptors or full perception."
+  ]
+}

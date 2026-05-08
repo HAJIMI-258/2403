@@ -1,0 +1,61 @@
+{
+  "execute": false,
+  "repo_id": "l-lt/LaSOT",
+  "categories": [
+    "kite",
+    "coin",
+    "motorcycle",
+    "bottle"
+  ],
+  "total_size_gb": 10.068191170692444,
+  "rows": [
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "kite",
+      "filename": "kite.zip",
+      "size_bytes": 2181194074,
+      "size_gb": 2.0313952807337046,
+      "downloaded": 0,
+      "extracted": 0,
+      "local_zip": "data\\external\\lasot_zips\\kite.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    },
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "coin",
+      "filename": "coin.zip",
+      "size_bytes": 1768425058,
+      "size_gb": 1.646974178031087,
+      "downloaded": 0,
+      "extracted": 0,
+      "local_zip": "data\\external\\lasot_zips\\coin.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    },
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "motorcycle",
+      "filename": "motorcycle.zip",
+      "size_bytes": 3007233650,
+      "size_gb": 2.800704585388303,
+      "downloaded": 0,
+      "extracted": 0,
+      "local_zip": "data\\external\\lasot_zips\\motorcycle.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    },
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "bottle",
+      "filename": "bottle.zip",
+      "size_bytes": 3853785170,
+      "size_gb": 3.5891171265393496,
+      "downloaded": 0,
+      "extracted": 0,
+      "local_zip": "data\\external\\lasot_zips\\bottle.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    }
+  ]
+}

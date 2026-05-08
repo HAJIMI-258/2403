@@ -1,0 +1,14 @@
+{
+  "stage": "EXT-5",
+  "status": "download_blocked",
+  "download_plan_created": 1,
+  "planned_categories": ["kite", "coin", "motorcycle", "bottle"],
+  "planned_total_size_gb": 10.068191170692444,
+  "attempted_category": "kite",
+  "attempt_result": "stalled_huggingface_download",
+  "partial_bytes": 67036723,
+  "reason": "HuggingFace unauthenticated download transferred only ~67 MB before the command exceeded the one-hour timeout.",
+  "already_available_categories": ["dog"],
+  "already_available_pixel_events": 62,
+  "next_recommendation": "Provide a faster/manual LaSOT download for kite/coin/motorcycle/bottle, or set HF_TOKEN and retry the category downloads. Existing dog full-pixel results remain valid."
+}

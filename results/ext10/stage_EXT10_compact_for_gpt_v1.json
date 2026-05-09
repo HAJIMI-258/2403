@@ -1,0 +1,16 @@
+{
+  "stage": "EXT-10",
+  "num_events": 234,
+  "selected_gate": "G_category_bottle_dog",
+  "selection_reason": "selected by best dev top1 among train-safe gates",
+  "selected_gate_diagnostic_only": 1,
+  "test_num_events": 82,
+  "test_geometry_top1": 0.6219512195121951,
+  "test_all_external_top1": 0.6707317073170732,
+  "test_selected_gate_top1": 0.6219512195121951,
+  "test_selected_delta_vs_geometry": 0.0,
+  "test_selected_delta_vs_all_external": -0.04878048780487809,
+  "test_selected_regressed_count": 1,
+  "routing_integration_ready": 0,
+  "next_recommendation": "routing gate not integration-ready; expand full-pixel data or keep all-external isolated branch"
+}

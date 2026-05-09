@@ -1,0 +1,15 @@
+{
+  "stage": "EXT-12",
+  "selected_variant": "A7_external_trajectory_plus_strong_w005",
+  "selection_reason": "selected by dev top1 among train-safe variants",
+  "test_num_events": 119,
+  "test_external_branch_top1": 0.7058823529411765,
+  "test_selected_top1": 0.6974789915966386,
+  "test_selected_delta_vs_external_branch": -0.008403361344537896,
+  "test_within_event_shuffled_delta": 0.0,
+  "test_category_shuffled_delta": 0.0,
+  "strong_auxiliary_split_gate_passed": 0,
+  "safe_for_external_auxiliary": 0,
+  "safe_for_main_merge": 0,
+  "next_recommendation": "do not integrate strong descriptor auxiliary; split/control gate failed"
+}

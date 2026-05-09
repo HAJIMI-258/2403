@@ -2,13 +2,13 @@
 
 ## Result
 
-- Events: `234`
-- Real geometry appearance gain: `0.0171`
-- Shuffled geometry appearance gain: `0.0128`
-- Category-shuffled geometry appearance gain: `0.0171`
-- Real external-branch appearance gain: `0.0000`
-- Shuffled external-branch appearance gain: `-0.0043`
-- Category-shuffled external-branch appearance gain: `0.0128`
+- Events: `406`
+- Real geometry appearance gain: `0.0123`
+- Shuffled geometry appearance gain: `0.0099`
+- Category-shuffled geometry appearance gain: `0.0049`
+- Real external-branch appearance gain: `0.0025`
+- Shuffled external-branch appearance gain: `-0.0049`
+- Category-shuffled external-branch appearance gain: `0.0049`
 - Controls passed: `0`
 
 ## Decision

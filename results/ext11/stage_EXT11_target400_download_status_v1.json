@@ -1,0 +1,61 @@
+{
+  "execute": true,
+  "repo_id": "l-lt/LaSOT",
+  "categories": [
+    "goldfish",
+    "volleyball",
+    "bicycle",
+    "hat"
+  ],
+  "total_size_gb": 13.271992970257998,
+  "rows": [
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "goldfish",
+      "filename": "goldfish.zip",
+      "size_bytes": 3934737682,
+      "size_gb": 3.66451002843678,
+      "downloaded": 1,
+      "extracted": 1,
+      "local_zip": "data\\external\\lasot_zips\\goldfish.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    },
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "volleyball",
+      "filename": "volleyball.zip",
+      "size_bytes": 3559076766,
+      "size_gb": 3.314648536965251,
+      "downloaded": 1,
+      "extracted": 1,
+      "local_zip": "data\\external\\lasot_zips\\volleyball.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    },
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "bicycle",
+      "filename": "bicycle.zip",
+      "size_bytes": 3100528407,
+      "size_gb": 2.8875920986756682,
+      "downloaded": 1,
+      "extracted": 1,
+      "local_zip": "data\\external\\lasot_zips\\bicycle.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    },
+    {
+      "repo_id": "l-lt/LaSOT",
+      "category": "hat",
+      "filename": "hat.zip",
+      "size_bytes": 3656351085,
+      "size_gb": 3.4052423061802983,
+      "downloaded": 1,
+      "extracted": 1,
+      "local_zip": "data\\external\\lasot_zips\\hat.zip",
+      "extract_dir": "data\\external\\lasot",
+      "error": ""
+    }
+  ]
+}

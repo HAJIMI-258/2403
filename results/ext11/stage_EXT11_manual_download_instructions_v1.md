@@ -5,35 +5,35 @@ Do not download the full LaSOT dataset yet. Use one of the staged plans below.
 
 ## Target 400 events
 
-- Categories: `goldfish,volleyball,bicycle,hat`
-- Estimated new events: `172`
-- Estimated download size: `13.27 GB`
+- Categories: ``
+- Estimated new events: `0`
+- Estimated download size: `0.00 GB`
 - Projected total events: `406`
 
 ```powershell
-python scripts/download_lasot_hf_categories.py --categories goldfish,volleyball,bicycle,hat --execute
+
 ```
 
 ## Target 500 events
 
-- Categories: `goldfish,volleyball,bicycle,hat,guitar,car,drone`
-- Estimated new events: `270`
-- Estimated download size: `23.19 GB`
+- Categories: `guitar,car,drone`
+- Estimated new events: `98`
+- Estimated download size: `9.92 GB`
 - Projected total events: `504`
 
 ```powershell
-python scripts/download_lasot_hf_categories.py --categories goldfish,volleyball,bicycle,hat,guitar,car,drone --execute
+python scripts/download_lasot_hf_categories.py --categories guitar,car,drone --execute
 ```
 
 ## Target 750 events
 
-- Categories: `goldfish,volleyball,bicycle,hat,guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet`
-- Estimated new events: `517`
-- Estimated download size: `53.14 GB`
+- Categories: `guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet`
+- Estimated new events: `345`
+- Estimated download size: `39.87 GB`
 - Projected total events: `751`
 
 ```powershell
-python scripts/download_lasot_hf_categories.py --categories goldfish,volleyball,bicycle,hat,guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet --execute
+python scripts/download_lasot_hf_categories.py --categories guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet --execute
 ```
 
 After download/extraction, rerun:

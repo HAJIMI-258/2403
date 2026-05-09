@@ -2,49 +2,36 @@
   "plans": [
     {
       "target_total_events": 400,
-      "current_pixel_ready_events": 234,
-      "selected_category_count": 4,
-      "new_event_count": 172,
+      "current_pixel_ready_events": 406,
+      "selected_category_count": 0,
+      "new_event_count": 0,
       "projected_total_events": 406,
-      "estimated_download_gb": 13.271992970257998,
-      "selected_categories": [
-        "goldfish",
-        "volleyball",
-        "bicycle",
-        "hat"
-      ],
-      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories goldfish,volleyball,bicycle,hat --execute"
+      "estimated_download_gb": 0.0,
+      "selected_categories": [],
+      "combined_download_command": ""
     },
     {
       "target_total_events": 500,
-      "current_pixel_ready_events": 234,
-      "selected_category_count": 7,
-      "new_event_count": 270,
+      "current_pixel_ready_events": 406,
+      "selected_category_count": 3,
+      "new_event_count": 98,
       "projected_total_events": 504,
-      "estimated_download_gb": 23.18988647032529,
+      "estimated_download_gb": 9.917893500067294,
       "selected_categories": [
-        "goldfish",
-        "volleyball",
-        "bicycle",
-        "hat",
         "guitar",
         "car",
         "drone"
       ],
-      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories goldfish,volleyball,bicycle,hat,guitar,car,drone --execute"
+      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories guitar,car,drone --execute"
     },
     {
       "target_total_events": 750,
-      "current_pixel_ready_events": 234,
-      "selected_category_count": 15,
-      "new_event_count": 517,
+      "current_pixel_ready_events": 406,
+      "selected_category_count": 11,
+      "new_event_count": 345,
       "projected_total_events": 751,
-      "estimated_download_gb": 53.13742049690336,
+      "estimated_download_gb": 39.86542752664536,
       "selected_categories": [
-        "goldfish",
-        "volleyball",
-        "bicycle",
-        "hat",
         "guitar",
         "car",
         "drone",
@@ -57,7 +44,7 @@
         "book",
         "helmet"
       ],
-      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories goldfish,volleyball,bicycle,hat,guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet --execute"
+      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet --execute"
     }
   ]
 }

@@ -2,14 +2,14 @@
 
 ## Result
 
-- Events: `234`
-- Geometry passive top1: `0.5513`
-- Geometry + strong best top1: `0.5726`
-- External branch top1: `0.5940`
-- External branch + strong best top1: `0.6026`
-- Mean strong margin: `0.0287`
-- Strong controls passed: `0`
+- Events: `406`
+- Geometry passive top1: `0.5739`
+- Geometry + strong best top1: `0.5936`
+- External branch top1: `0.6601`
+- External branch + strong best top1: `0.6650`
+- Mean strong margin: `0.0271`
+- Strong controls passed: `1`
 
 ## Decision
 
-strong local descriptor is not reliable enough for integration
+consider descriptor-gated external branch only

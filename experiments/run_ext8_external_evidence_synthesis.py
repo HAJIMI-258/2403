@@ -48,6 +48,7 @@ def evidence_rows(data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     ext5c = data["ext5c"]
     ext6 = data["ext6"]
     ext7 = data["ext7"]
+    ext12 = data.get("ext12", {})
     return [
         {
             "stage": "EXT-1",
@@ -105,12 +106,27 @@ def evidence_rows(data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
         },
         {
             "stage": "EXT-6",
-            "claim": "handcrafted strong descriptor fails controls",
+            "claim": "handcrafted strong descriptor status depends on controls after full-pixel expansion",
             "event_count": ext6.get("num_events", ""),
             "primary_metric": "strong_controls_passed",
             "value": ext6.get("strong_controls_passed", ""),
-            "supporting_value": ext6.get("within_event_shuffled_external_gain", ""),
-            "decision": "do_not_integrate_handcrafted_descriptor",
+            "supporting_value": ext6.get("strong_external_gain", ""),
+            "decision": (
+                "split_gate_failed_do_not_integrate"
+                if ext12 and not int(float(ext12.get("strong_auxiliary_split_gate_passed", 0) or 0))
+                else "candidate_external_auxiliary_requires_split_and_synthetic_guard"
+                if int(float(ext6.get("strong_descriptor_safe_for_external_branch", 0) or 0))
+                else "do_not_integrate_handcrafted_descriptor"
+            ),
+        },
+        {
+            "stage": "EXT-12",
+            "claim": "handcrafted strong descriptor external auxiliary must pass split gate",
+            "event_count": ext12.get("test_num_events", ""),
+            "primary_metric": "strong_auxiliary_split_gate_passed",
+            "value": ext12.get("strong_auxiliary_split_gate_passed", ""),
+            "supporting_value": ext12.get("test_selected_delta_vs_external_branch", ""),
+            "decision": "do_not_integrate_strong_descriptor_auxiliary" if ext12 else "not_run",
         },
         {
             "stage": "EXT-7",
@@ -150,9 +166,13 @@ def integration_matrix(data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
         {
             "method_or_branch": "handcrafted_strong_descriptor",
             "safe_for_main_merge": 0,
-            "safe_as_external_branch": 0,
+            "safe_as_external_branch": int(float(data["ext6"].get("strong_descriptor_safe_for_external_branch", 0) or 0)),
             "safe_as_diagnostic_baseline": 1,
-            "reason": "EXT-6 controls fail; shuffled gain can exceed real gain",
+            "reason": (
+                "EXT-6 controls pass on expanded subset, but branch still needs split/significance and synthetic guard"
+                if int(float(data["ext6"].get("strong_descriptor_safe_for_external_branch", 0) or 0))
+                else "EXT-6 controls fail; shuffled gain can exceed real gain"
+            ),
         },
         {
             "method_or_branch": "frozen_resnet18_embedding",
@@ -169,6 +189,13 @@ def method_status(data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     ext6 = data["ext6"]
     ext7 = data["ext7"]
     return [
+        {
+            "method": "strong_descriptor_external_auxiliary_split_gate",
+            "events": data.get("ext12", {}).get("test_num_events", ""),
+            "top1": data.get("ext12", {}).get("test_selected_top1", ""),
+            "controls_passed": data.get("ext12", {}).get("strong_auxiliary_split_gate_passed", ""),
+            "status": "rejected_for_integration",
+        },
         {
             "method": "geometry_passive_full_pixel",
             "events": ext5.get("pixel_ready_events", ""),
@@ -267,6 +294,7 @@ def main() -> None:
         "ext5c": read_json(ROOT / "results" / "ext5c" / "stage_EXT5C_compact_for_gpt_v1.json"),
         "ext6": read_json(ROOT / "results" / "ext6" / "stage_EXT6_compact_for_gpt_v1.json"),
         "ext7": read_json(ROOT / "results" / "ext7" / "stage_EXT7_compact_for_gpt_v1.json"),
+        "ext12": read_json(ROOT / "results" / "ext12" / "stage_EXT12_compact_for_gpt_v1.json"),
     }
     evidence = evidence_rows(data)
     matrix = integration_matrix(data)
@@ -284,9 +312,13 @@ def main() -> None:
         "full_pixel_category_count": data["ext5"].get("num_categories"),
         "raw_appearance_controls_passed": data["ext5c"].get("appearance_controls_passed"),
         "strong_descriptor_controls_passed": data["ext6"].get("strong_controls_passed"),
+        "strong_descriptor_external_auxiliary_allowed": data["ext12"].get("safe_for_external_auxiliary", 0),
+        "strong_descriptor_split_gate_passed": data["ext12"].get("strong_auxiliary_split_gate_passed", 0),
         "frozen_embedding_controls_passed": data["ext7"].get("embedding_controls_passed"),
         "frozen_embedding_significance_passed": data["ext7"].get("significance_passed"),
-        "recommended_next_stage": "EXT-9 event-conditioned geometry failure analysis or expand full-pixel categories; do not run more appearance fusion",
+        "recommended_next_stage": (
+            "download target-500 categories or keep isolated all-external geometry branch; do not run more appearance/embedding fusion"
+        ),
     }
     write_csv(out_dir / "stage_EXT8_evidence_table_v1.csv", evidence)
     write_csv(out_dir / "stage_EXT8_integration_matrix_v1.csv", matrix)
@@ -300,7 +332,8 @@ def main() -> None:
         "",
         "- External geometry branch is valid only as an isolated external profile.",
         "- Main NOPS merge is not allowed because SYN-REG-1 failed.",
-        "- Raw appearance, handcrafted descriptor, and frozen embedding fusion are rejected for integration because controls/significance failed.",
+        "- Raw appearance and frozen embedding fusion are rejected for integration because controls/significance failed.",
+        "- Handcrafted strong descriptor also failed the split gate, so it is not allowed as external auxiliary.",
         "- Frozen ResNet18 remains useful only as an external pretrained diagnostic baseline.",
         "",
         "## Current Best Numbers",

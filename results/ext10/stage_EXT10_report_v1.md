@@ -2,11 +2,11 @@
 
 ## Result
 
-- Selected gate: `G_category_bottle_dog`
-- Test events: `82`
-- Test geometry top1: `0.6220`
-- Test all-external top1: `0.6707`
-- Test selected gate top1: `0.6220`
+- Selected gate: `A1_all_external`
+- Test events: `119`
+- Test geometry top1: `0.6218`
+- Test all-external top1: `0.7059`
+- Test selected gate top1: `0.7059`
 - Integration ready: `0`
 
 ## Decision

@@ -1,17 +1,13 @@
 {
   "stage": "EXT-11",
-  "current_pixel_ready_events": 234,
-  "current_pixel_ready_categories": 5,
+  "current_pixel_ready_events": 406,
+  "current_pixel_ready_categories": 9,
   "target_500_plan_categories": [
-    "goldfish",
-    "volleyball",
-    "bicycle",
-    "hat",
     "guitar",
     "car",
     "drone"
   ],
-  "target_500_estimated_download_gb": 23.18988647032529,
+  "target_500_estimated_download_gb": 9.917893500067294,
   "target_500_projected_total_events": 504,
   "download_should_be_manual_confirmed": 1,
   "next_recommendation": "download target_500_plan categories if storage/network budget allows; otherwise target_400 plan is the smaller expansion"

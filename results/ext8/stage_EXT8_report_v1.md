@@ -11,8 +11,8 @@
 ## Current Best Numbers
 
 - Annotation external geometry branch top1: `0.7279472382522671`
-- Full-pixel external geometry branch top1: `0.6600985221674877`
-- Full-pixel events/categories: `406` / `9`
+- Full-pixel external geometry branch top1: `0.6785714285714286`
+- Full-pixel events/categories: `504` / `12`
 
 ## Next
 

@@ -1,19 +1,15 @@
 {
   "stage": "EXT-13",
-  "current_pixel_ready_events": 406,
-  "current_categories": 9,
+  "current_pixel_ready_events": 504,
+  "current_categories": 12,
   "external_geometry_branch_status": "isolated_external_branch_only",
-  "raw_appearance_status": "rejected_controls_failed",
+  "raw_appearance_status": "diagnostic_only_controls_passed_no_integration",
   "strong_descriptor_status": "rejected_split_gate_failed",
   "embedding_status": "external_baseline_only_controls_failed",
   "routing_status": "rejected_split_gate_failed",
-  "target500_categories": [
-    "guitar",
-    "car",
-    "drone"
-  ],
-  "target500_estimated_download_gb": 9.917893500067294,
+  "target500_categories": [],
+  "target500_estimated_download_gb": 0,
   "target500_projected_events": 504,
-  "download_requires_user_confirmation": 1,
-  "recommended_next_action": "await_user_download_confirmation"
+  "download_requires_user_confirmation": 0,
+  "recommended_next_action": "keep_current_504_event_evidence_and_write_report"
 }

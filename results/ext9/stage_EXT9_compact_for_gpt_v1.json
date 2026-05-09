@@ -1,19 +1,19 @@
 {
   "stage": "EXT-9",
-  "num_events": 406,
-  "geometry_passive_top1": 0.5738916256157636,
-  "external_branch_top1": 0.6600985221674877,
-  "external_minus_geometry": 0.08620689655172409,
+  "num_events": 504,
+  "geometry_passive_top1": 0.5912698412698413,
+  "external_branch_top1": 0.6785714285714286,
+  "external_minus_geometry": 0.08730158730158732,
   "delta_counts": {
-    "both_failure": 126,
-    "both_success": 221,
-    "external_rescued": 47,
-    "external_regressed": 12
+    "both_failure": 146,
+    "both_success": 282,
+    "external_rescued": 60,
+    "external_regressed": 16
   },
   "best_diagnostic_gate": "A1_all_external",
-  "best_diagnostic_gate_top1": 0.6600985221674877,
-  "best_diagnostic_gate_delta_vs_geometry": 0.08620689655172409,
-  "best_diagnostic_gate_regressed_count": 12,
+  "best_diagnostic_gate_top1": 0.6785714285714286,
+  "best_diagnostic_gate_delta_vs_geometry": 0.08730158730158732,
+  "best_diagnostic_gate_regressed_count": 16,
   "gate_integration_allowed": 0,
   "next_recommendation": "use this as failure analysis only; next either expand full-pixel events or create train/dev split before event-conditioned geometry routing"
 }

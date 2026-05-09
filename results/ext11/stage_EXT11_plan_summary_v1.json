@@ -2,39 +2,32 @@
   "plans": [
     {
       "target_total_events": 400,
-      "current_pixel_ready_events": 406,
+      "current_pixel_ready_events": 504,
       "selected_category_count": 0,
       "new_event_count": 0,
-      "projected_total_events": 406,
+      "projected_total_events": 504,
       "estimated_download_gb": 0.0,
       "selected_categories": [],
       "combined_download_command": ""
     },
     {
       "target_total_events": 500,
-      "current_pixel_ready_events": 406,
-      "selected_category_count": 3,
-      "new_event_count": 98,
+      "current_pixel_ready_events": 504,
+      "selected_category_count": 0,
+      "new_event_count": 0,
       "projected_total_events": 504,
-      "estimated_download_gb": 9.917893500067294,
-      "selected_categories": [
-        "guitar",
-        "car",
-        "drone"
-      ],
-      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories guitar,car,drone --execute"
+      "estimated_download_gb": 0.0,
+      "selected_categories": [],
+      "combined_download_command": ""
     },
     {
       "target_total_events": 750,
-      "current_pixel_ready_events": 406,
-      "selected_category_count": 11,
-      "new_event_count": 345,
+      "current_pixel_ready_events": 504,
+      "selected_category_count": 8,
+      "new_event_count": 247,
       "projected_total_events": 751,
-      "estimated_download_gb": 39.86542752664536,
+      "estimated_download_gb": 29.94753402657807,
       "selected_categories": [
-        "guitar",
-        "car",
-        "drone",
         "pool",
         "basketball",
         "monkey",
@@ -44,7 +37,7 @@
         "book",
         "helmet"
       ],
-      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories guitar,car,drone,pool,basketball,monkey,electricfan,truck,swing,book,helmet --execute"
+      "combined_download_command": "python scripts/download_lasot_hf_categories.py --categories pool,basketball,monkey,electricfan,truck,swing,book,helmet --execute"
     }
   ]
 }

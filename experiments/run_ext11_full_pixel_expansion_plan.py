@@ -85,11 +85,11 @@ def greedy_plan(rows: list[dict[str, Any]], target_total_events: int) -> tuple[l
     return selected, summary
 
 
-def manual_instructions(plans: list[dict[str, Any]]) -> str:
+def manual_instructions(plans: list[dict[str, Any]], current_events: int) -> str:
     lines = [
         "# EXT-11 Full-pixel Expansion Instructions",
         "",
-        "Current full-pixel subset has 234 events across 5 categories.",
+        f"Current full-pixel subset has {current_events} events.",
         "Do not download the full LaSOT dataset yet. Use one of the staged plans below.",
         "",
     ]
@@ -116,9 +116,11 @@ def manual_instructions(plans: list[dict[str, Any]]) -> str:
         "python experiments\\run_ext5c_appearance_control_audit.py",
         "python experiments\\run_ext6_stronger_local_descriptor_validation.py",
         "python experiments\\run_ext7_frozen_embedding_baseline.py --embedding-model resnet18 --bootstrap-samples 300",
-        "python experiments\\run_ext8_external_evidence_synthesis.py",
         "python experiments\\run_ext9_event_conditioned_geometry_analysis.py",
         "python experiments\\run_ext10_geometry_routing_split_gate.py",
+        "python experiments\\run_ext12_strong_descriptor_split_gate.py",
+        "python experiments\\run_ext8_external_evidence_synthesis.py",
+        "python experiments\\run_ext13_freeze_external_protocol.py",
         "```",
         "",
     ])
@@ -152,15 +154,19 @@ def main() -> None:
         "target_500_plan_categories": next(p["selected_categories"] for p in plan_summaries if p["target_total_events"] == 500),
         "target_500_estimated_download_gb": next(p["estimated_download_gb"] for p in plan_summaries if p["target_total_events"] == 500),
         "target_500_projected_total_events": next(p["projected_total_events"] for p in plan_summaries if p["target_total_events"] == 500),
-        "download_should_be_manual_confirmed": 1,
-        "next_recommendation": "download target_500_plan categories if storage/network budget allows; otherwise target_400 plan is the smaller expansion",
+        "download_should_be_manual_confirmed": 0 if current_events >= 500 else 1,
+        "next_recommendation": (
+            "target_500 reached; keep current frozen full-pixel evidence"
+            if current_events >= 500
+            else "download target_500_plan categories if storage/network budget allows; otherwise target_400 plan is the smaller expansion"
+        ),
     }
     write_csv(out_dir / "stage_EXT11_category_download_ranking_v1.csv", ranking)
     write_csv(out_dir / "stage_EXT11_missing_category_candidates_v1.csv", candidate_ranking)
     write_csv(out_dir / "stage_EXT11_selected_download_plans_v1.csv", selected_rows)
     write_json(out_dir / "stage_EXT11_plan_summary_v1.json", {"plans": plan_summaries})
     write_json(out_dir / "stage_EXT11_compact_for_gpt_v1.json", compact)
-    (out_dir / "stage_EXT11_manual_download_instructions_v1.md").write_text(manual_instructions(plan_summaries), encoding="utf-8")
+    (out_dir / "stage_EXT11_manual_download_instructions_v1.md").write_text(manual_instructions(plan_summaries, current_events), encoding="utf-8")
     report = [
         "# EXT-11 Full-pixel Expansion Plan",
         "",

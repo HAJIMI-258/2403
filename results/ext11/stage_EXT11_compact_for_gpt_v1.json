@@ -1,14 +1,10 @@
 {
   "stage": "EXT-11",
-  "current_pixel_ready_events": 406,
-  "current_pixel_ready_categories": 9,
-  "target_500_plan_categories": [
-    "guitar",
-    "car",
-    "drone"
-  ],
-  "target_500_estimated_download_gb": 9.917893500067294,
+  "current_pixel_ready_events": 504,
+  "current_pixel_ready_categories": 12,
+  "target_500_plan_categories": [],
+  "target_500_estimated_download_gb": 0.0,
   "target_500_projected_total_events": 504,
-  "download_should_be_manual_confirmed": 1,
-  "next_recommendation": "download target_500_plan categories if storage/network budget allows; otherwise target_400 plan is the smaller expansion"
+  "download_should_be_manual_confirmed": 0,
+  "next_recommendation": "target_500 reached; keep current frozen full-pixel evidence"
 }

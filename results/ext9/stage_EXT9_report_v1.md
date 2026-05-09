@@ -2,12 +2,12 @@
 
 ## Result
 
-- Events: `406`
-- Geometry passive top1: `0.5739`
-- External branch top1: `0.6601`
-- Delta counts: `{'both_failure': 126, 'both_success': 221, 'external_rescued': 47, 'external_regressed': 12}`
+- Events: `504`
+- Geometry passive top1: `0.5913`
+- External branch top1: `0.6786`
+- Delta counts: `{'both_failure': 146, 'both_success': 282, 'external_rescued': 60, 'external_regressed': 16}`
 - Best diagnostic gate: `A1_all_external`
-- Best diagnostic gate top1: `0.6601`
+- Best diagnostic gate top1: `0.6786`
 
 ## Decision
 

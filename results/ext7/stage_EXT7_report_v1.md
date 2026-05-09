@@ -4,15 +4,15 @@
 
 - Embedding model: `resnet18`
 - Device: `cuda`
-- Events: `406`
-- Geometry passive top1: `0.5739`
-- External branch top1: `0.6601`
-- Embedding NN top1: `0.5369`
-- Geometry + embedding best top1: `0.5985`
-- External branch + embedding best top1: `0.6626`
-- Mean embedding margin: `0.1136`
+- Events: `504`
+- Geometry passive top1: `0.5913`
+- External branch top1: `0.6786`
+- Embedding NN top1: `0.5496`
+- Geometry + embedding best top1: `0.6151`
+- External branch + embedding best top1: `0.6786`
+- Mean embedding margin: `0.1277`
 - Controls passed: `0`
-- Significance passed: `0`
+- Significance passed: `1`
 
 ## Decision
 

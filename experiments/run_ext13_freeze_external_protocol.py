@@ -32,12 +32,12 @@ def f(v: Any, default: float = 0.0) -> float:
         return default
 
 
-def target500_rows(ext11_plan: dict[str, Any]) -> list[dict[str, Any]]:
+def target500_rows(ext11_plan: dict[str, Any], current_events: int) -> list[dict[str, Any]]:
     plan = next((p for p in ext11_plan.get("plans", []) if int(p.get("target_total_events", 0)) == 500), {})
     selected = plan.get("selected_categories", [])
     candidates = {r["category"]: r for r in read_csv(ROOT / "results" / "ext11" / "stage_EXT11_missing_category_candidates_v1.csv")}
     rows = []
-    running_total = 406
+    running_total = current_events
     for cat in selected:
         c = candidates.get(cat, {})
         running_total += int(float(c.get("missing_event_count", 0) or 0))
@@ -52,7 +52,14 @@ def target500_rows(ext11_plan: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def current_evidence(ext5: dict[str, Any], ext6: dict[str, Any], ext7: dict[str, Any], ext8: dict[str, Any], ext10: dict[str, Any], ext12: dict[str, Any]) -> list[dict[str, Any]]:
+def current_evidence(ext5: dict[str, Any], ext5c: dict[str, Any], ext6: dict[str, Any], ext7: dict[str, Any], ext8: dict[str, Any], ext10: dict[str, Any], ext12: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_controls_passed = int(ext5c.get("appearance_controls_passed", ext5.get("appearance_controls_passed", 0)) or 0)
+    raw_decision = "diagnostic_only" if raw_controls_passed else "rejected_controls_failed"
+    raw_reason = (
+        "raw appearance controls pass after EXT-5C, but EXT-8 still blocks integration; keep diagnostic only"
+        if raw_controls_passed
+        else "raw appearance controls fail"
+    )
     return [
         {
             "stage": "EXT-5",
@@ -92,12 +99,12 @@ def current_evidence(ext5: dict[str, Any], ext6: dict[str, Any], ext7: dict[str,
             "top1": ext5.get("external_branch_plus_appearance_best_top1"),
             "top3": "",
             "top5": "",
-            "control_passed": ext5.get("appearance_controls_passed"),
+            "control_passed": raw_controls_passed,
             "split_gate_passed": "not_run",
             "safe_for_external_branch": 0,
             "safe_for_main_merge": 0,
-            "decision": "diagnostic_only",
-            "reason": "raw appearance controls fail",
+            "decision": raw_decision,
+            "reason": raw_reason,
         },
         {
             "stage": "EXT-6/EXT-12",
@@ -167,7 +174,7 @@ def decision_matrix() -> list[dict[str, Any]]:
             "requires_more_data": 1,
             "requires_synthetic_regression": 0,
             "requires_controls": 1,
-            "decision": "diagnostic only; controls failed",
+            "decision": "diagnostic only; even when controls pass, EXT-8 blocks integration",
         },
         {
             "component": "handcrafted_strong_descriptor",
@@ -205,10 +212,10 @@ def decision_matrix() -> list[dict[str, Any]]:
 def frozen_protocol_md() -> str:
     return """# EXT-13 Frozen External Evaluation Protocol
 
-This protocol freezes the current 406-event full-pixel evaluation state.
+This protocol freezes the current full-pixel evaluation state.
 
 Allowed:
-- Rerun existing EXT-4, EXT-5, EXT-5C, EXT-6, EXT-7, EXT-8, EXT-10, EXT-12 scripts unchanged.
+- Rerun existing EXT-4, EXT-5, EXT-5C, EXT-6, EXT-7, EXT-9, EXT-10, EXT-12, EXT-8 scripts unchanged.
 - Add more LaSOT categories only through the EXT-11/EXT-13 download plan.
 - Report oracle-proposal memory-only results as oracle-proposal memory-only results.
 
@@ -234,9 +241,10 @@ python experiments\\run_ext5_multicategory_full_pixel_validation.py
 python experiments\\run_ext5c_appearance_control_audit.py
 python experiments\\run_ext6_stronger_local_descriptor_validation.py
 python experiments\\run_ext7_frozen_embedding_baseline.py --embedding-model resnet18 --bootstrap-samples 300
-python experiments\\run_ext8_external_evidence_synthesis.py
+python experiments\\run_ext9_event_conditioned_geometry_analysis.py
 python experiments\\run_ext10_geometry_routing_split_gate.py
 python experiments\\run_ext12_strong_descriptor_split_gate.py
+python experiments\\run_ext8_external_evidence_synthesis.py
 python experiments\\run_ext13_freeze_external_protocol.py
 ```
 
@@ -249,30 +257,40 @@ def main() -> None:
     out_dir = ROOT / "results" / "ext13"
     out_dir.mkdir(parents=True, exist_ok=True)
     ext5 = read_json(ROOT / "results" / "ext5" / "stage_EXT5_compact_for_gpt_v1.json")
+    ext5c = read_json(ROOT / "results" / "ext5c" / "stage_EXT5C_compact_for_gpt_v1.json")
     ext6 = read_json(ROOT / "results" / "ext6" / "stage_EXT6_compact_for_gpt_v1.json")
     ext7 = read_json(ROOT / "results" / "ext7" / "stage_EXT7_compact_for_gpt_v1.json")
     ext8 = read_json(ROOT / "results" / "ext8" / "stage_EXT8_compact_for_gpt_v1.json")
     ext10 = read_json(ROOT / "results" / "ext10" / "stage_EXT10_compact_for_gpt_v1.json")
     ext11 = read_json(ROOT / "results" / "ext11" / "stage_EXT11_plan_summary_v1.json")
     ext12 = read_json(ROOT / "results" / "ext12" / "stage_EXT12_compact_for_gpt_v1.json")
-    download_rows = target500_rows(ext11)
+    current_events = int(f(ext5.get("pixel_ready_events"), 0))
+    download_rows = target500_rows(ext11, current_events)
     target500_cats = [r["category"] for r in download_rows]
+    raw_controls_passed = int(ext5c.get("appearance_controls_passed", ext5.get("appearance_controls_passed", 0)) or 0)
+    target500_reached = current_events >= 500
+    raw_status = "diagnostic_only_controls_passed_no_integration" if raw_controls_passed else "rejected_controls_failed"
+    recommended_next_action = (
+        "keep_current_504_event_evidence_and_write_report"
+        if target500_reached
+        else "await_user_download_confirmation"
+    )
     compact = {
         "stage": "EXT-13",
-        "current_pixel_ready_events": ext5.get("pixel_ready_events"),
+        "current_pixel_ready_events": current_events,
         "current_categories": ext5.get("num_categories"),
         "external_geometry_branch_status": "isolated_external_branch_only",
-        "raw_appearance_status": "rejected_controls_failed",
+        "raw_appearance_status": raw_status,
         "strong_descriptor_status": "rejected_split_gate_failed",
         "embedding_status": "external_baseline_only_controls_failed",
         "routing_status": "rejected_split_gate_failed",
         "target500_categories": target500_cats,
         "target500_estimated_download_gb": sum(f(r["estimated_download_gb"]) for r in download_rows),
         "target500_projected_events": download_rows[-1]["projected_total_events_after_download"] if download_rows else ext5.get("pixel_ready_events"),
-        "download_requires_user_confirmation": 1,
-        "recommended_next_action": "await_user_download_confirmation",
+        "download_requires_user_confirmation": 0 if target500_reached else 1,
+        "recommended_next_action": recommended_next_action,
     }
-    write_csv(out_dir / "stage_EXT13_current_evidence_table_v1.csv", current_evidence(ext5, ext6, ext7, ext8, ext10, ext12))
+    write_csv(out_dir / "stage_EXT13_current_evidence_table_v1.csv", current_evidence(ext5, ext5c, ext6, ext7, ext8, ext10, ext12))
     write_csv(out_dir / "stage_EXT13_integration_decision_matrix_v1.csv", decision_matrix())
     write_csv(out_dir / "stage_EXT13_target500_download_plan_v1.csv", download_rows)
     (out_dir / "stage_EXT13_frozen_protocol_v1.md").write_text(frozen_protocol_md(), encoding="utf-8")
@@ -298,7 +316,11 @@ def main() -> None:
         "",
         "## Decision",
         "",
-        "Await user confirmation before downloading target-500 categories. Do not run new model experiments under the frozen protocol.",
+        (
+            "Target-500 is already reached. Keep this frozen 504-event evidence and write the stage report; do not run new model experiments under the frozen protocol."
+            if target500_reached
+            else "Await user confirmation before downloading target-500 categories. Do not run new model experiments under the frozen protocol."
+        ),
     ]
     (out_dir / "stage_EXT13_report_v1.md").write_text("\n".join(report) + "\n", encoding="utf-8")
     print(json.dumps(compact, indent=2, ensure_ascii=False))

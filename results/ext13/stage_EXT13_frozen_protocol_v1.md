@@ -1,9 +1,9 @@
 # EXT-13 Frozen External Evaluation Protocol
 
-This protocol freezes the current 406-event full-pixel evaluation state.
+This protocol freezes the current full-pixel evaluation state.
 
 Allowed:
-- Rerun existing EXT-4, EXT-5, EXT-5C, EXT-6, EXT-7, EXT-8, EXT-10, EXT-12 scripts unchanged.
+- Rerun existing EXT-4, EXT-5, EXT-5C, EXT-6, EXT-7, EXT-9, EXT-10, EXT-12, EXT-8 scripts unchanged.
 - Add more LaSOT categories only through the EXT-11/EXT-13 download plan.
 - Report oracle-proposal memory-only results as oracle-proposal memory-only results.
 

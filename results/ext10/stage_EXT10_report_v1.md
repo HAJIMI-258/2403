@@ -3,10 +3,10 @@
 ## Result
 
 - Selected gate: `A1_all_external`
-- Test events: `119`
-- Test geometry top1: `0.6218`
-- Test all-external top1: `0.7059`
-- Test selected gate top1: `0.7059`
+- Test events: `125`
+- Test geometry top1: `0.6160`
+- Test all-external top1: `0.7120`
+- Test selected gate top1: `0.7120`
 - Integration ready: `0`
 
 ## Decision

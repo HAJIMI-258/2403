@@ -1,0 +1,17 @@
+{
+  "stage": "CORE-1H",
+  "torch_available": 1,
+  "train_pair_count": 6000,
+  "raw_geometry_test_top1": 0.045454545454545456,
+  "diagnostic_encoder_test_top1": 0.0,
+  "shuffled_positive_test_top1": 0.0,
+  "diagnostic_encoder_delta_vs_raw": -0.045454545454545456,
+  "diagnostic_encoder_delta_vs_shuffled": 0.0,
+  "controls_passed": 0,
+  "improves_raw_geometry": 0,
+  "passed_minimum": 0,
+  "safe_for_main_nops": 0,
+  "oracle_leakage_found": 0,
+  "main_constraint": "Encoder is trained from GT-ledger diagnostic pairs; this is an upper-bound experiment only.",
+  "next_recommendation": "CORE-1I inspect dense diagnostic features; do not train main encoder from GT-ledger pairs"
+}

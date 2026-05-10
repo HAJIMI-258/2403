@@ -1,0 +1,19 @@
+{
+  "query_positive_pair_count": 702,
+  "query_negative_pair_count": 144,
+  "event_positive_pair_count": 7,
+  "event_positive_precision_eval_only": 0.8571428571428571,
+  "selected_event_ids": [
+    "M-RE-TC-005",
+    "M-RE-TC-008",
+    "M-RE-TC-009",
+    "M-RE-TC-003",
+    "M-RE-TC-012",
+    "M-RE-TC-013",
+    "M-RE-TC-016"
+  ],
+  "proxy_positive_pair_count": 695,
+  "negative_pair_precision_eval_only": 0.9375,
+  "usable_for_training": 1,
+  "main_pair_failure_reason": ""
+}

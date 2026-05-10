@@ -1,0 +1,38 @@
+{
+  "stage": "CORE-1B",
+  "gate_scan_best_event_count": 7,
+  "gate_scan_best_precision_eval_only": 0.8571428571428571,
+  "candidate_gate": {
+    "support_v2_min": 0.9,
+    "content_min": 0.9,
+    "disappearance_min": 0.68,
+    "temporal_max": 1.0,
+    "margin_max": 0.05
+  },
+  "query_pair_mining_passed": 1,
+  "event_positive_pair_count": 7,
+  "event_positive_precision_eval_only": 0.8571428571428571,
+  "selected_event_ids": [
+    "M-RE-TC-005",
+    "M-RE-TC-008",
+    "M-RE-TC-009",
+    "M-RE-TC-003",
+    "M-RE-TC-012",
+    "M-RE-TC-013",
+    "M-RE-TC-016"
+  ],
+  "best_ablation": "A0_current_NOPS_passive",
+  "baseline_top1": 0.4117647058823529,
+  "best_core1b_top1": 0.4117647058823529,
+  "alignment_sim_only_top1": 0.11764705882352941,
+  "frozen_random_top1": 0.0,
+  "false_bundle_retrieval_rate": 0.5882352941176471,
+  "focus_success_count": 3,
+  "alignment_collapse_metric": 0.008485590107738972,
+  "negative_controls_passed": 1,
+  "gate_repair_passed": 1,
+  "retrieval_integration_passed": 0,
+  "passed_minimum": 0,
+  "oracle_leakage_found": 0,
+  "next_recommendation": "CORE-1C split-validate cue-consensus query gate and collect more query positives; do not integrate yet"
+}

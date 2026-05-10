@@ -1,0 +1,13 @@
+{
+  "artifact_version": "v1",
+  "best_negative_mode": "cross_event_same_sequence",
+  "best_negative_pair_count": 580,
+  "best_negative_pair_precision_eval_only": 0.8,
+  "best_positive_pair_precision_eval_only": 0.9485294117647058,
+  "cross_event_negative_mining_passed": 0,
+  "next_recommendation": "cross-context negatives still insufficient; expand window/sequence sample or use oracle proposals for diagnostic encoder",
+  "oracle_leakage_found": 0,
+  "positive_pair_count": 136,
+  "ready_for_encoder_training": 0,
+  "stage": "CORE-1X"
+}

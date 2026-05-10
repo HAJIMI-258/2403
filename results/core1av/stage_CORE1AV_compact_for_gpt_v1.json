@@ -1,0 +1,23 @@
+{
+  "artifact_version": "v1",
+  "broader_sequence_regression_passed": 1,
+  "four_sequence_false_old_recall_reduction": 6,
+  "four_sequence_policy_coverage": 0.9676767676767677,
+  "four_sequence_policy_precision": 0.964509394572025,
+  "four_sequence_query_count": 495,
+  "next_recommendation": "CORE-1AW integrate bounded-wait policy into main evaluation harness behind a disabled-by-default flag",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "six_sequence_baseline_top1": 0.9505247376311844,
+  "six_sequence_decoupled_frontier_ready": 1,
+  "six_sequence_false_old_recall_reduction": 8,
+  "six_sequence_observation_count": 6513,
+  "six_sequence_policy_coverage": 0.9730134932533733,
+  "six_sequence_policy_precision": 0.9614791987673343,
+  "six_sequence_query_count": 667,
+  "six_sequence_released_wrong_count": 0,
+  "six_sequence_selected_sequence_count": 6,
+  "six_sequence_split_gate_passed": 1,
+  "six_sequence_unresolved_count": 18,
+  "stage": "CORE-1AV"
+}

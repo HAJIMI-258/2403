@@ -1,0 +1,19 @@
+{
+  "artifact_version": "v1",
+  "baseline_false_count": 33,
+  "baseline_top1": 0.9505247376311844,
+  "best_committed_false_retrieval_rate": 0.044169611307420496,
+  "best_committed_top1": 0.9558303886925795,
+  "best_coverage": 0.848575712143928,
+  "best_threshold": 0.0195,
+  "correct_abstained_count": 93,
+  "eval_gate": "S55_C50",
+  "false_retrieval_avoided_count": 8,
+  "next_recommendation": "CORE-1AO integrate uncertainty/abstention state into object-file memory audit",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "query_count": 667,
+  "random_false_avoided_mean": 5.165,
+  "stage": "CORE-1AN",
+  "uncertainty_gate_passed": 1
+}

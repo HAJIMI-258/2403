@@ -1,0 +1,10 @@
+{
+  "query_positive_pair_count": 699,
+  "query_negative_pair_count": 102,
+  "event_positive_pair_count": 4,
+  "event_positive_precision_eval_only": 0.25,
+  "proxy_positive_pair_count": 695,
+  "negative_pair_precision_eval_only": 0.9117647058823529,
+  "usable_for_training": 0,
+  "main_pair_failure_reason": "query_pair_gate_failed"
+}

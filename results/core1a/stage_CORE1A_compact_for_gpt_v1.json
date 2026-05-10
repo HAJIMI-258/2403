@@ -1,0 +1,22 @@
+{
+  "stage": "CORE-1A",
+  "query_pair_mining_passed": 0,
+  "query_positive_pair_count": 699,
+  "query_negative_pair_count": 102,
+  "event_positive_pair_count": 4,
+  "event_positive_precision_eval_only": 0.25,
+  "best_query_gate_event_count": 0,
+  "best_query_gate_precision_eval_only": 0.5,
+  "best_ablation": "A0_current_NOPS_passive",
+  "baseline_top1": 0.4117647058823529,
+  "best_query_memory_top1": 0.4117647058823529,
+  "alignment_sim_only_top1": 0.0,
+  "frozen_random_top1": 0.0,
+  "false_bundle_retrieval_rate": 0.5882352941176471,
+  "focus_success_count": 3,
+  "alignment_collapse_metric": 0.0,
+  "negative_controls_passed": 0,
+  "oracle_leakage_found": 0,
+  "passed_minimum": 0,
+  "next_recommendation": "repair query-memory pair gate"
+}

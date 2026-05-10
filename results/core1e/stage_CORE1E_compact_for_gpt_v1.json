@@ -1,0 +1,18 @@
+{
+  "stage": "CORE-1E",
+  "internal_stable_positive_count": 3,
+  "internal_stable_precision_eval_only": 1.0,
+  "best_external_source": "external_a0_cal_ref_all_agree",
+  "best_external_positive_count": 880,
+  "best_external_precision_eval_only": 0.8056818181818182,
+  "external_category_count": 67,
+  "external_hard_event_count": 184,
+  "external_similar_distractor_event_count": 739,
+  "external_controls_passed": 0,
+  "core_training_ready": 0,
+  "external_diagnostic_training_ready": 0,
+  "passed_minimum": 0,
+  "oracle_leakage_found": 0,
+  "main_constraint": "external positives are abundant but are oracle-proposal geometry positives and cannot train main no-pretrain NOPS directly",
+  "next_recommendation": "CORE-1F create denser internal synthetic event ledger before training main online encoder"
+}

@@ -1,0 +1,18 @@
+{
+  "stage": "CORE-1I",
+  "event_count": 564,
+  "same_sequence_same_concept_top1": 0.925531914893617,
+  "same_sequence_top1": 0.6631205673758865,
+  "same_split_top1": 0.03368794326241135,
+  "same_sequence_mean_candidate_count": 1.9787234042553192,
+  "same_split_mean_candidate_count": 234.85106382978722,
+  "main_failure_counts": {
+    "candidate_scope_too_broad": 564,
+    "large_reentry_displacement": 364,
+    "fast_planned_area_degenerate": 207,
+    "same_concept_geometry_collision": 42,
+    "different_concept_geometry_collision": 148
+  },
+  "passed_minimum": 1,
+  "next_recommendation": "CORE-1J render selected dense ledger windows and mine tracker-derived online pairs"
+}

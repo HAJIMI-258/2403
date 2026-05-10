@@ -1,0 +1,16 @@
+{
+  "artifact_version": "v1",
+  "baseline_false_count": 23,
+  "baseline_top1": 0.9535353535353536,
+  "fold_count": 12,
+  "next_recommendation": "CORE-1AQ integrate uncertainty state with split-validated threshold",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "query_count": 495,
+  "split_committed_top1": 0.9594272076372315,
+  "split_coverage": 0.8464646464646465,
+  "split_false_suppressed_count": 6,
+  "split_gate_passed": 1,
+  "split_unnecessary_uncertain_count": 70,
+  "stage": "CORE-1AP"
+}

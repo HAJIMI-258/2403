@@ -1,0 +1,18 @@
+{
+  "artifact_version": "v1",
+  "assignment_observation_count": 4367,
+  "best_negative_mode": "cross_sequence",
+  "best_negative_pair_count": 2622,
+  "best_negative_pair_precision_eval_only": 0.7726926010678871,
+  "best_positive_pair_precision_eval_only": 0.8956228956228957,
+  "expanded_cross_event_negative_mining_passed": 0,
+  "next_recommendation": "expand beyond 3 rendered sequences or switch to oracle-proposal diagnostic encoder; current objectness-derived negatives remain too noisy",
+  "oracle_leakage_found": 0,
+  "positive_pair_count": 297,
+  "ready_for_encoder_training": 0,
+  "runtime_sec": 185.95505870000125,
+  "selected_event_count": 6,
+  "selected_sequence_count": 3,
+  "selected_window_count": 12,
+  "stage": "CORE-1Y"
+}

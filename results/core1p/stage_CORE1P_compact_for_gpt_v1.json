@@ -1,0 +1,25 @@
+{
+  "artifact_version": "v1",
+  "assignment_observation_count": 2230,
+  "best_gate": "A3_score050_cost_le_050",
+  "best_negative_pair_count": 660,
+  "best_negative_pair_precision_eval_only": 0.36363636363636365,
+  "best_positive_pair_count": 315,
+  "best_positive_pair_precision_eval_only": 0.7015873015873015,
+  "core1m_best_negative_precision": 0.37905604719764013,
+  "core1m_best_positive_precision": 0.6485714285714286,
+  "matched_assignment_rate": 0.1937528754565164,
+  "next_recommendation": "proposal recall improved but pair quality still insufficient; inspect duplicate/fragmented assignments before training",
+  "oracle_leakage_found": 0,
+  "pair_mining_gate_passed": 0,
+  "profile_config": {
+    "local_k": 0.85,
+    "max_proposals": 16,
+    "q_obj": 0.88
+  },
+  "proposal_profile": "A3_lower_quantile_from_CORE1O",
+  "runtime_sec": 109.82401730000129,
+  "selected_sequence_count": 2,
+  "selected_window_count": 6,
+  "stage": "CORE-1P"
+}

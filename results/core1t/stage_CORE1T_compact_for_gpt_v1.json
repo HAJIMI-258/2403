@@ -1,0 +1,16 @@
+{
+  "artifact_version": "v1",
+  "best_gate": "A0_assignment_only",
+  "best_negative_pair_count": 489,
+  "best_negative_pair_precision_eval_only": 0.9406952965235174,
+  "best_observation_count": 431,
+  "best_oracle_filter_variant": "A1_oracle_matched_iou25",
+  "best_positive_pair_count": 350,
+  "best_positive_pair_precision_eval_only": 0.9857142857142858,
+  "diagnostic_only_uses_gt_filter": 1,
+  "next_recommendation": "CORE-1U learn/design GT-free matched-observation confidence target",
+  "oracle_leakage_found": 0,
+  "oracle_matched_upper_bound_passed": 1,
+  "safe_for_main_online_training": 0,
+  "stage": "CORE-1T"
+}

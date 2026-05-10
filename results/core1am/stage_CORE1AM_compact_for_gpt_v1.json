@@ -1,0 +1,30 @@
+{
+  "artifact_version": "v1",
+  "baseline_top1": 0.9535353535353536,
+  "best_shuffled_descriptor_top1": 0.9595959595959596,
+  "control_best_top1": 0.9595959595959596,
+  "control_mean_top1": 0.9565175565175565,
+  "control_permutation_rate": 0.11904761904761904,
+  "control_significance_passed": 0,
+  "control_std_top1": 0.0017764488035227522,
+  "eval_gate": "S55_C50",
+  "event_delta_counts": {
+    "both_rescue": 3,
+    "learned_only_rescue": 1,
+    "learned_regression": 1,
+    "unchanged_failure": 19,
+    "unchanged_success": 471
+  },
+  "learned_delta_vs_baseline": 0.006060606060605989,
+  "learned_improved_count": 4,
+  "learned_metric_test_auc": 1.0,
+  "learned_regressed_count": 1,
+  "learned_top1": 0.9595959595959596,
+  "next_recommendation": "do not integrate learned metric; improvement is not statistically/control separated from shuffled descriptor perturbations",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 0,
+  "shuffled_label_metric_test_auc": 0.5175204918032786,
+  "significance_passed": 0,
+  "stage": "CORE-1AM",
+  "train_gate": "S70_C30_streak2"
+}

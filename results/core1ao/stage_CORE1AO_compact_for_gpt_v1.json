@@ -1,0 +1,17 @@
+{
+  "artifact_version": "v1",
+  "baseline_false_old_recall_count": 23,
+  "baseline_old_recall_precision": 0.9535353535353536,
+  "best_coverage": 0.8464646464646465,
+  "best_false_old_recall_count": 17,
+  "best_old_recall_precision": 0.9594272076372315,
+  "best_policy": "A1_core1an_selected_margin_gate",
+  "best_threshold": 0.0194,
+  "false_old_suppressed_count": 6,
+  "next_recommendation": "CORE-1AP add uncertainty state to core memory API / downstream audit",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "policy_gate_passed": 1,
+  "stage": "CORE-1AO",
+  "unnecessary_uncertain_count": 70
+}

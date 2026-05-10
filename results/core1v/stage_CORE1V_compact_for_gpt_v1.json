@@ -1,0 +1,14 @@
+{
+  "artifact_version": "v1",
+  "best_filter": "A0_high_conf_only",
+  "best_negative_pair_count": 148,
+  "best_negative_pair_precision_eval_only": 0.777027027027027,
+  "best_positive_pair_count": 136,
+  "best_positive_pair_precision_eval_only": 0.9485294117647058,
+  "high_conf_observation_count": 223,
+  "next_recommendation": "need stronger duplicate/fragmentation filter or localization-quality feature before encoder training",
+  "oracle_leakage_found": 0,
+  "pair_level_negative_filter_passed": 0,
+  "ready_for_encoder_training": 0,
+  "stage": "CORE-1V"
+}

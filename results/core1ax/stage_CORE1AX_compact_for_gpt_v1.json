@@ -1,0 +1,15 @@
+{
+  "artifact_version": "v1",
+  "learned_metric_integrated": 0,
+  "next_recommendation": "CORE-1AY broader seed/config regression before default enablement",
+  "passed_minimum": 1,
+  "policy_flag_harness_passed": 1,
+  "safe_for_default_enable": 0,
+  "safe_for_experimental_eval_flag": 1,
+  "six_sequence_false_old_recall_reduction": 8,
+  "six_sequence_policy_coverage": 0.9730134932533733,
+  "six_sequence_policy_precision": 0.9614791987673343,
+  "stage": "CORE-1AX",
+  "uncertainty_policy_available": 1,
+  "uncertainty_policy_default_enabled": 0
+}

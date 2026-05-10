@@ -1,0 +1,22 @@
+{
+  "artifact_version": "v1",
+  "fragmented_frame_rate": 0.1875,
+  "main_failure_counts": {
+    "overlapping_tracks_for_different_gt": 2,
+    "same_gt_fragmented_across_tracks": 14,
+    "track_identity_switched_between_frames": 4,
+    "unmatched_assignment_in_pair": 496
+  },
+  "main_failure_type": "unmatched_assignment_in_pair",
+  "negative_pair_count": 660,
+  "negative_pair_precision_eval_only": 0.36363636363636365,
+  "next_recommendation": "add matched-observation confidence gate or improve objectness/proposal localization before training",
+  "oracle_leakage_found": 0,
+  "positive_pair_count": 315,
+  "positive_pair_precision_eval_only": 0.7015873015873015,
+  "ready_for_encoder_training": 0,
+  "source_gate": "A3_score050_cost_le_050",
+  "stage": "CORE-1Q",
+  "switched_track_rate": 0.07936507936507936,
+  "unmatched_frame_rate": 0.802166313624647
+}

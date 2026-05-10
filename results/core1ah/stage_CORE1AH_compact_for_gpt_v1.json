@@ -1,0 +1,20 @@
+{
+  "artifact_version": "v1",
+  "best_baseline_failure_count": 41,
+  "best_baseline_top1": 0.9525462962962963,
+  "best_clean_rescue_count": 26,
+  "best_delta_vs_gate_baseline": -0.04629629629629628,
+  "best_gate": "A0_core1y_all",
+  "best_num_queries": 864,
+  "best_pair_quality_passed": 0,
+  "best_regressed_count": 69,
+  "best_selected_observation_count": 4367,
+  "best_top1": 0.90625,
+  "best_variant": "A1_raw_descriptor_only",
+  "gate_count": 14,
+  "gate_variant_count": 140,
+  "hard_pool_found": 0,
+  "next_recommendation": "no reliable hard descriptor pool; prioritize proposal/observation quality repair over descriptor integration",
+  "oracle_leakage_found": 0,
+  "stage": "CORE-1AH"
+}

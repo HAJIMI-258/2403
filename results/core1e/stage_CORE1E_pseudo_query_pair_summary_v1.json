@@ -1,0 +1,24 @@
+{
+  "ambiguous_pair_count": 17,
+  "average_gap_delta": 2.4262295081967213,
+  "gap_distribution": {
+    "0": 120,
+    "10": 3,
+    "11": 3,
+    "12": 1,
+    "3": 45,
+    "4": 12,
+    "5": 38,
+    "6": 13,
+    "7": 6,
+    "8": 3
+  },
+  "hard_negative_pair_count": 248,
+  "main_pair_failure_reason": "",
+  "negative_pair_precision_eval_only": 0.967741935483871,
+  "positive_pair_precision_eval_only": 0.9590163934426229,
+  "pseudo_negative_pair_count": 248,
+  "pseudo_positive_pair_count": 244,
+  "stable_object_file_count": 28,
+  "usable_for_curriculum_training": 1
+}

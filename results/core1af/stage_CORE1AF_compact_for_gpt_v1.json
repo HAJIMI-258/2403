@@ -1,0 +1,18 @@
+{
+  "artifact_version": "v1",
+  "baseline_failure_count": 13,
+  "baseline_success_no_opportunity_count": 284,
+  "control_confounded_rescue_count": 0,
+  "descriptor_clean_rescue_count": 2,
+  "descriptor_opportunity_rate": 0.15384615384615385,
+  "gate_name": "A9_score060_cost040_consecutive",
+  "main_opportunity_class": "baseline_success_no_opportunity",
+  "next_recommendation": "CORE-1AG mine harder non-oracle descriptor-opportunity events before any integration",
+  "num_queries": 297,
+  "oracle_leakage_found": 0,
+  "raw_descriptor_not_discriminative_count": 8,
+  "safe_for_integration": 0,
+  "selected_variant": "A6_gated_fusion_w020_margin005",
+  "source_stage": "CORE-1AE",
+  "stage": "CORE-1AF"
+}

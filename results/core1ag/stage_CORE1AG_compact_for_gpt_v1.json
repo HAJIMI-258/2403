@@ -1,0 +1,25 @@
+{
+  "artifact_version": "v1",
+  "best_baseline_failure_count": 13,
+  "best_baseline_top1": 0.9562289562289562,
+  "best_clean_rescue_count": 2,
+  "best_control_rescue_count": 1,
+  "best_gate": "A10_score060_cost040_streak2",
+  "best_num_queries": 297,
+  "best_opportunity_score": 1,
+  "best_regressed_count": 0,
+  "best_variant": "A4_fusion_w020",
+  "gate_variant_count": 42,
+  "hard_descriptor_opportunity_found": 0,
+  "next_recommendation": "descriptor cue has too few clean hard opportunities; return to observation/proposal quality rather than integration",
+  "opportunity_event_count": 46,
+  "opportunity_gate_distribution": {
+    "A10_score060_cost040_streak2": 9,
+    "A1_score050_cost050": 19,
+    "A2_score060_cost040": 9,
+    "A9_score060_cost040_consecutive": 9
+  },
+  "oracle_leakage_found": 0,
+  "source_stage": "CORE-1AD",
+  "stage": "CORE-1AG"
+}

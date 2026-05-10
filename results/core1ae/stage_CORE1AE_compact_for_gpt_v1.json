@@ -1,0 +1,23 @@
+{
+  "artifact_version": "v1",
+  "baseline_top1": 0.9562289562289562,
+  "beats_controls": 1,
+  "best_control_delta_top1": 0.0033670033670033517,
+  "bootstrap_ci95_high": 0.01683501683501687,
+  "bootstrap_ci95_low": 0.0,
+  "ci_excludes_zero": 0,
+  "delta_top1": 0.006734006734006703,
+  "gate_name": "A9_score060_cost040_consecutive",
+  "improved_count": 2,
+  "next_recommendation": "do not integrate descriptor cue; CORE-1AD gain is too small or not robust against controls",
+  "num_queries": 297,
+  "oracle_leakage_found": 0,
+  "regressed_count": 0,
+  "regression_ok": 1,
+  "robustness_gate_passed": 0,
+  "safe_for_main_integration": 0,
+  "selected_top1": 0.9629629629629629,
+  "selected_variant": "A6_gated_fusion_w020_margin005",
+  "source_stage": "CORE-1AD",
+  "stage": "CORE-1AE"
+}

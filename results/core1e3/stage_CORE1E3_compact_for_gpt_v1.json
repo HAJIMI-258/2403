@@ -1,0 +1,17 @@
+{
+  "artifact_version": "v1",
+  "baseline_top1": 0.9530364372469635,
+  "best_gate_fire_count": 40,
+  "best_gate_improved_event_count": 3,
+  "best_gate_regression_event_count": 12,
+  "best_gate_top1": 0.945748987854251,
+  "best_gate_variant": "A_gate_b002_m020_c6",
+  "best_shuffled_control_top1": 0.9433198380566802,
+  "core1e2_split_generalization_passed": 1,
+  "integration_gate_passed": 0,
+  "main_failure_type": "no_safe_retrieval_gate_above_baseline_and_shuffled_control",
+  "next_recommendation": "do not integrate pseudo metric; build a harder official re-entry eval bridge or improve descriptor input",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 0,
+  "stage": "CORE-1E3"
+}

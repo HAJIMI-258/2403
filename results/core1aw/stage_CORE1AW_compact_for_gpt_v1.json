@@ -1,0 +1,20 @@
+{
+  "artifact_version": "v1",
+  "bounded_wait_horizon": 10,
+  "default_policy_enabled": 0,
+  "delayed_old_recall_count": 82,
+  "disabled_false_old_recall_count": 33,
+  "disabled_precision": 0.9505247376311844,
+  "enabled_coverage": 0.9730134932533733,
+  "enabled_false_old_recall_count": 25,
+  "enabled_precision": 0.9614791987673343,
+  "next_recommendation": "CORE-1AX run external/synthetic documentation update and mark policy experimental-disabled",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "policy_flag_harness_passed": 1,
+  "policy_violation_count": 0,
+  "query_count": 667,
+  "stage": "CORE-1AW",
+  "threshold": 0.0194,
+  "unresolved_count": 18
+}

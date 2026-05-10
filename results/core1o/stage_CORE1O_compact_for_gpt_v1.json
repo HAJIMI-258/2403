@@ -1,0 +1,16 @@
+{
+  "artifact_version": "v1",
+  "baseline_recall_iou025": 0.7805907172995781,
+  "baseline_recall_iou050": 0.6160337552742616,
+  "best_mean_proposals_per_frame": 15.486111111111112,
+  "best_recall_iou025": 0.8565400843881856,
+  "best_recall_iou050": 0.6962025316455697,
+  "best_variant": "A3_lower_quantile",
+  "frontend_profile_candidate_found": 1,
+  "next_recommendation": "CORE-1P validate best proposal profile through tracker pair mining",
+  "oracle_leakage_found": 0,
+  "runtime_sec": 254.45220940000036,
+  "selected_sequence_count": 2,
+  "selected_window_count": 6,
+  "stage": "CORE-1O"
+}

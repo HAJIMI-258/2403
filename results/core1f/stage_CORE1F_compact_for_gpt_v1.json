@@ -1,0 +1,27 @@
+{
+  "stage": "CORE-1F",
+  "config": "configs/bridge_synth_generic_v1.yaml",
+  "seed": 42,
+  "mode": "fast-planned",
+  "num_sequences": 480,
+  "smoke_gap_event_count": 681,
+  "real_gap_event_count": 564,
+  "train_real_gap_events": 320,
+  "dev_real_gap_events": 134,
+  "test_real_gap_events": 110,
+  "difficulty_counts": {
+    "hard": 564
+  },
+  "concept_counts": {
+    "0": 254,
+    "1": 189,
+    "2": 121
+  },
+  "adjacent_positive_pair_opportunities": 1598510,
+  "skip5_positive_pair_opportunities": 1589062,
+  "negative_cov_visible_pair_opportunities": 2261154,
+  "dense_ledger_ready": 1,
+  "oracle_leakage_found": 0,
+  "gt_usage": "GT boxes/instance ids define evaluation ledger only; not allowed for online scoring or training labels.",
+  "next_recommendation": "CORE-1G run NOPS/core encoder pair-mining on dense internal ledger"
+}

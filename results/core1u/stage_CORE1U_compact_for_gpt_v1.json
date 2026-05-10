@@ -1,0 +1,21 @@
+{
+  "artifact_version": "v1",
+  "best_gate_matched_observation_rate_eval_only": 0.9461883408071748,
+  "best_gate_observation_count": 223,
+  "best_matched_observation_gate": "logistic_probe_precision_090",
+  "best_negative_pair_count": 148,
+  "best_negative_pair_precision_eval_only": 0.777027027027027,
+  "best_positive_pair_count": 136,
+  "best_positive_pair_precision_eval_only": 0.9485294117647058,
+  "best_single_feature": "score",
+  "best_single_feature_auc": 0.896365472439574,
+  "logistic_probe_accuracy_at_050": 0.9179372197309417,
+  "logistic_probe_auc": 0.9520228433171819,
+  "matched_label_rate_eval_only": 0.19327354260089685,
+  "matched_observation_feature_gate_passed": 0,
+  "next_recommendation": "online features insufficient; add localization-quality features or repair objectness field",
+  "observation_count": 2230,
+  "oracle_leakage_found": 0,
+  "ready_for_encoder_training": 0,
+  "stage": "CORE-1U"
+}

@@ -1,0 +1,13 @@
+{
+  "artifact_version": "v1",
+  "bounded_wait_horizon": 10,
+  "core1ap_split_gate_passed": 1,
+  "core1as_bounded_wait_policy_passed": 1,
+  "memory_decision_regression_passed": 1,
+  "next_recommendation": "CORE-1AU run end-to-end smoke with memory decision policy enabled",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "stage": "CORE-1AT",
+  "uncertainty_margin_threshold": 0.0194,
+  "unit_test_returncode": 0
+}

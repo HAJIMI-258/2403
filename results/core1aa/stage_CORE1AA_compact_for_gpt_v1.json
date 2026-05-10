@@ -1,0 +1,19 @@
+{
+  "artifact_version": "v1",
+  "best_gate": "A11_score070_cost030",
+  "best_namespace_precision_gain": 0.15267175572519076,
+  "best_negative_mode": "cross_sequence",
+  "best_negative_pair_count": 1048,
+  "best_negative_pair_precision_local_id_eval_only": 0.7557251908396947,
+  "best_negative_pair_precision_namespace_eval_only": 0.9083969465648855,
+  "best_positive_pair_count": 64,
+  "best_positive_pair_precision_eval_only": 0.921875,
+  "best_selected_observation_count": 131,
+  "next_recommendation": "CORE-1AB train diagnostic online encoder on CORE-1AA stability/namespace-aware curriculum",
+  "observation_count": 4367,
+  "oracle_leakage_found": 0,
+  "ready_for_encoder_training_smoke": 1,
+  "source_observation_trace": "results/core1y/stage_CORE1Y_assignment_observation_trace_v1.csv",
+  "stability_namespace_pair_gate_passed": 1,
+  "stage": "CORE-1AA"
+}

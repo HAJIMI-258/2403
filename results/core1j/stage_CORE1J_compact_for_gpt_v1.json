@@ -1,0 +1,14 @@
+{
+  "stage": "CORE-1J",
+  "mode": "runtime_feasibility_gate",
+  "selected_sequence_count": 32,
+  "selected_real_gap_events": 48,
+  "planned_window_count": 96,
+  "planned_window_frame_count": 2400,
+  "observed_single_sequence_runtime_sec": 260.0,
+  "estimated_full_selected_runtime_sec": 8320.0,
+  "full_sequence_tracker_feasible": 0,
+  "tracker_pair_mining_ready": 0,
+  "oracle_leakage_found": 0,
+  "next_recommendation": "CORE-1J-windowed render/cache selected event windows before tracker-derived pair mining"
+}

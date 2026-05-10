@@ -1,0 +1,15 @@
+{
+  "artifact_version": "v1",
+  "best_gate": "A0_core1p_best",
+  "best_matched_observation_rate_eval_only": 0.7020316027088036,
+  "best_negative_pair_count": 660,
+  "best_negative_pair_precision_eval_only": 0.36363636363636365,
+  "best_observation_count": 443,
+  "best_positive_pair_count": 315,
+  "best_positive_pair_precision_eval_only": 0.7015873015873015,
+  "next_recommendation": "proxy gate insufficient; objectness/proposal localization must be repaired before encoder training",
+  "observation_count": 2230,
+  "oracle_leakage_found": 0,
+  "proxy_gate_passed": 0,
+  "stage": "CORE-1R"
+}

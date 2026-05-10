@@ -1,0 +1,19 @@
+{
+  "artifact_version": "v1",
+  "coverage": 0.8464646464646465,
+  "evidence_queue_size": 76,
+  "false_old_after_policy": 17,
+  "false_old_before_policy": 23,
+  "false_old_suppressed_count": 6,
+  "next_recommendation": "CORE-1AR connect uncertainty state to active evidence / delayed update without attach-promotion",
+  "old_recall_count": 419,
+  "old_recall_precision_eval_only": 0.9594272076372315,
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "policy_violation_count": 0,
+  "query_count": 495,
+  "stage": "CORE-1AQ",
+  "uncertain_count": 76,
+  "uncertainty_state_integration_passed": 1,
+  "unnecessary_uncertain_count": 70
+}

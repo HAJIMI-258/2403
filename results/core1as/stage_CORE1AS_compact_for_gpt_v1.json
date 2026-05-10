@@ -1,0 +1,18 @@
+{
+  "artifact_version": "v1",
+  "bounded_wait_horizon": 10,
+  "bounded_wait_policy_passed": 1,
+  "correct_delay_resolved_count": 58,
+  "false_suppressed_resolved_count": 2,
+  "mean_wait_frames": 1.6833333333333333,
+  "next_recommendation": "CORE-1AT write core memory decision spec and add regression tests",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "policy_violation_count": 0,
+  "released_wrong_count": 0,
+  "resolution_rate": 0.7894736842105263,
+  "resolved_correct_count": 60,
+  "stage": "CORE-1AS",
+  "uncertain_count": 76,
+  "unresolved_after_horizon_count": 16
+}

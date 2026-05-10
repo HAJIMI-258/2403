@@ -1,0 +1,18 @@
+{
+  "artifact_version": "v1",
+  "best_correct_delay_resolved_count": 58,
+  "best_false_suppressed_resolved_count": 2,
+  "best_horizon_frames": 10,
+  "best_mean_wait_frames": 1.6833333333333333,
+  "best_released_wrong_count": 0,
+  "best_resolution_rate": 0.7894736842105263,
+  "best_resolved_correct_count": 60,
+  "best_unresolved_count": 16,
+  "delayed_resolution_passed": 1,
+  "future_used_for_current_decision": 0,
+  "next_recommendation": "CORE-1AS add delayed uncertainty resolution policy with bounded wait horizon",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "stage": "CORE-1AR",
+  "uncertain_count": 76
+}

@@ -37,6 +37,12 @@ class EpisodicBundle:
     replay_priority: float = 0.0
     reactivation_count: int = 0
     source_state: str = "active"
+    last_observed_frame: int | None = None
+    observation_count: int = 1
+    closed: bool = False
+    close_reason: str = ""
+    evidence_quality: float = 0.0
+    prediction_error_mean: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -53,6 +59,7 @@ class EpisodicMemory:
     def __init__(self, memory_budget: int = 256) -> None:
         self.memory_budget = int(memory_budget)
         self._bundles: dict[int, EpisodicBundle] = {}
+        self._active_episode_by_track: dict[int, int] = {}
         self._next_episode_id = 1
 
     @property
@@ -61,6 +68,15 @@ class EpisodicMemory:
 
     def __len__(self) -> int:
         return len(self._bundles)
+
+    @property
+    def active_episode_by_track(self) -> dict[int, int]:
+        return dict(self._active_episode_by_track)
+
+    def get_episode(self, episode_id: int | None) -> EpisodicBundle | None:
+        if episode_id is None:
+            return None
+        return self._bundles.get(int(episode_id))
 
     def write_episode(
         self,
@@ -73,16 +89,49 @@ class EpisodicMemory:
         frame_start: int | None = None,
         frame_end: int | None = None,
         disappearance_signature: np.ndarray | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> int:
+        return self.begin_episode(
+            object_file=object_file,
+            frame_index=frame_index,
+            track_id=track_id,
+            prototype_id=prototype_id,
+            concept_id=concept_id,
+            source_state=source_state,
+            frame_start=frame_start,
+            frame_end=frame_end,
+            disappearance_signature=disappearance_signature,
+            metadata=metadata,
+        )
+
+    def begin_episode(
+        self,
+        object_file: ObjectFile,
+        frame_index: int | None = None,
+        track_id: int | None = None,
+        prototype_id: int | None = None,
+        concept_id: int | None = None,
+        source_state: str = "active",
+        frame_start: int | None = None,
+        frame_end: int | None = None,
+        disappearance_signature: np.ndarray | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> int:
         created_frame = int(object_file.frame_index if frame_index is None else frame_index)
         episode_id = self._next_episode_id
         self._next_episode_id += 1
+        resolved_track_id = object_file.linked_track_id if track_id is None else track_id
+        resolved_prototype_id = object_file.linked_prototype_id if prototype_id is None else prototype_id
+        resolved_concept_id = object_file.linked_concept_id if concept_id is None else concept_id
+        merged_metadata = dict(object_file.metadata)
+        if metadata:
+            merged_metadata.update(metadata)
         bundle = EpisodicBundle(
             episode_id=episode_id,
             object_file_id=object_file.object_file_id,
-            track_id=object_file.linked_track_id if track_id is None else track_id,
-            prototype_id=object_file.linked_prototype_id if prototype_id is None else prototype_id,
-            concept_id=object_file.linked_concept_id if concept_id is None else concept_id,
+            track_id=resolved_track_id,
+            prototype_id=resolved_prototype_id,
+            concept_id=resolved_concept_id,
             frame_start=created_frame if frame_start is None else int(frame_start),
             frame_end=created_frame if frame_end is None else int(frame_end),
             created_frame=created_frame,
@@ -102,11 +151,122 @@ class EpisodicMemory:
             replay_priority=float(np.clip(object_file.prediction_error + object_file.novelty_score, 0.0, 1.0)),
             reactivation_count=0,
             source_state=source_state,
+            last_observed_frame=created_frame,
+            observation_count=1,
+            closed=False,
+            close_reason="",
+            evidence_quality=float(object_file.quality_score),
+            prediction_error_mean=float(object_file.prediction_error),
+            metadata=merged_metadata,
         )
         self._bundles[episode_id] = bundle
+        if resolved_track_id is not None:
+            self._active_episode_by_track[int(resolved_track_id)] = episode_id
         object_file.linked_episode_ids.append(episode_id)
         self._enforce_budget()
         return episode_id
+
+    def extend_episode(
+        self,
+        episode_id: int,
+        object_file: ObjectFile,
+        frame_index: int,
+        update_signatures: bool = True,
+        alpha: float = 0.85,
+    ) -> None:
+        bundle = self._bundles.get(int(episode_id))
+        if bundle is None:
+            return
+        bundle.object_file_id = object_file.object_file_id
+        bundle.frame_end = int(frame_index)
+        bundle.last_observed_frame = int(frame_index)
+        bundle.observation_count += 1
+        bundle.closed = False
+        bundle.close_reason = ""
+        bundle.source_state = object_file.state
+        bundle.evidence_quality = _running_mean(
+            bundle.evidence_quality,
+            float(object_file.quality_score),
+            bundle.observation_count,
+        )
+        bundle.prediction_error_mean = _running_mean(
+            bundle.prediction_error_mean,
+            float(object_file.prediction_error),
+            bundle.observation_count,
+        )
+        bundle.metadata.update({key: value for key, value in object_file.metadata.items() if value is not None})
+        if update_signatures:
+            bundle.content_signature = _ema_signature(bundle.content_signature, object_file.appearance_signature, alpha)
+            bundle.support_signature = _ema_signature(bundle.support_signature, object_file.shape_signature, alpha)
+            bundle.context_signature = _ema_signature(bundle.context_signature, object_file.context_signature, alpha)
+            bundle.motion_signature = _ema_signature(bundle.motion_signature, object_file.motion_signature, alpha)
+        bundle.temporal_signature = np.asarray(
+            [
+                float(bundle.created_frame),
+                float(bundle.frame_end - bundle.frame_start),
+                float(bundle.observation_count),
+            ],
+            dtype=np.float32,
+        )
+        bundle.accessibility_score = float(
+            np.clip(bundle.accessibility_score + 0.005 * object_file.confidence, 0.0, 1.0)
+        )
+        if bundle.observation_count >= 6 and bundle.stability_level == "candidate":
+            bundle.stability_level = "stabilizing"
+        if bundle.track_id is not None:
+            self._active_episode_by_track[int(bundle.track_id)] = int(bundle.episode_id)
+
+    def close_episode(
+        self,
+        episode_id: int,
+        frame_index: int,
+        close_reason: str = "unknown",
+        disappearance_signature: np.ndarray | None = None,
+    ) -> None:
+        bundle = self._bundles.get(int(episode_id))
+        if bundle is None or bundle.closed:
+            return
+        bundle.closed = True
+        bundle.close_reason = str(close_reason)
+        bundle.frame_end = max(bundle.frame_end, int(frame_index))
+        bundle.last_observed_frame = bundle.last_observed_frame or int(frame_index)
+        if disappearance_signature is not None:
+            bundle.disappearance_signature = disappearance_signature.astype(np.float32, copy=True)
+        elif bundle.motion_signature.size:
+            bundle.disappearance_signature = bundle.motion_signature.astype(np.float32, copy=True)
+        if bundle.track_id is not None and self._active_episode_by_track.get(int(bundle.track_id)) == episode_id:
+            del self._active_episode_by_track[int(bundle.track_id)]
+
+    def write_or_extend_episode(
+        self,
+        object_file: ObjectFile,
+        frame_index: int,
+        track_id: int | None = None,
+        prototype_id: int | None = None,
+        concept_id: int | None = None,
+        source_state: str = "active",
+        active_episode_id: int | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> int:
+        resolved_track_id = object_file.linked_track_id if track_id is None else track_id
+        candidate_episode_id = active_episode_id
+        if candidate_episode_id is None and resolved_track_id is not None:
+            candidate_episode_id = self._active_episode_by_track.get(int(resolved_track_id))
+        if candidate_episode_id is not None:
+            bundle = self._bundles.get(int(candidate_episode_id))
+            if bundle is not None and not bundle.closed:
+                self.extend_episode(int(candidate_episode_id), object_file, frame_index)
+                object_file.linked_episode_ids.append(int(candidate_episode_id))
+                return int(candidate_episode_id)
+        return self.begin_episode(
+            object_file=object_file,
+            frame_index=frame_index,
+            track_id=resolved_track_id,
+            prototype_id=prototype_id,
+            concept_id=concept_id,
+            source_state=source_state,
+            metadata=metadata,
+        )
 
     def retrieve(self, cue: ObjectFile | dict[str, np.ndarray], top_k: int = 5) -> list[RetrievedEpisode]:
         if not self._bundles:
@@ -143,6 +303,7 @@ class EpisodicMemory:
         bundle.reactivation_count += 1
         bundle.last_reactivated_frame = int(frame_index)
         bundle.accessibility_score = float(np.clip(bundle.accessibility_score + score_delta, 0.0, 1.0))
+        bundle.replay_priority = float(np.clip(bundle.replay_priority + 0.01, 0.0, 1.0))
         if bundle.reactivation_count >= 3:
             bundle.stability_level = "stable"
         elif bundle.reactivation_count >= 1:
@@ -160,9 +321,11 @@ class EpisodicMemory:
         while len(self._bundles) > self.memory_budget:
             victim = min(
                 self._bundles.values(),
-                key=lambda b: (b.accessibility_score + 0.05 * b.reactivation_count, b.created_frame),
+                key=_budget_score,
             )
             del self._bundles[victim.episode_id]
+            if victim.track_id is not None and self._active_episode_by_track.get(int(victim.track_id)) == victim.episode_id:
+                del self._active_episode_by_track[int(victim.track_id)]
 
 
 def _cue_signatures(cue: ObjectFile | dict[str, np.ndarray]) -> dict[str, np.ndarray]:
@@ -204,3 +367,37 @@ def _temporal_similarity(left: np.ndarray, right: np.ndarray) -> float:
         return 0.5
     gap = abs(float(left.reshape(-1)[0]) - float(right.reshape(-1)[0]))
     return float(np.exp(-gap / 48.0))
+
+
+def _ema_signature(old: np.ndarray, new: np.ndarray, alpha: float) -> np.ndarray:
+    if old.size == 0:
+        return new.astype(np.float32, copy=True)
+    if new.size == 0:
+        return old.astype(np.float32, copy=True)
+    dim = min(old.size, new.size)
+    out = old.astype(np.float32, copy=True)
+    out.reshape(-1)[:dim] = alpha * out.reshape(-1)[:dim] + (1.0 - alpha) * new.reshape(-1)[:dim]
+    return out
+
+
+def _running_mean(previous_mean: float, new_value: float, count: int) -> float:
+    if count <= 1:
+        return float(new_value)
+    return float(previous_mean + (new_value - previous_mean) / float(count))
+
+
+def _budget_score(bundle: EpisodicBundle) -> tuple[float, int]:
+    stability_bonus = {"stable": 0.35, "stabilizing": 0.20, "candidate": 0.05, "latent": 0.0}.get(
+        bundle.stability_level,
+        0.0,
+    )
+    closed_penalty = -0.10 if bundle.closed else 0.05
+    score = (
+        bundle.accessibility_score
+        + 0.07 * bundle.reactivation_count
+        + stability_bonus
+        + 0.02 * min(bundle.observation_count, 10)
+        + 0.05 * bundle.replay_priority
+        + closed_penalty
+    )
+    return (float(score), int(bundle.created_frame))

@@ -6,10 +6,12 @@ claim to implement a full brain model; this stage only creates explicit
 object-file, episodic-memory, and predictive-recognition interfaces.
 """
 
+from .cognitive_event import CognitiveEvent
 from .object_file import ObjectFile, ObjectFileBuilder, SupportMaskSummary
 
 __all__ = [
     "CognitiveFrameResult",
+    "CognitiveEvent",
     "ObjectFile",
     "ObjectFileBuilder",
     "PredictiveRecognizer",

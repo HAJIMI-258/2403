@@ -78,8 +78,13 @@ class VisualCognitiveLoopSmokeTest(unittest.TestCase):
             self.assertEqual(result.frame_index, frame_idx)
             self.assertIsInstance(result.object_files, list)
             self.assertIsInstance(result.recognition_decisions, list)
+            self.assertIsInstance(result.cognitive_events, list)
             self.assertLessEqual(len(result.attended_object_files), loop.attention_gate.max_attended_objects)
             self.assertIn("attended_object_ratio", result.metrics_snapshot)
+            self.assertIn("memory_context_available", result.metrics_snapshot)
+            if frame_idx >= 2:
+                self.assertTrue(result.memory_context_used)
+            self.assertLessEqual(len(loop.episodic_memory), loop.episodic_memory.memory_budget)
 
         self.assertEqual(len(results), 10)
         self.assertGreaterEqual(len(loop.episodic_memory), 0)

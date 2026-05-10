@@ -1,0 +1,17 @@
+{
+  "stage": "CORE-1G",
+  "positive_pair_count": 564,
+  "negative_pair_count": 6000,
+  "hard_negative_pair_count": 96,
+  "positive_precision_eval_only": 1.0,
+  "negative_precision_eval_only": 1.0,
+  "train_positive_pairs": 320,
+  "dev_positive_pairs": 134,
+  "test_positive_pairs": 110,
+  "negative_controls_passed": 1,
+  "dense_diagnostic_pair_mining_ready": 1,
+  "main_online_training_ready": 0,
+  "oracle_leakage_found": 0,
+  "main_constraint": "Pairs are derived from CORE-1F GT event ledger and are diagnostic/upper-bound only, not main online training labels.",
+  "next_recommendation": "CORE-1H dense diagnostic encoder upper-bound, isolated from main NOPS"
+}

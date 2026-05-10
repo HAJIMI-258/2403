@@ -1,0 +1,20 @@
+{
+  "stage": "CORE-1D",
+  "stable_query_positive_event_count": 3,
+  "stable_query_positive_event_ids": [
+    "M-RE-TC-009",
+    "M-RE-TC-012",
+    "M-RE-TC-013"
+  ],
+  "baseline_top1": 0.4117647058823529,
+  "best_ablation": "A0_current_NOPS_passive",
+  "best_online_top1": 0.4117647058823529,
+  "frozen_random_top1": 0.0,
+  "best_false_bundle_retrieval_rate": 0.5882352941176471,
+  "best_focus_success_count": 3,
+  "negative_controls_passed": 1,
+  "passed_minimum": 0,
+  "oracle_leakage_found": 0,
+  "main_failure_type": "insufficient_real_query_positive_coverage",
+  "next_recommendation": "CORE-1E generate more real query positives; stable positives are too sparse for reliable online encoder integration"
+}

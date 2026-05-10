@@ -1,0 +1,20 @@
+{
+  "artifact_version": "v1",
+  "core1e_negative_pair_precision_eval_only": 0.967741935483871,
+  "core1e_positive_pair_precision_eval_only": 0.9590163934426229,
+  "core1e_pseudo_pair_mining_passed": 1,
+  "dense_eval_available": 1,
+  "dense_eval_baseline_top1": 0.9530364372469635,
+  "dense_eval_curriculum_w005_top1": 0.9530364372469635,
+  "event_holdout_auc": 0.9253419919656589,
+  "event_holdout_shuffled_auc": 0.4949420524955807,
+  "main_failure_type": "",
+  "next_recommendation": "CORE-1E3 integrate only with held-out validated objective",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "random_pair_auc": 0.9185185185185185,
+  "sequence_holdout_auc": 0.9204559883987197,
+  "sequence_holdout_shuffled_auc": 0.5113577747547497,
+  "split_generalization_passed": 1,
+  "stage": "CORE-1E2"
+}

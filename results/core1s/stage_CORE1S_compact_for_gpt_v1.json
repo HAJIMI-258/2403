@@ -1,0 +1,17 @@
+{
+  "artifact_version": "v1",
+  "best_gate": "A3_score050_cost_le_050",
+  "best_matched_assignment_rate_eval_only": 0.2548192771084337,
+  "best_negative_pair_count": 638,
+  "best_negative_pair_precision_eval_only": 0.38087774294670845,
+  "best_positive_pair_count": 313,
+  "best_positive_pair_precision_eval_only": 0.7092651757188498,
+  "best_variant": "A7_quality035_nms040_max12",
+  "next_recommendation": "proposal postprocess insufficient; repair objectness/localization model before encoder training",
+  "oracle_leakage_found": 0,
+  "postprocess_pair_gate_passed": 0,
+  "runtime_sec": 360.36715709999953,
+  "selected_sequence_count": 2,
+  "selected_window_count": 6,
+  "stage": "CORE-1S"
+}

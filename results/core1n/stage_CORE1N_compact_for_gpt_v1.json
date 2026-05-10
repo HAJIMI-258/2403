@@ -1,0 +1,17 @@
+{
+  "artifact_version": "v1",
+  "assignment_observation_count": 474,
+  "negative_pair_count": 559,
+  "negative_pair_precision_eval_only": 1.0,
+  "next_recommendation": "front-end objectness/proposal repair is the blocker; oracle proposals make pair mining viable",
+  "oracle_leakage_found": 0,
+  "pair_mining_upper_bound_passed": 1,
+  "positive_pair_count": 450,
+  "positive_pair_precision_eval_only": 1.0,
+  "proposal_mode": "oracle_gt_box_memory_only",
+  "runtime_sec": 79.84036430000015,
+  "safe_for_main_online_training": 0,
+  "selected_sequence_count": 2,
+  "selected_window_count": 6,
+  "stage": "CORE-1N"
+}

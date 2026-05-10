@@ -1,0 +1,19 @@
+{
+  "artifact_version": "v1",
+  "config": "configs/bridge_synth_generic_v1.yaml",
+  "descriptor_available_rate": 1.0,
+  "fallback_window_count": 3,
+  "mean_same_event_margin": 0.03951991597811381,
+  "next_recommendation": "CORE-1L windowed tracker pair mining on selected rendered windows",
+  "processed_event_count": 6,
+  "random_top1_rate": 0.3611111111111111,
+  "raw_frame_cache_written": 0,
+  "runtime_sec": 180.28526349999993,
+  "same_event_top1_rate": 0.8333333333333334,
+  "selected_sequence_count": 3,
+  "selected_window_count": 12,
+  "stage": "CORE-1K",
+  "tracker_executed": 0,
+  "window_cache_smoke_passed": 1,
+  "window_plan": "results/core1j/stage_CORE1J_window_plan_v1.csv"
+}

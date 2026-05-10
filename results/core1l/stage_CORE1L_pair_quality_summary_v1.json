@@ -1,0 +1,8 @@
+{
+  "main_pair_failure_reason": "insufficient_count_or_precision",
+  "negative_pair_count": 6535,
+  "negative_pair_precision_eval_only": 0.06778882938026014,
+  "positive_pair_count": 1344,
+  "positive_pair_precision_eval_only": 0.23958333333333334,
+  "usable_for_training_smoke": 0
+}

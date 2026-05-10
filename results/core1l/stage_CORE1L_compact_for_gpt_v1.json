@@ -1,0 +1,15 @@
+{
+  "artifact_version": "v1",
+  "matched_obs_rate": 0.29083577679632505,
+  "negative_pair_count": 6535,
+  "negative_pair_precision_eval_only": 0.06778882938026014,
+  "next_recommendation": "repair tracker pair mining confidence gates before encoder training",
+  "oracle_leakage_found": 0,
+  "pair_mining_passed": 0,
+  "positive_pair_count": 1344,
+  "positive_pair_precision_eval_only": 0.23958333333333334,
+  "runtime_sec": 150.2985434000002,
+  "selected_sequence_count": 2,
+  "selected_window_count": 6,
+  "stage": "CORE-1L"
+}

@@ -1,0 +1,21 @@
+{
+  "artifact_version": "v1",
+  "baseline_false_old_recall_count": 23,
+  "baseline_top1": 0.9535353535353536,
+  "bounded_wait_horizon": 10,
+  "delayed_old_recall_count": 60,
+  "end_to_end_smoke_passed": 1,
+  "false_old_recall_reduction": 6,
+  "next_recommendation": "CORE-1AV run broader seed/sequence regression for bounded-wait memory policy",
+  "oracle_leakage_found": 0,
+  "passed_minimum": 1,
+  "policy_coverage": 0.9676767676767677,
+  "policy_false_old_recall_count": 17,
+  "policy_old_recall_precision": 0.964509394572025,
+  "policy_violation_count": 0,
+  "query_count": 495,
+  "released_wrong_count": 0,
+  "stage": "CORE-1AU",
+  "threshold": 0.0194,
+  "unresolved_count": 16
+}

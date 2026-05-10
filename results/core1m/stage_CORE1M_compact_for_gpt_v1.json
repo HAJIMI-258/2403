@@ -1,0 +1,17 @@
+{
+  "artifact_version": "v1",
+  "assignment_observation_count": 1043,
+  "best_gate": "A3_score050_cost_le_050",
+  "best_negative_pair_count": 678,
+  "best_negative_pair_precision_eval_only": 0.37905604719764013,
+  "best_positive_pair_count": 350,
+  "best_positive_pair_precision_eval_only": 0.6485714285714286,
+  "matched_assignment_rate": 0.38656056681544787,
+  "next_recommendation": "repair objectness/tracker observation quality before encoder training",
+  "oracle_leakage_found": 0,
+  "pair_mining_gate_passed": 0,
+  "runtime_sec": 102.40006240000002,
+  "selected_sequence_count": 2,
+  "selected_window_count": 6,
+  "stage": "CORE-1M"
+}

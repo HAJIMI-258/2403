@@ -1,0 +1,10 @@
+{
+  "positive_pair_count": 2509,
+  "negative_pair_count": 2590,
+  "hard_negative_count": 505,
+  "positive_pair_precision_eval_only": 1.0,
+  "negative_pair_precision_eval_only": 1.0,
+  "ambiguous_pair_count": 0,
+  "usable_for_training": 1,
+  "main_pair_failure_reason": ""
+}

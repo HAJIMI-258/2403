@@ -1,0 +1,23 @@
+{
+  "stage": "CORE-1",
+  "pair_mining_passed": 1,
+  "positive_pair_count": 2509,
+  "negative_pair_count": 2590,
+  "positive_pair_precision_eval_only": 1.0,
+  "negative_pair_precision_eval_only": 1.0,
+  "best_ablation": "A0_current_NOPS_passive",
+  "baseline_top1": 0.4117647058823529,
+  "best_online_encoder_top1": 0.4117647058823529,
+  "frozen_random_top1": 0.0,
+  "false_bundle_retrieval_rate": 0.5882352941176471,
+  "focus_success_count": 3,
+  "strict_anchor_real_svr": 0.7058823529411765,
+  "strict_anchor_shuffled_svr": 0.23529411764705882,
+  "wrong_old_prototype_visible_count": 2,
+  "encoder_collapse_metric": 0.007550978101789951,
+  "memory_growth": 48,
+  "negative_controls_passed": 0,
+  "oracle_leakage_found": 0,
+  "passed_minimum": 0,
+  "next_recommendation": "query-memory alignment failed; learned bundle embeddings do not retrieve re-entry cues better than random"
+}

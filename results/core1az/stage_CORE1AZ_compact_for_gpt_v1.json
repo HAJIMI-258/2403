@@ -1,0 +1,15 @@
+{
+  "artifact_version": "v1",
+  "best_confirmed_false_old_recall_reduction": 8,
+  "best_confirmed_policy_coverage": 0.9730134932533733,
+  "best_confirmed_policy_precision": 0.9614791987673343,
+  "best_confirmed_query_count": 667,
+  "core1_milestone_frozen": 1,
+  "learned_metric_integrated": 0,
+  "next_core_stage": "CORE-2 object-file consolidation and uncertainty-driven evidence handling",
+  "parameter_sensitivity_passed": 1,
+  "passed_minimum": 1,
+  "stage": "CORE-1AZ",
+  "uncertainty_policy_default_enabled": 0,
+  "uncertainty_policy_experimental_available": 1
+}

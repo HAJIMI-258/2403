@@ -1,0 +1,22 @@
+{
+  "artifact_version": "v1",
+  "best_false_old_recall_reduction": 8,
+  "best_horizon": 10,
+  "best_policy_coverage": 0.9730134932533733,
+  "best_policy_precision": 0.9614791987673343,
+  "best_released_wrong_count": 0,
+  "best_threshold": 0.0194,
+  "canonical_config_passed": 1,
+  "canonical_horizon": 10,
+  "canonical_threshold": 0.0194,
+  "config_count": 28,
+  "eligible_config_count": 14,
+  "horizon_count": 4,
+  "next_recommendation": "CORE-1AZ freeze CORE-1 uncertainty policy milestone and prepare next core model objective",
+  "oracle_leakage_found": 0,
+  "parameter_sensitivity_passed": 1,
+  "passed_minimum": 1,
+  "query_count": 667,
+  "stage": "CORE-1AY",
+  "threshold_count": 7
+}

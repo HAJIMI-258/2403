@@ -10,6 +10,7 @@ from .decision_policy import (
 )
 from .episodic_memory import EpisodicBundle, EpisodicMemory, RetrievedEpisode
 from .prototype_memory import FrameMemoryResult, MinimalPrototypeMemory, PrototypeAssignment, PrototypeState
+from .retrieval_context import RetrievalContext
 
 __all__ = [
     "EpisodicBundle",
@@ -21,6 +22,7 @@ __all__ = [
     "PrototypeAssignment",
     "PrototypeState",
     "RetrievedEpisode",
+    "RetrievalContext",
     "RetrievalState",
     "assert_safe_side_effects",
     "can_release_after_wait",

@@ -22,6 +22,7 @@ from nops_owr.evaluation.cognitive_metrics import (
     prediction_error_mean,
 )
 from nops_owr.memory.episodic_memory import EpisodicMemory, RetrievedEpisode
+from nops_owr.memory.retrieval_context import RetrievalContext
 
 
 @dataclass(slots=True)
@@ -124,6 +125,7 @@ class VisualCognitiveLoop:
         reactivated_episode_ids: list[int] = []
         cognitive_events: list[CognitiveEvent] = []
         episodic_retrievals: dict[str, list[RetrievedEpisode]] = {}
+        retrieval_contexts: dict[str, RetrievalContext] = {}
         assignment_by_proposal = {
             int(assignment.proposal_index): assignment for assignment in getattr(tracking_output, "assignments", [])
         }
@@ -140,19 +142,22 @@ class VisualCognitiveLoop:
             )
 
         for object_file in attended_object_files:
-            candidates = self.episodic_memory.retrieve(object_file, top_k=5)
+            retrieval_context = self._determine_retrieval_context(object_file, tracking_output, frame_index)
+            retrieval_contexts[object_file.object_file_id] = retrieval_context
+            candidates = self.episodic_memory.retrieve(object_file, top_k=5, context=retrieval_context)
             episodic_retrievals[object_file.object_file_id] = candidates
             decision = self.recognizer.recognize(
                 object_file,
                 tracking_assignment=assignment_by_proposal.get(object_file.proposal_index),
                 episodic_candidates=candidates,
                 prototype_result=memory_output,
+                retrieval_mode=retrieval_context.mode,
             )
             recognition_decisions.append(decision)
             if decision.linked_track_id is not None:
                 self._last_decision_by_track[int(decision.linked_track_id)] = decision
                 self._last_seen_track_frame[int(decision.linked_track_id)] = int(frame_index)
-            cognitive_events.append(self._decision_event(frame_index, object_file, decision))
+            cognitive_events.append(self._decision_event(frame_index, object_file, decision, candidates))
             if self._should_write_episode(object_file, decision):
                 active_episode_id = (
                     self._active_episode_by_track.get(int(decision.linked_track_id))
@@ -207,6 +212,22 @@ class VisualCognitiveLoop:
             "active_episode_count": float(len(self._active_episode_by_track)),
             "memory_context_available": float(memory_context_used),
             "episode_reactivation_count": float(len(reactivated_episode_ids)),
+            "continuous_decision_count": float(
+                sum(1 for ctx in retrieval_contexts.values() if ctx.mode == "continuous")
+            ),
+            "reentry_decision_count": float(sum(1 for ctx in retrieval_contexts.values() if ctx.mode == "reentry")),
+            "general_decision_count": float(sum(1 for ctx in retrieval_contexts.values() if ctx.mode == "general")),
+            "active_conflict_count": float(
+                sum(1 for rows in episodic_retrievals.values() if rows and rows[0].active_conflict)
+            ),
+            "low_margin_uncertain_count": float(
+                sum(
+                    1
+                    for decision in recognition_decisions
+                    if decision.decision_type == "uncertain_hold"
+                    and decision.metadata.get("rejection_reason") == "low_retrieval_margin"
+                )
+            ),
         }
         self._prev_memory_output = memory_output
         return CognitiveFrameResult(
@@ -270,6 +291,39 @@ class VisualCognitiveLoop:
             states.extend(list(getattr(tracking_output, field_name, []) or []))
         return states
 
+    def _determine_retrieval_context(
+        self,
+        object_file: ObjectFile,
+        tracking_output: Any,
+        frame_index: int,
+    ) -> RetrievalContext:
+        active_track_ids = {
+            int(track.track_id)
+            for track in list(getattr(tracking_output, "active_tracks", []) or [])
+            if getattr(track, "track_id", None) is not None
+        }
+        track_id = object_file.linked_track_id
+        if track_id is not None and int(track_id) in self._active_episode_by_track:
+            mode = "continuous"
+            prefer_closed = False
+        elif track_id is not None:
+            mode = "reentry"
+            prefer_closed = True
+        else:
+            mode = "general"
+            prefer_closed = False
+        return RetrievalContext(
+            frame_index=int(frame_index),
+            query_track_id=None if track_id is None else int(track_id),
+            query_prototype_id=object_file.linked_prototype_id,
+            query_concept_id=object_file.linked_concept_id,
+            active_track_ids=active_track_ids,
+            mode=mode,
+            min_reentry_gap=8,
+            prefer_closed_episodes=prefer_closed,
+            suppress_active_conflicts=True,
+        )
+
     def _attach_ground_truth_metadata(self, object_files: list[ObjectFile], ground_truth: dict[str, Any]) -> None:
         boxes = list(ground_truth.get("boxes", []) or [])
         instance_ids = list(ground_truth.get("instance_ids", []) or [])
@@ -305,6 +359,7 @@ class VisualCognitiveLoop:
         frame_index: int,
         object_file: ObjectFile,
         decision: RecognitionDecision,
+        candidates: list[RetrievedEpisode] | None = None,
     ) -> CognitiveEvent:
         mapping = {
             "same_instance": "same_instance_recognized",
@@ -313,7 +368,22 @@ class VisualCognitiveLoop:
             "uncertain_hold": "uncertain_hold",
             "familiar_but_unresolved": "familiar_unresolved",
         }
-        return self._event(frame_index, mapping.get(decision.decision_type, "uncertain_hold"), object_file, decision)
+        top1 = candidates[0] if candidates else None
+        metadata = {
+            "retrieval_mode": decision.metadata.get("retrieval_mode", "general"),
+            "top1_episode_id": None if top1 is None else top1.bundle.episode_id,
+            "top1_score": 0.0 if top1 is None else top1.score,
+            "top1_margin": 0.0 if top1 is None else top1.margin_to_next,
+            "active_conflict": False if top1 is None else top1.active_conflict,
+            "rejection_reason": decision.metadata.get("rejection_reason", ""),
+        }
+        return self._event(
+            frame_index,
+            mapping.get(decision.decision_type, "uncertain_hold"),
+            object_file,
+            decision,
+            metadata=metadata,
+        )
 
     def _event(
         self,

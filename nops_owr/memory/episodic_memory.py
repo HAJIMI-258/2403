@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 
 from nops_owr.cognition.object_file import ObjectFile
+from nops_owr.memory.retrieval_context import RetrievalContext
 
 
 @dataclass(slots=True)
@@ -51,6 +52,13 @@ class RetrievedEpisode:
     bundle: EpisodicBundle
     score: float
     evidence_breakdown: dict[str, float]
+    rank: int = 0
+    margin_to_next: float = 0.0
+    retrieval_mode: str = "general"
+    active_conflict: bool = False
+    closed_bonus: float = 0.0
+    reentry_gap: int = 0
+    status_penalty: float = 0.0
 
 
 class EpisodicMemory:
@@ -268,11 +276,17 @@ class EpisodicMemory:
             metadata=metadata,
         )
 
-    def retrieve(self, cue: ObjectFile | dict[str, np.ndarray], top_k: int = 5) -> list[RetrievedEpisode]:
+    def retrieve(
+        self,
+        cue: ObjectFile | dict[str, np.ndarray],
+        top_k: int = 5,
+        context: RetrievalContext | None = None,
+    ) -> list[RetrievedEpisode]:
         if not self._bundles:
             return []
         cue_signatures = _cue_signatures(cue)
         results: list[RetrievedEpisode] = []
+        retrieval_mode = "general" if context is None else context.mode
         for bundle in self._bundles.values():
             breakdown = {
                 "content": _cosine(cue_signatures["content"], bundle.content_signature),
@@ -283,7 +297,7 @@ class EpisodicMemory:
                 "disappearance": _cosine(cue_signatures["disappearance"], bundle.disappearance_signature),
                 "accessibility": float(bundle.accessibility_score),
             }
-            score = (
+            base_score = (
                 0.28 * breakdown["content"]
                 + 0.22 * breakdown["support"]
                 + 0.18 * breakdown["context"]
@@ -292,8 +306,26 @@ class EpisodicMemory:
                 + 0.07 * breakdown["disappearance"]
                 + 0.05 * breakdown["accessibility"]
             )
-            results.append(RetrievedEpisode(bundle=bundle, score=float(score), evidence_breakdown=breakdown))
+            adjusted_score, context_breakdown = _context_adjustment(base_score, bundle, context)
+            breakdown.update(context_breakdown)
+            results.append(
+                RetrievedEpisode(
+                    bundle=bundle,
+                    score=float(adjusted_score),
+                    evidence_breakdown=breakdown,
+                    retrieval_mode=retrieval_mode,
+                    active_conflict=bool(context_breakdown["active_conflict"]),
+                    closed_bonus=float(context_breakdown["closed_bonus"]),
+                    reentry_gap=int(context_breakdown["reentry_gap"]),
+                    status_penalty=float(context_breakdown["status_penalty"]),
+                )
+            )
         results.sort(key=lambda item: item.score, reverse=True)
+        for index, item in enumerate(results):
+            item.rank = index + 1
+            item.margin_to_next = float(item.score - results[index + 1].score) if index + 1 < len(results) else float(item.score)
+            item.evidence_breakdown["rank"] = float(item.rank)
+            item.evidence_breakdown["margin_to_next"] = float(item.margin_to_next)
         return results[: int(top_k)]
 
     def update_reactivation(self, episode_id: int, frame_index: int, score_delta: float = 0.03) -> None:
@@ -367,6 +399,73 @@ def _temporal_similarity(left: np.ndarray, right: np.ndarray) -> float:
         return 0.5
     gap = abs(float(left.reshape(-1)[0]) - float(right.reshape(-1)[0]))
     return float(np.exp(-gap / 48.0))
+
+
+def _context_adjustment(
+    base_score: float,
+    bundle: EpisodicBundle,
+    context: RetrievalContext | None,
+) -> tuple[float, dict[str, float | bool]]:
+    if context is None:
+        return float(base_score), {
+            "base_score": float(base_score),
+            "adjusted_score": float(base_score),
+            "closed_bonus": 0.0,
+            "reentry_gap_bonus": 0.0,
+            "active_conflict_penalty": 0.0,
+            "status_penalty": 0.0,
+            "active_conflict": False,
+            "bundle_closed": bool(bundle.closed),
+            "reentry_gap": 0,
+        }
+
+    last_observed = bundle.last_observed_frame if bundle.last_observed_frame is not None else bundle.frame_end
+    reentry_gap = max(0, int(context.frame_index) - int(last_observed))
+    active_conflict = (
+        context.suppress_active_conflicts
+        and bundle.track_id is not None
+        and int(bundle.track_id) in context.active_track_ids
+        and (context.query_track_id is None or int(bundle.track_id) != int(context.query_track_id))
+    )
+    closed_bonus = 0.0
+    reentry_gap_bonus = 0.0
+    active_conflict_penalty = 0.0
+    status_penalty = 0.0
+
+    if context.mode == "reentry":
+        if context.prefer_closed_episodes and bundle.closed:
+            closed_bonus = 0.06
+        if reentry_gap >= int(context.min_reentry_gap):
+            reentry_gap_bonus = 0.04
+        if active_conflict:
+            active_conflict_penalty = -0.18
+        if context.query_track_id is not None and bundle.track_id == context.query_track_id:
+            status_penalty = -0.05
+        if not bundle.closed and not active_conflict:
+            status_penalty += -0.02
+    elif context.mode == "continuous":
+        if context.query_track_id is not None and bundle.track_id == context.query_track_id and not bundle.closed:
+            closed_bonus = 0.04
+        if bundle.closed:
+            status_penalty = -0.04
+        if active_conflict:
+            active_conflict_penalty = -0.08
+    elif active_conflict:
+        active_conflict_penalty = -0.10
+
+    adjusted = float(base_score + closed_bonus + reentry_gap_bonus + active_conflict_penalty + status_penalty)
+    adjusted = float(np.clip(adjusted, 0.0, 1.0))
+    return adjusted, {
+        "base_score": float(base_score),
+        "adjusted_score": adjusted,
+        "closed_bonus": float(closed_bonus),
+        "reentry_gap_bonus": float(reentry_gap_bonus),
+        "active_conflict_penalty": float(active_conflict_penalty),
+        "status_penalty": float(status_penalty),
+        "active_conflict": bool(active_conflict),
+        "bundle_closed": bool(bundle.closed),
+        "reentry_gap": int(reentry_gap),
+    }
 
 
 def _ema_signature(old: np.ndarray, new: np.ndarray, alpha: float) -> np.ndarray:

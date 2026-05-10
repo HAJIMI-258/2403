@@ -1,0 +1,15 @@
+{
+  "all_negative_pair_count": 148,
+  "artifact_version": "v1",
+  "best_curriculum": "C0_all_high_conf_negatives",
+  "best_negative_pair_count": 148,
+  "best_negative_pair_precision_eval_only": 0.777027027027027,
+  "best_positive_pair_count": 136,
+  "best_positive_pair_precision_eval_only": 0.9485294117647058,
+  "negative_curriculum_passed": 0,
+  "next_recommendation": "safe negatives insufficient in same-frame windows; mine cross-window/cross-event negatives or repair fragmentation",
+  "oracle_leakage_found": 0,
+  "positive_pair_count": 136,
+  "ready_for_encoder_training": 0,
+  "stage": "CORE-1W"
+}

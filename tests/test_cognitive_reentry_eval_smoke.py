@@ -94,8 +94,19 @@ class CognitiveReentryEvalSmokeTest(unittest.TestCase):
 
         output_dir = Path(tempfile.mkdtemp(prefix="cognitive_reentry_smoke_"))
         try:
-            summary = run_eval(sequences=1, max_frames=30, output_dir=output_dir, seed=13)
+            summary = run_eval(
+                sequences=1,
+                max_frames=60,
+                output_dir=output_dir,
+                seed=13,
+                force_reentry_events=True,
+                guaranteed_reentry_count=1,
+                reentry_visibility_mode="hard_hide",
+            )
+            self.assertGreater(summary["reentry_event_count"], 0)
             self.assertIn("reentry_event_count", summary)
+            self.assertIn("benchmark_valid", summary)
+            self.assertIn("benchmark_status", summary)
             self.assertIn("false_resurrection_rate", summary)
             self.assertIn("false_resurrection_rate_at_reentry", summary)
             self.assertIn("long_gap_reentry_success_rate", summary)

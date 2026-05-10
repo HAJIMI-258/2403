@@ -142,7 +142,14 @@ class VisualCognitiveLoop:
             )
 
         for object_file in attended_object_files:
-            retrieval_context = self._determine_retrieval_context(object_file, tracking_output, frame_index)
+            probe_context = self._base_retrieval_context(object_file, tracking_output, frame_index, mode="general")
+            probe_candidates = self.episodic_memory.retrieve(object_file, top_k=1, context=probe_context)
+            retrieval_context = self._determine_retrieval_context(
+                object_file,
+                tracking_output,
+                frame_index,
+                probe_candidates,
+            )
             retrieval_contexts[object_file.object_file_id] = retrieval_context
             candidates = self.episodic_memory.retrieve(object_file, top_k=5, context=retrieval_context)
             episodic_retrievals[object_file.object_file_id] = candidates
@@ -296,6 +303,29 @@ class VisualCognitiveLoop:
         object_file: ObjectFile,
         tracking_output: Any,
         frame_index: int,
+        probe_candidates: list[RetrievedEpisode] | None = None,
+    ) -> RetrievalContext:
+        track_id = object_file.linked_track_id
+        if track_id is not None and int(track_id) in self._active_episode_by_track:
+            return self._base_retrieval_context(object_file, tracking_output, frame_index, mode="continuous")
+
+        top = probe_candidates[0] if probe_candidates else None
+        if (
+            top is not None
+            and top.bundle.closed
+            and top.reentry_gap >= 8
+            and top.score >= 0.45
+        ):
+            return self._base_retrieval_context(object_file, tracking_output, frame_index, mode="reentry")
+
+        return self._base_retrieval_context(object_file, tracking_output, frame_index, mode="general")
+
+    def _base_retrieval_context(
+        self,
+        object_file: ObjectFile,
+        tracking_output: Any,
+        frame_index: int,
+        mode: str,
     ) -> RetrievalContext:
         active_track_ids = {
             int(track.track_id)
@@ -303,15 +333,7 @@ class VisualCognitiveLoop:
             if getattr(track, "track_id", None) is not None
         }
         track_id = object_file.linked_track_id
-        if track_id is not None and int(track_id) in self._active_episode_by_track:
-            mode = "continuous"
-            prefer_closed = False
-        elif track_id is not None:
-            mode = "reentry"
-            prefer_closed = True
-        else:
-            mode = "general"
-            prefer_closed = False
+        prefer_closed = mode == "reentry"
         return RetrievalContext(
             frame_index=int(frame_index),
             query_track_id=None if track_id is None else int(track_id),

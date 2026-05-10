@@ -55,6 +55,9 @@ def run_sweep(
                     "unresolved_but_target_in_topk_rate": summary["unresolved_but_target_in_topk_rate"],
                     "target_episode_top5_rate": summary["target_episode_top5_rate"],
                     "reentry_event_count": summary["reentry_event_count"],
+                    "benchmark_status": summary["benchmark_status"],
+                    "actual_reentry_event_count": summary["actual_reentry_event_count"],
+                    "benchmark_valid": int(bool(summary["benchmark_valid"])),
                     "failure_buckets": json.dumps(summary["failure_buckets"], sort_keys=True),
                 }
             )

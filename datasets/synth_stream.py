@@ -42,6 +42,12 @@ class BridgeSyntheticConfig:
     crossing_probability: float = 0.0
     target_deformation_strength: float = 0.0
     low_contrast_probability: float = 0.0
+    force_reentry_events: bool = False
+    guaranteed_reentry_count: int = 0
+    reentry_visibility_mode: str = "natural_exit"
+    min_pre_visible_frames: int = 6
+    min_post_visible_frames: int = 6
+    actual_reentry_gap_range: tuple[int, int] = (8, 18)
 
 
 @dataclass(slots=True)
@@ -83,7 +89,12 @@ class SynthDatasetConfig:
             bridge_synthetic=BridgeSyntheticConfig(
                 occlusion_duration_range=tuple(bridge_payload.get("occlusion_duration_range", (16, 32))),
                 reentry_gap_range=tuple(bridge_payload.get("reentry_gap_range", (12, 24))),
-                **{key: value for key, value in bridge_payload.items() if key not in {"occlusion_duration_range", "reentry_gap_range"}},
+                actual_reentry_gap_range=tuple(bridge_payload.get("actual_reentry_gap_range", (8, 18))),
+                **{
+                    key: value
+                    for key, value in bridge_payload.items()
+                    if key not in {"occlusion_duration_range", "reentry_gap_range", "actual_reentry_gap_range"}
+                },
             ),
             outputs=tuple(dataset.get("outputs", ("frame", "boxes", "masks", "instance_id", "concept_id"))),
         )
@@ -103,6 +114,7 @@ class FrameSample:
     blur_level: float = 0.0
     noise_level: float = 0.0
     reentry_event: bool = False
+    lifecycle_events: list[dict[str, object]] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -110,6 +122,17 @@ class SequenceSample:
     sequence_id: int
     frames: list[FrameSample]
     metadata: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class _ReentryEventPlan:
+    instance_id: int
+    disappear_frame: int
+    reappear_frame: int
+    gap_length: int
+    mode: str
+    exit_edge: str | None
+    return_edge: str | None
 
 
 @dataclass(slots=True)
@@ -128,6 +151,8 @@ class _ObjectState:
     return_edge: str | None
     contrast_gain: float
     deformation_phase: float
+    forced_hidden_until: int | None
+    reentry_plan: _ReentryEventPlan | None
 
 
 @dataclass(slots=True)
@@ -158,7 +183,7 @@ class SyntheticStreamGenerator:
 
         frames: list[FrameSample] = []
         for frame_idx in range(self.config.sequence_length):
-            returned_ids = self._update_objects(objects, rng, frame_idx, occlusion_event)
+            lifecycle_events = self._update_objects(objects, rng, frame_idx, occlusion_event)
             camera_jitter = self._sample_camera_jitter(rng)
             frame, drift_strength = self._build_background(rng, frame_idx, camera_jitter)
             frame_sample = self._render_frame(
@@ -168,14 +193,26 @@ class SyntheticStreamGenerator:
                 frame_idx,
                 camera_jitter,
                 drift_strength,
-                reentry_event=bool(returned_ids),
+                lifecycle_events=lifecycle_events,
             )
             frames.append(frame_sample)
 
+        planned_events = [self._reentry_plan_to_dict(obj.reentry_plan) for obj in objects if obj.reentry_plan is not None]
+        actual_events = self._build_actual_visibility_events(frames)
+        min_actual_gap = self.config.bridge_synthetic.actual_reentry_gap_range[0]
+        validation = self._validate_reentry_events(planned_events, actual_events, min_gap=min_actual_gap)
         metadata = {
             "difficulty_preset": self.config.bridge_synthetic.difficulty_preset,
             "active_concept_count": len({obj.concept_id for obj in objects}),
             "planned_reentry_events": sum(int(obj.return_frame is not None) for obj in objects),
+            "planned_reentry_event_rows": planned_events,
+            "actual_reentry_events": actual_events,
+            "actual_long_gap_reentry_count": int(
+                sum(int(event["gap_length"] >= min_actual_gap) for event in actual_events)
+            ),
+            "benchmark_valid": bool(validation["benchmark_valid"]),
+            "benchmark_invalid_reason": validation["benchmark_invalid_reason"],
+            "event_ledger_discovery_mismatch_count": int(validation["event_ledger_discovery_mismatch_count"]),
             "planned_long_occlusion_events": int(
                 occlusion_event is not None
                 and (occlusion_event.end - occlusion_event.start) >= max(24, self.config.sequence_length // 18)
@@ -205,7 +242,14 @@ class SyntheticStreamGenerator:
             velocity = self._sample_velocity(rng)
             base_scale = float(rng.uniform(*self.config.object_scale_range))
             base_intensity = float(rng.uniform(0.85, 1.05))
-            exit_frame, return_frame, exit_edge, return_edge = self._sample_reentry_plan(rng)
+            reentry_plan = self._sample_forced_reentry_plan(rng, instance_id)
+            if reentry_plan is None:
+                exit_frame, return_frame, exit_edge, return_edge = self._sample_reentry_plan(rng)
+            else:
+                exit_frame = reentry_plan.disappear_frame
+                return_frame = reentry_plan.reappear_frame
+                exit_edge = reentry_plan.exit_edge
+                return_edge = reentry_plan.return_edge
             contrast_gain = (
                 float(rng.uniform(0.25, 0.55))
                 if self.config.bridge_synthetic.enabled and rng.random() < self.config.bridge_synthetic.low_contrast_probability
@@ -229,10 +273,47 @@ class SyntheticStreamGenerator:
                     return_edge=return_edge,
                     contrast_gain=contrast_gain,
                     deformation_phase=deformation_phase,
+                    forced_hidden_until=None,
+                    reentry_plan=reentry_plan,
                 )
             )
 
         return objects
+
+    def _sample_forced_reentry_plan(
+        self, rng: np.random.Generator, instance_id: int
+    ) -> _ReentryEventPlan | None:
+        bridge = self.config.bridge_synthetic
+        if not bridge.enabled or not bridge.force_reentry_events:
+            return None
+        if instance_id >= max(0, int(bridge.guaranteed_reentry_count)):
+            return None
+        if bridge.reentry_visibility_mode not in {"natural_exit", "hard_hide"}:
+            return None
+
+        gap_low, gap_high = bridge.actual_reentry_gap_range
+        gap_length = int(rng.integers(gap_low, max(gap_low + 1, gap_high + 1)))
+        min_pre = int(max(1, bridge.min_pre_visible_frames))
+        min_post = int(max(1, bridge.min_post_visible_frames))
+        latest_disappear = int(self.config.sequence_length - min_post - gap_length - 1)
+        if latest_disappear < min_pre:
+            return None
+
+        span = max(1, latest_disappear - min_pre + 1)
+        disappear_frame = min_pre + int((instance_id * max(2, gap_low // 2 + 1)) % span)
+        reappear_frame = int(disappear_frame + gap_length + 1)
+        edges = ("left", "right", "top", "bottom")
+        exit_edge = str(rng.choice(edges))
+        return_edge = str(rng.choice(edges))
+        return _ReentryEventPlan(
+            instance_id=int(instance_id),
+            disappear_frame=int(disappear_frame),
+            reappear_frame=int(reappear_frame),
+            gap_length=int(gap_length),
+            mode=bridge.reentry_visibility_mode,
+            exit_edge=exit_edge,
+            return_edge=return_edge,
+        )
 
     def _sample_reentry_plan(
         self, rng: np.random.Generator
@@ -274,22 +355,121 @@ class SyntheticStreamGenerator:
         )
         return _OcclusionEvent(pair=pair, start=start, end=end, target=target)
 
+    def _reentry_plan_to_dict(self, plan: _ReentryEventPlan | None) -> dict[str, object]:
+        if plan is None:
+            return {}
+        return {
+            "instance_id": int(plan.instance_id),
+            "disappear_frame": int(plan.disappear_frame),
+            "reappear_frame": int(plan.reappear_frame),
+            "gap_length": int(plan.gap_length),
+            "mode": plan.mode,
+            "exit_edge": plan.exit_edge,
+            "return_edge": plan.return_edge,
+        }
+
+    def _lifecycle_event(self, event_type: str, plan: _ReentryEventPlan) -> dict[str, object]:
+        payload = self._reentry_plan_to_dict(plan)
+        payload["event_type"] = event_type
+        return payload
+
+    def _build_actual_visibility_events(self, frames: list[FrameSample]) -> list[dict[str, object]]:
+        visible_by_frame = {
+            int(frame.frame_index): set(int(instance_id) for instance_id in frame.instance_ids)
+            for frame in frames
+        }
+        all_ids = sorted(set().union(*visible_by_frame.values())) if visible_by_frame else []
+        events: list[dict[str, object]] = []
+        for instance_id in all_ids:
+            last_visible: int | None = None
+            absent_count = 0
+            for frame in frames:
+                frame_idx = int(frame.frame_index)
+                visible = int(instance_id) in visible_by_frame[frame_idx]
+                if visible:
+                    if absent_count > 0 and last_visible is not None:
+                        events.append(
+                            {
+                                "instance_id": int(instance_id),
+                                "disappear_frame": int(last_visible),
+                                "reappear_frame": int(frame_idx),
+                                "gap_length": int(absent_count),
+                                "mode": "actual_visibility",
+                            }
+                        )
+                    last_visible = frame_idx
+                    absent_count = 0
+                elif last_visible is not None:
+                    absent_count += 1
+        return events
+
+    def _validate_reentry_events(
+        self,
+        planned: list[dict[str, object]],
+        actual: list[dict[str, object]],
+        min_gap: int,
+    ) -> dict[str, object]:
+        actual_keys = {
+            (int(event["instance_id"]), int(event["disappear_frame"]), int(event["reappear_frame"]))
+            for event in actual
+            if int(event.get("gap_length", 0)) >= int(min_gap)
+        }
+        planned_keys = {
+            (int(event["instance_id"]), int(event["disappear_frame"]), int(event["reappear_frame"]))
+            for event in planned
+            if int(event.get("gap_length", 0)) >= int(min_gap)
+        }
+        mismatch_count = len(planned_keys - actual_keys)
+        actual_long_gap_count = len(actual_keys)
+        forced = bool(self.config.bridge_synthetic.force_reentry_events)
+        guaranteed = int(self.config.bridge_synthetic.guaranteed_reentry_count)
+        benchmark_valid = actual_long_gap_count > 0 and (not forced or actual_long_gap_count >= min(guaranteed, len(planned_keys)))
+        reason = ""
+        if not benchmark_valid:
+            if not actual:
+                reason = "no_actual_reentry_events"
+            elif actual_long_gap_count == 0:
+                reason = "no_actual_long_gap_reentry_events"
+            elif forced:
+                reason = "guaranteed_reentry_count_not_met"
+        return {
+            "benchmark_valid": benchmark_valid,
+            "benchmark_invalid_reason": reason,
+            "event_ledger_discovery_mismatch_count": int(mismatch_count),
+        }
+
     def _update_objects(
         self,
         objects: list[_ObjectState],
         rng: np.random.Generator,
         frame_idx: int,
         occlusion_event: _OcclusionEvent | None,
-    ) -> list[int]:
+    ) -> list[dict[str, object]]:
         height, width = self.config.resolution
         margin = self.config.spawn_margin
-        returned_ids: list[int] = []
+        lifecycle_events: list[dict[str, object]] = []
 
         for obj in objects:
+            plan = obj.reentry_plan
+            if plan is not None and plan.mode == "hard_hide":
+                if frame_idx == plan.disappear_frame:
+                    lifecycle_events.append(self._lifecycle_event("disappear", plan))
+                if plan.disappear_frame < frame_idx < plan.reappear_frame:
+                    obj.active = False
+                    obj.forced_hidden_until = plan.reappear_frame
+                    continue
+                if frame_idx == plan.reappear_frame:
+                    obj.center, obj.velocity = self._spawn_from_edge(rng, plan.return_edge or "left")
+                    obj.active = True
+                    obj.forced_hidden_until = None
+                    lifecycle_events.append(self._lifecycle_event("reappear", plan))
+
             if obj.return_frame is not None and frame_idx == obj.return_frame:
-                obj.center, obj.velocity = self._spawn_from_edge(rng, obj.return_edge or "left")
-                obj.active = True
-                returned_ids.append(obj.instance_id)
+                if not (plan is not None and plan.mode == "hard_hide"):
+                    obj.center, obj.velocity = self._spawn_from_edge(rng, obj.return_edge or "left")
+                    obj.active = True
+                    if plan is not None:
+                        lifecycle_events.append(self._lifecycle_event("reappear", plan))
 
             if not obj.active:
                 continue
@@ -320,6 +500,8 @@ class SyntheticStreamGenerator:
             if exiting:
                 if self._is_outside(obj.center, width, height, margin):
                     obj.active = False
+                    if plan is not None:
+                        lifecycle_events.append(self._lifecycle_event("disappear", plan))
                 continue
 
             if obj.center[0] < margin or obj.center[0] > width - margin:
@@ -328,7 +510,7 @@ class SyntheticStreamGenerator:
             if obj.center[1] < margin or obj.center[1] > height - margin:
                 obj.velocity[1] *= -1.0
                 obj.center[1] = np.clip(obj.center[1], margin, height - margin)
-        return returned_ids
+        return lifecycle_events
 
     def _build_background(
         self,
@@ -412,7 +594,7 @@ class SyntheticStreamGenerator:
         frame_idx: int,
         camera_jitter: np.ndarray,
         drift_strength: float,
-        reentry_event: bool,
+        lifecycle_events: list[dict[str, object]],
     ) -> FrameSample:
         height, width = self.config.resolution
         owner_map = np.full((height, width), -1, dtype=np.int32)
@@ -470,7 +652,8 @@ class SyntheticStreamGenerator:
             drift_strength=float(drift_strength),
             blur_level=float(blur_level),
             noise_level=float(noise_level),
-            reentry_event=bool(reentry_event),
+            reentry_event=any(event.get("event_type") == "reappear" for event in lifecycle_events),
+            lifecycle_events=lifecycle_events,
         )
 
     def _shape_mask_and_color(

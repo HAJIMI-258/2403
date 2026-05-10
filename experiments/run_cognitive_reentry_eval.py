@@ -104,11 +104,20 @@ def run_eval(
     strict_min_iou: float = 0.25,
     top_k_audit: int = 5,
     recognizer_kwargs: dict[str, Any] | None = None,
+    force_reentry_events: bool = True,
+    guaranteed_reentry_count: int = 2,
+    reentry_visibility_mode: str = "hard_hide",
 ) -> dict[str, Any]:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     seed_values = seeds if seeds is not None else [seed]
-    config = _build_config(sequences=sequences, max_frames=max_frames)
+    config = _build_config(
+        sequences=sequences,
+        max_frames=max_frames,
+        force_reentry_events=force_reentry_events,
+        guaranteed_reentry_count=guaranteed_reentry_count,
+        reentry_visibility_mode=reentry_visibility_mode,
+    )
 
     frame_rows: list[dict[str, Any]] = []
     reentry_rows: list[dict[str, Any]] = []
@@ -119,6 +128,12 @@ def run_eval(
     total_extended = 0
     total_reactivated = 0
     final_episode_memory_size = 0
+    planned_reentry_event_count = 0
+    actual_reentry_event_count = 0
+    discovered_reentry_event_count = 0
+    mismatch_count = 0
+    benchmark_valid_sequences = 0
+    benchmark_invalid_reasons: Counter[str] = Counter()
 
     for seed_value in seed_values:
         generator = SyntheticStreamGenerator(config, seed=seed_value)
@@ -130,6 +145,24 @@ def run_eval(
                 continue
             loop = _build_loop(recognizer_kwargs=recognizer_kwargs)
             results_by_frame: dict[int, CognitiveFrameResult] = {}
+            planned_events = list(sequence.metadata.get("planned_reentry_event_rows", []) or [])
+            actual_events = [
+                event for event in list(sequence.metadata.get("actual_reentry_events", []) or [])
+                if int(event.get("gap_length", 0)) >= int(min_gap)
+            ]
+            discovered_events = _discover_reentry_events(frames, min_gap=min_gap)
+            planned_reentry_event_count += len(planned_events)
+            actual_reentry_event_count += len(actual_events)
+            discovered_reentry_event_count += len(discovered_events)
+            mismatch_count += _event_mismatch_count(actual_events, discovered_events)
+            if bool(sequence.metadata.get("benchmark_valid", False)) and actual_events:
+                benchmark_valid_sequences += 1
+            else:
+                reason = str(sequence.metadata.get("benchmark_invalid_reason", "invalid_no_reentry_events") or "invalid_no_reentry_events")
+                benchmark_invalid_reasons[reason] += 1
+            events_by_reappear_frame: dict[int, list[dict[str, Any]]] = defaultdict(list)
+            for event in actual_events:
+                events_by_reappear_frame[int(event["reappear_frame"])].append(dict(event))
 
             for idx in range(1, len(frames)):
                 prev_sample = frames[idx - 1]
@@ -152,22 +185,18 @@ def run_eval(
                 total_extended += len([event for event in result.cognitive_events if event.event_type == "episode_extended"])
                 total_reactivated += len(result.reactivated_episode_ids)
                 frame_rows.append(_frame_row(output_sequence_id, result))
-
-            reentry_events = _discover_reentry_events(frames, min_gap=min_gap)
-            for event in reentry_events:
-                result = results_by_frame.get(event["reappear_frame"])
-                sample = frames[int(event["reappear_frame"])] if int(event["reappear_frame"]) < len(frames) else None
-                reentry_rows.append(
-                    _reentry_row(
-                        output_sequence_id,
-                        event,
-                        result,
-                        loop,
-                        sample,
-                        strict_min_iou=strict_min_iou,
-                        top_k_audit=top_k_audit,
+                for event in events_by_reappear_frame.get(int(sample.frame_index), []):
+                    reentry_rows.append(
+                        _reentry_row(
+                            output_sequence_id,
+                            event,
+                            result,
+                            loop,
+                            sample,
+                            strict_min_iou=strict_min_iou,
+                            top_k_audit=top_k_audit,
+                        )
                     )
-                )
             final_episode_memory_size += len(loop.episodic_memory)
 
     _write_csv(output_path / "frame_metrics.csv", frame_rows, FRAME_FIELDNAMES)
@@ -183,13 +212,26 @@ def run_eval(
         episodic_memory_size=final_episode_memory_size,
         reentry_rows=reentry_rows,
         decisions=all_decisions,
+        planned_reentry_event_count=planned_reentry_event_count,
+        actual_reentry_event_count=actual_reentry_event_count,
+        discovered_reentry_event_count=discovered_reentry_event_count,
+        event_ledger_discovery_mismatch_count=mismatch_count,
+        benchmark_valid_sequence_count=benchmark_valid_sequences,
+        benchmark_invalid_reasons=dict(benchmark_invalid_reasons),
+        total_sequence_count=len(seed_values) * sequences,
     )
     (output_path / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     (output_path / "report.md").write_text(_report(summary, reentry_rows), encoding="utf-8")
     return summary
 
 
-def _build_config(sequences: int, max_frames: int) -> SynthDatasetConfig:
+def _build_config(
+    sequences: int,
+    max_frames: int,
+    force_reentry_events: bool = True,
+    guaranteed_reentry_count: int = 2,
+    reentry_visibility_mode: str = "hard_hide",
+) -> SynthDatasetConfig:
     return SynthDatasetConfig(
         name="cognitive_reentry_eval",
         resolution=(128, 128),
@@ -227,6 +269,12 @@ def _build_config(sequences: int, max_frames: int) -> SynthDatasetConfig:
             crossing_probability=0.20,
             target_deformation_strength=0.05,
             low_contrast_probability=0.10,
+            force_reentry_events=force_reentry_events,
+            guaranteed_reentry_count=guaranteed_reentry_count,
+            reentry_visibility_mode=reentry_visibility_mode,
+            min_pre_visible_frames=8,
+            min_post_visible_frames=8,
+            actual_reentry_gap_range=(8, 18),
         ),
         outputs=("frame", "boxes", "masks", "instance_id", "concept_id"),
     )
@@ -278,6 +326,18 @@ def _discover_reentry_events(frames: list[Any], min_gap: int) -> list[dict[str, 
                 first_absent = sample.frame_index if first_absent is None else first_absent
                 absent_count += 1
     return events
+
+
+def _event_mismatch_count(left: list[dict[str, Any]], right: list[dict[str, Any]]) -> int:
+    left_keys = {
+        (int(event["instance_id"]), int(event["disappear_frame"]), int(event["reappear_frame"]))
+        for event in left
+    }
+    right_keys = {
+        (int(event["instance_id"]), int(event["disappear_frame"]), int(event["reappear_frame"]))
+        for event in right
+    }
+    return len(left_keys.symmetric_difference(right_keys))
 
 
 def _reentry_row(
@@ -415,11 +475,20 @@ def _find_target_episode(loop: VisualCognitiveLoop, instance_id: int, reappear_f
     candidates = [
         bundle
         for bundle in loop.episodic_memory.bundles
-        if bundle.metadata.get("gt_instance_id") == instance_id and int(bundle.frame_start) < int(reappear_frame)
+        if bundle.metadata.get("gt_instance_id") == instance_id
+        and int(bundle.frame_start) < int(reappear_frame)
+        and int(bundle.last_observed_frame if bundle.last_observed_frame is not None else bundle.frame_end) < int(reappear_frame)
     ]
     if not candidates:
         return None
-    return max(candidates, key=lambda bundle: (bundle.observation_count, bundle.frame_end))
+    return max(
+        candidates,
+        key=lambda bundle: (
+            int(bundle.closed),
+            int(bundle.last_observed_frame if bundle.last_observed_frame is not None else bundle.frame_end),
+            int(bundle.observation_count),
+        ),
+    )
 
 
 def _gap_bucket(gap_length: int) -> str:
@@ -480,6 +549,13 @@ def _summary(
     episodic_memory_size: int,
     reentry_rows: list[dict[str, Any]],
     decisions: list[Any],
+    planned_reentry_event_count: int,
+    actual_reentry_event_count: int,
+    discovered_reentry_event_count: int,
+    event_ledger_discovery_mismatch_count: int,
+    benchmark_valid_sequence_count: int,
+    benchmark_invalid_reasons: dict[str, int],
+    total_sequence_count: int,
 ) -> dict[str, Any]:
     reentry_count = len(reentry_rows)
     decision_counts = Counter(getattr(decision, "decision_type", "unknown") for decision in decisions)
@@ -503,9 +579,21 @@ def _summary(
     episode_update_ratio = (
         (episode_write_count + episode_extend_count) / object_file_count if object_file_count else 0.0
     )
+    benchmark_valid = actual_reentry_event_count > 0 and event_ledger_discovery_mismatch_count == 0
+    benchmark_status = "valid" if benchmark_valid else "invalid_no_reentry_events"
+    if actual_reentry_event_count > 0 and event_ledger_discovery_mismatch_count:
+        benchmark_status = "invalid_event_ledger_mismatch"
     return {
-        "sequence_count": sequences,
+        "sequence_count": total_sequence_count,
         "frame_count": frame_count,
+        "benchmark_valid": bool(benchmark_valid),
+        "benchmark_status": benchmark_status,
+        "planned_reentry_event_count": int(planned_reentry_event_count),
+        "actual_reentry_event_count": int(actual_reentry_event_count),
+        "discovered_reentry_event_count": int(discovered_reentry_event_count),
+        "event_ledger_discovery_mismatch_count": int(event_ledger_discovery_mismatch_count),
+        "benchmark_valid_rate": benchmark_valid_sequence_count / total_sequence_count if total_sequence_count else 0.0,
+        "benchmark_invalid_reason": "" if benchmark_valid else json.dumps(benchmark_invalid_reasons, sort_keys=True),
         "object_file_count": object_file_count,
         "attended_object_ratio_mean": attended_object_ratio(attended_count, object_file_count),
         "episodic_memory_size": episodic_memory_size,
@@ -588,6 +676,10 @@ def _report(summary: dict[str, Any], reentry_rows: list[dict[str, Any]]) -> str:
         "# Cognitive Re-entry Evaluation\n\n"
         "This is a synthetic mechanism evaluation for event-aware visual memory. "
         "GT is used only for matching/evaluation and episode metadata audit, not for online scoring.\n\n"
+        f"- benchmark_status: {summary['benchmark_status']}\n"
+        f"- actual_reentry_event_count: {summary['actual_reentry_event_count']}\n"
+        f"- discovered_reentry_event_count: {summary['discovered_reentry_event_count']}\n"
+        f"- event_ledger_discovery_mismatch_count: {summary['event_ledger_discovery_mismatch_count']}\n"
         f"- reentry_event_count: {summary['reentry_event_count']}\n"
         f"- long_gap_reentry_success_rate: {summary['long_gap_reentry_success_rate']:.4f}\n"
         f"- false_resurrection_rate_at_reentry: {summary['false_resurrection_rate_at_reentry']:.4f}\n"
@@ -599,7 +691,13 @@ def _report(summary: dict[str, Any], reentry_rows: list[dict[str, Any]]) -> str:
         + "\n".join(table)
         + "\n\n"
         f"Top failure bucket: `{top_bucket}`.\n\n"
-        "Interpretation guide: perception failures appear as `no_object_file_matched`, "
+        + (
+            "No valid re-entry events were found. This benchmark run cannot be interpreted as an algorithm "
+            "recovery failure.\n\n"
+            if summary["benchmark_status"] != "valid"
+            else ""
+        )
+        + "Interpretation guide: perception failures appear as `no_object_file_matched`, "
         "attention failures as `attention_missed_object`, memory-write failures as "
         "`target_episode_missing`, retrieval failures as `target_not_in_topk` or "
         "`target_in_topk_but_low_rank`, and decision failures as `low_margin_uncertain`, "
@@ -622,6 +720,9 @@ def main() -> None:
     parser.add_argument("--top-k-audit", type=int, default=5)
     parser.add_argument("--same-instance-margin-threshold", type=float, default=0.08)
     parser.add_argument("--reentry-same-instance-threshold", type=float, default=0.76)
+    parser.add_argument("--force-reentry-events", type=int, default=1)
+    parser.add_argument("--guaranteed-reentry-count", type=int, default=2)
+    parser.add_argument("--reentry-visibility-mode", type=str, default="hard_hide")
     args = parser.parse_args()
     seeds = [int(value.strip()) for value in args.seeds.split(",") if value.strip()] or None
     summary = run_eval(
@@ -637,6 +738,9 @@ def main() -> None:
             "same_instance_margin_threshold": args.same_instance_margin_threshold,
             "reentry_same_instance_threshold": args.reentry_same_instance_threshold,
         },
+        force_reentry_events=bool(args.force_reentry_events),
+        guaranteed_reentry_count=args.guaranteed_reentry_count,
+        reentry_visibility_mode=args.reentry_visibility_mode,
     )
     print(json.dumps(summary, indent=2))
 

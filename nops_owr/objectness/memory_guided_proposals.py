@@ -29,6 +29,9 @@ class MemoryGuidedProposalConfig:
     nms_iou: float = 0.55
     min_episode_gap: int = 8
     default_window_fracs: tuple[float, ...] = (0.14, 0.22, 0.32)
+    use_template_matching: bool = False
+    template_match_count: int = 8
+    template_stride_frac: float = 0.45
 
 
 class MemoryGuidedProposalAugmenter:
@@ -62,7 +65,7 @@ class MemoryGuidedProposalAugmenter:
         merged = base + added
         merged.sort(
             key=lambda proposal: (
-                proposal.source_score if proposal.source == "memory_guided_window" else proposal.quality_score,
+                proposal.source_score if proposal.source.startswith("memory_") else proposal.quality_score,
                 proposal.quality_score,
                 proposal.score,
             ),
@@ -93,16 +96,28 @@ class MemoryGuidedProposalAugmenter:
         height, width = heatmap.shape
         sizes = _episode_window_sizes(bundle, (height, width), self.config.default_window_fracs)
         peaks = _heatmap_peaks(heatmap, count=max(4, self.config.windows_per_episode), radius=max(4, min(height, width) // 10))
-        centers: list[tuple[float, float]] = []
+        centers: list[tuple[float, float, float]] = []
         centers.append(_context_center(bundle, (height, width)))
-        centers.extend(peaks)
+        centers.extend((x, y, 0.0) for x, y in peaks)
+        if self.config.use_template_matching:
+            # Template matching is diagnostic and can dominate runtime on real
+            # video, so only scan the most episode-like window sizes.
+            template_sizes = sizes[:2] if len(sizes) > 2 else sizes
+            centers = _template_match_centers(
+                bundle,
+                encoding,
+                template_sizes,
+                count=self.config.template_match_count,
+                stride_frac=self.config.template_stride_frac,
+            ) + centers
         proposals: list[Proposal] = []
         for box_w, box_h in sizes:
             for center in centers:
                 if len(proposals) >= self.config.windows_per_episode:
                     return proposals
-                box = _box_from_center(center, box_w, box_h, (height, width))
-                proposal = _proposal_from_window(box, bundle, heatmap, encoding, frame_index)
+                cx, cy, template_score = center
+                box = _box_from_center((cx, cy), box_w, box_h, (height, width))
+                proposal = _proposal_from_window(box, bundle, heatmap, encoding, frame_index, template_score=template_score)
                 proposals.append(proposal)
         return proposals
 
@@ -113,6 +128,7 @@ def _proposal_from_window(
     heatmap: np.ndarray,
     encoding: SpikeEncoding,
     frame_index: int,
+    template_score: float = 0.0,
 ) -> Proposal:
     x1, y1, x2, y2 = box
     patch = heatmap[y1:y2, x1:x2].astype(np.float32)
@@ -127,11 +143,12 @@ def _proposal_from_window(
     shape_score = _shape_score(box, heatmap.shape, bundle.support_signature)
     closed_prior = 1.0 if bundle.closed else 0.0
     final_score = float(
-        0.30 * appearance_score
-        + 0.25 * shape_score
-        + 0.25 * heatmap_score
+        0.24 * appearance_score
+        + 0.22 * shape_score
+        + 0.20 * heatmap_score
+        + 0.24 * template_score
         + 0.10 * float(bundle.accessibility_score)
-        + 0.10 * closed_prior
+        + 0.00 * closed_prior
     )
     fill_ratio = float(area / max(1, patch.shape[0] * patch.shape[1]))
     return Proposal(
@@ -148,10 +165,11 @@ def _proposal_from_window(
         compactness=0.0,
         boundary_smoothness=0.0,
         near_boundary=int(x1 <= 4 or y1 <= 4 or x2 >= heatmap.shape[1] - 4 or y2 >= heatmap.shape[0] - 4),
-        source="memory_guided_window",
+        source="memory_template_window" if template_score > 0.0 else "memory_guided_window",
         source_score=final_score,
         metadata={
             "memory_guided_window": 1,
+            "memory_template_window": int(template_score > 0.0),
             "source_episode_id": int(bundle.episode_id),
             "source_track_id": "" if bundle.track_id is None else int(bundle.track_id),
             "source_prototype_id": "" if bundle.prototype_id is None else int(bundle.prototype_id),
@@ -161,6 +179,7 @@ def _proposal_from_window(
             "memory_appearance_score": appearance_score,
             "memory_shape_score": shape_score,
             "memory_heatmap_score": heatmap_score,
+            "memory_template_score": template_score,
             "memory_frame_index": int(frame_index),
         },
     )
@@ -203,12 +222,78 @@ def _clip_size(value: float, limit: int) -> int:
     return int(max(8, min(round(value), int(limit))))
 
 
-def _context_center(bundle: EpisodicBundle, frame_shape: tuple[int, int]) -> tuple[float, float]:
+def _context_center(bundle: EpisodicBundle, frame_shape: tuple[int, int]) -> tuple[float, float, float]:
     height, width = frame_shape
     context = np.asarray(bundle.context_signature, dtype=np.float32).reshape(-1)
     if context.size >= 2:
-        return (float(context[0]) * width, float(context[1]) * height)
-    return (width * 0.5, height * 0.5)
+        return (float(context[0]) * width, float(context[1]) * height, 0.0)
+    return (width * 0.5, height * 0.5, 0.0)
+
+
+def _template_match_centers(
+    bundle: EpisodicBundle,
+    encoding: SpikeEncoding,
+    sizes: list[tuple[int, int]],
+    *,
+    count: int,
+    stride_frac: float,
+) -> list[tuple[float, float, float]]:
+    gray_template = _metadata_template(bundle, "template_gray_16")
+    edge_template = _metadata_template(bundle, "template_edge_16")
+    if gray_template is None and edge_template is None:
+        return []
+    height, width = encoding.current_gray.shape
+    candidates: list[tuple[float, float, float]] = []
+    for box_w, box_h in sizes:
+        stride = max(4, int(round(min(box_w, box_h) * float(stride_frac))))
+        for y1 in range(0, max(1, height - box_h + 1), stride):
+            for x1 in range(0, max(1, width - box_w + 1), stride):
+                x2 = min(width, x1 + box_w)
+                y2 = min(height, y1 + box_h)
+                score = _template_score(
+                    box=(x1, y1, x2, y2),
+                    encoding=encoding,
+                    gray_template=gray_template,
+                    edge_template=edge_template,
+                )
+                candidates.append(((x1 + x2) * 0.5, (y1 + y2) * 0.5, max(score, 1e-6)))
+    candidates.sort(key=lambda row: row[2], reverse=True)
+    deduped: list[tuple[float, float, float]] = []
+    for candidate in candidates:
+        cx, cy, score = candidate
+        if any((cx - ox) ** 2 + (cy - oy) ** 2 <= 64.0 for ox, oy, _ in deduped):
+            continue
+        deduped.append(candidate)
+        if len(deduped) >= int(count):
+            break
+    return deduped
+
+
+def _metadata_template(bundle: EpisodicBundle, key: str) -> np.ndarray | None:
+    value = bundle.metadata.get(key)
+    if value is None:
+        return None
+    array = np.asarray(value, dtype=np.float32)
+    if array.size == 0:
+        return None
+    return array.reshape(16, 16) if array.size == 256 else array
+
+
+def _template_score(
+    *,
+    box: Box,
+    encoding: SpikeEncoding,
+    gray_template: np.ndarray | None,
+    edge_template: np.ndarray | None,
+) -> float:
+    scores: list[float] = []
+    if gray_template is not None:
+        scores.append(_patch_similarity(_resize_nearest(_crop_2d(encoding.current_gray, box), 16, 16), gray_template))
+    if edge_template is not None:
+        scores.append(_patch_similarity(_resize_nearest(_crop_2d(encoding.edge_map, box), 16, 16), edge_template))
+    if not scores:
+        return 0.0
+    return float(sum(scores) / len(scores))
 
 
 def _heatmap_peaks(heatmap: np.ndarray, *, count: int, radius: int) -> list[tuple[float, float]]:
@@ -285,6 +370,29 @@ def _crop_2d(array: np.ndarray, box: Box) -> np.ndarray:
     return array[y1:y2, x1:x2].astype(np.float32, copy=False)
 
 
+def _resize_nearest(patch: np.ndarray, out_h: int, out_w: int) -> np.ndarray:
+    if patch.size == 0:
+        return np.zeros((out_h, out_w), dtype=np.float32)
+    in_h, in_w = patch.shape[:2]
+    y_idx = np.clip(np.round(np.linspace(0, in_h - 1, out_h)).astype(np.int32), 0, in_h - 1)
+    x_idx = np.clip(np.round(np.linspace(0, in_w - 1, out_w)).astype(np.int32), 0, in_w - 1)
+    return patch[np.ix_(y_idx, x_idx)].astype(np.float32, copy=False)
+
+
+def _patch_similarity(left: np.ndarray, right: np.ndarray) -> float:
+    if left.size == 0 or right.size == 0:
+        return 0.0
+    dim = min(left.size, right.size)
+    a = left.reshape(-1)[:dim].astype(np.float32, copy=False)
+    b = right.reshape(-1)[:dim].astype(np.float32, copy=False)
+    a = a - float(np.mean(a))
+    b = b - float(np.mean(b))
+    denom = float(np.linalg.norm(a) * np.linalg.norm(b))
+    if denom <= 1e-8:
+        return 0.0
+    return float(np.clip((float(np.dot(a, b)) / denom + 1.0) * 0.5, 0.0, 1.0))
+
+
 def _cosine(left: np.ndarray, right: np.ndarray) -> float:
     if left.size == 0 or right.size == 0:
         return 0.0
@@ -309,4 +417,3 @@ def _box_iou(left: Box, right: Box) -> float:
     inter = (ix2 - ix1) * (iy2 - iy1)
     union = (lx2 - lx1) * (ly2 - ly1) + (rx2 - rx1) * (ry2 - ry1) - inter
     return 0.0 if union <= 0.0 else float(inter / union)
-

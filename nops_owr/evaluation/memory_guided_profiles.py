@@ -52,6 +52,32 @@ def memory_guided_profile_specs() -> list[dict[str, Any]]:
             "nms_iou": 0.50,
             "min_episode_gap": 8,
         },
+        {
+            "profile_name": "M4_closed_episode_template_windows_k16",
+            "enabled": True,
+            "max_memory_episodes": 3,
+            "windows_per_episode": 6,
+            "max_added_proposals": 8,
+            "max_total_proposals": 32,
+            "nms_iou": 0.50,
+            "min_episode_gap": 8,
+            "use_template_matching": True,
+            "template_match_count": 4,
+            "template_stride_frac": 0.75,
+        },
+        {
+            "profile_name": "M5_closed_episode_template_windows_k24",
+            "enabled": True,
+            "max_memory_episodes": 4,
+            "windows_per_episode": 8,
+            "max_added_proposals": 12,
+            "max_total_proposals": 36,
+            "nms_iou": 0.50,
+            "min_episode_gap": 8,
+            "use_template_matching": True,
+            "template_match_count": 5,
+            "template_stride_frac": 0.65,
+        },
     ]
 
 
@@ -72,4 +98,3 @@ def build_memory_guided_augmenter(profile_name: str) -> MemoryGuidedProposalAugm
     profile.pop("profile_name", None)
     config = MemoryGuidedProposalConfig(**profile)
     return MemoryGuidedProposalAugmenter(config=config)
-

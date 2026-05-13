@@ -27,8 +27,10 @@ class LaSOTMemoryGuidedSweepImportTest(unittest.TestCase):
                 pre_context=5,
                 post_context=3,
                 frame_stride=1,
+                profile_filter="M4_closed_episode_template_windows_k16",
             )
             self.assertEqual(summary["evaluated_event_count"], 1)
+            self.assertEqual(summary["profile_count"], 1)
             self.assertIn("best_profile", summary)
             self.assertTrue((Path(tmp) / "sweep" / "profile_summary.csv").exists())
 

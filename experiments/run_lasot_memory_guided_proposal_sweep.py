@@ -50,11 +50,23 @@ def run_sweep(
     objectness_profile: str = "A5_quantile_q060_k000_area8_props24",
     attention_profile: str = "A4_recall_max16",
     memory_guided_attention: int = 1,
+    profile_filter: str = "",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
-    for profile in memory_guided_profile_specs():
+    requested_profiles = _parse_profile_filter(profile_filter)
+    all_profiles = memory_guided_profile_specs()
+    known_profiles = {str(profile["profile_name"]) for profile in all_profiles}
+    missing_profiles = sorted(requested_profiles - known_profiles)
+    if missing_profiles:
+        raise ValueError(f"Unknown profile(s): {', '.join(missing_profiles)}")
+    profiles = [
+        profile
+        for profile in all_profiles
+        if not requested_profiles or str(profile["profile_name"]) in requested_profiles
+    ]
+    for profile in profiles:
         profile_name = str(profile["profile_name"])
         subdir = out / profile_name
         summary = run_eval(
@@ -102,6 +114,7 @@ def run_sweep(
         "objectness_profile": objectness_profile,
         "attention_profile": attention_profile,
         "memory_guided_attention": int(memory_guided_attention),
+        "profile_filter": profile_filter,
         "best_profile": best,
         "best_profile_summary": next((row for row in rows if row["memory_guided_profile"] == best), {}),
         "profile_count": len(rows),
@@ -127,6 +140,12 @@ def _select_best(rows: list[dict[str, Any]]) -> str:
         ),
     )
     return str(best["memory_guided_profile"])
+
+
+def _parse_profile_filter(profile_filter: str) -> set[str]:
+    if not profile_filter:
+        return set()
+    return {item.strip() for item in profile_filter.split(",") if item.strip()}
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
@@ -175,6 +194,11 @@ def main() -> None:
     parser.add_argument("--objectness-profile", default="A5_quantile_q060_k000_area8_props24")
     parser.add_argument("--attention-profile", default="A4_recall_max16")
     parser.add_argument("--memory-guided-attention", type=int, default=1)
+    parser.add_argument(
+        "--profile-filter",
+        default="",
+        help="Comma-separated memory-guided profile names to run. Empty runs all profiles.",
+    )
     args = parser.parse_args()
     summary = run_sweep(**vars(args))
     print(json.dumps(summary, indent=2, ensure_ascii=False))

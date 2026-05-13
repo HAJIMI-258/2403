@@ -100,6 +100,8 @@ class ObjectFileBuilder:
                         **dict(getattr(proposal, "metadata", {}) or {}),
                         "proposal_source": str(getattr(proposal, "source", "component")),
                         "proposal_source_score": float(getattr(proposal, "source_score", proposal.score)),
+                        "template_gray_16": _template_patch(encoding.current_gray, proposal.box, size=16).tolist(),
+                        "template_edge_16": _template_patch(encoding.edge_map, proposal.box, size=16).tolist(),
                     },
                 )
             )
@@ -181,6 +183,22 @@ def _crop_2d(array: np.ndarray, box: Box) -> np.ndarray:
     if x2 <= x1 or y2 <= y1:
         return np.zeros((0, 0), dtype=np.float32)
     return array[y1:y2, x1:x2].astype(np.float32, copy=False)
+
+
+def _template_patch(array: np.ndarray, box: Box, size: int = 16) -> np.ndarray:
+    patch = _crop_2d(array, box)
+    if patch.size == 0:
+        return np.zeros((size, size), dtype=np.float32)
+    return _resize_nearest(patch, size, size)
+
+
+def _resize_nearest(patch: np.ndarray, out_h: int, out_w: int) -> np.ndarray:
+    in_h, in_w = patch.shape[:2]
+    if in_h <= 0 or in_w <= 0:
+        return np.zeros((out_h, out_w), dtype=np.float32)
+    y_idx = np.clip(np.round(np.linspace(0, in_h - 1, out_h)).astype(np.int32), 0, in_h - 1)
+    x_idx = np.clip(np.round(np.linspace(0, in_w - 1, out_w)).astype(np.int32), 0, in_w - 1)
+    return patch[np.ix_(y_idx, x_idx)].astype(np.float32, copy=False)
 
 
 def _patch_stats(patch: np.ndarray) -> list[float]:

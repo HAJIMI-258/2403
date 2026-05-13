@@ -40,6 +40,33 @@ class MemoryGuidedProposalsTest(unittest.TestCase):
         self.assertIn("source_episode_id", memory_proposals[0].metadata)
         self.assertEqual(memory_proposals[0].metadata["source_episode_id"], episode_id)
 
+    def test_template_matching_adds_template_window_proposals(self) -> None:
+        encoding = _encoding()
+        memory = EpisodicMemory(memory_budget=16)
+        object_file = _object_file(frame_index=1)
+        episode_id = memory.begin_episode(object_file, frame_index=1, track_id=7, metadata={"gt_instance_id": 1})
+        memory.close_episode(episode_id, frame_index=2, close_reason="test")
+        output = _objectness_output(encoding)
+        augmenter = MemoryGuidedProposalAugmenter(
+            MemoryGuidedProposalConfig(
+                max_memory_episodes=1,
+                windows_per_episode=4,
+                max_added_proposals=4,
+                use_template_matching=True,
+                template_match_count=4,
+            )
+        )
+        proposals = augmenter.augment(
+            objectness_output=output,
+            encoding=encoding,
+            current_frame=None,
+            episodic_memory=memory,
+            frame_index=20,
+        )
+        template_proposals = [proposal for proposal in proposals if proposal.source == "memory_template_window"]
+        self.assertGreater(len(template_proposals), 0)
+        self.assertGreaterEqual(float(template_proposals[0].metadata["memory_template_score"]), 0.0)
+
 
 def _encoding() -> SpikeEncoding:
     heat = np.zeros((32, 32), dtype=np.float32)
@@ -94,6 +121,10 @@ def _object_file(frame_index: int) -> ObjectFile:
         context_signature=np.asarray([15 / 32, 15 / 32, 1.0, 0.0, 0.2, 0.2], dtype=np.float32),
         motion_signature=np.zeros(0, dtype=np.float32),
         confidence=0.8,
+        metadata={
+            "template_gray_16": np.ones((16, 16), dtype=np.float32),
+            "template_edge_16": np.ones((16, 16), dtype=np.float32),
+        },
     )
 
 

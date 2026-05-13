@@ -60,6 +60,18 @@ REENTRY_FIELDNAMES = [
     "target_episode_closed",
     "target_episode_rank",
     "target_episode_score",
+    "target_content_score",
+    "target_support_score",
+    "target_context_score",
+    "target_motion_score",
+    "target_temporal_score",
+    "target_accessibility_score",
+    "target_base_score",
+    "target_adjusted_score",
+    "target_closed_bonus",
+    "target_reentry_gap_bonus",
+    "target_active_conflict_penalty",
+    "target_status_penalty",
     "top1_episode_id",
     "top1_score",
     "top1_margin",
@@ -67,6 +79,19 @@ REENTRY_FIELDNAMES = [
     "top1_active_conflict",
     "top1_bundle_closed",
     "top1_reentry_gap",
+    "top1_content_score",
+    "top1_support_score",
+    "top1_context_score",
+    "top1_motion_score",
+    "top1_temporal_score",
+    "top1_accessibility_score",
+    "top1_base_score",
+    "top1_adjusted_score",
+    "top1_closed_bonus",
+    "top1_reentry_gap_bonus",
+    "top1_active_conflict_penalty",
+    "top1_status_penalty",
+    "score_gap_top1_minus_target",
     "topk_contains_target",
     "decision_type",
     "rejection_reason",
@@ -298,10 +323,12 @@ def _reentry_row(
         int(event.reappear_frame),
     )
     target_episode_id = None if target_episode is None else target_episode.episode_id
+    target_candidate = None
     target_rank = 0
     target_score = 0.0
     for candidate in retrievals:
         if target_episode_id is not None and candidate.bundle.episode_id == target_episode_id:
+            target_candidate = candidate
             target_rank = int(candidate.rank)
             target_score = float(candidate.score)
             break
@@ -346,6 +373,18 @@ def _reentry_row(
         "target_episode_closed": 0 if target_episode is None else int(target_episode.closed),
         "target_episode_rank": target_rank,
         "target_episode_score": target_score,
+        "target_content_score": _evidence(target_candidate, "content"),
+        "target_support_score": _evidence(target_candidate, "support"),
+        "target_context_score": _evidence(target_candidate, "context"),
+        "target_motion_score": _evidence(target_candidate, "motion"),
+        "target_temporal_score": _evidence(target_candidate, "temporal"),
+        "target_accessibility_score": _evidence(target_candidate, "accessibility"),
+        "target_base_score": _evidence(target_candidate, "base_score"),
+        "target_adjusted_score": _evidence(target_candidate, "adjusted_score"),
+        "target_closed_bonus": _evidence(target_candidate, "closed_bonus"),
+        "target_reentry_gap_bonus": _evidence(target_candidate, "reentry_gap_bonus"),
+        "target_active_conflict_penalty": _evidence(target_candidate, "active_conflict_penalty"),
+        "target_status_penalty": _evidence(target_candidate, "status_penalty"),
         "top1_episode_id": "" if top_episode is None else top_episode.episode_id,
         "top1_score": 0.0 if top1 is None else top1.score,
         "top1_margin": 0.0 if top1 is None else top1.margin_to_next,
@@ -353,6 +392,19 @@ def _reentry_row(
         "top1_active_conflict": 0 if top1 is None else int(top1.active_conflict),
         "top1_bundle_closed": 0 if top_episode is None else int(top_episode.closed),
         "top1_reentry_gap": 0 if top1 is None else top1.reentry_gap,
+        "top1_content_score": _evidence(top1, "content"),
+        "top1_support_score": _evidence(top1, "support"),
+        "top1_context_score": _evidence(top1, "context"),
+        "top1_motion_score": _evidence(top1, "motion"),
+        "top1_temporal_score": _evidence(top1, "temporal"),
+        "top1_accessibility_score": _evidence(top1, "accessibility"),
+        "top1_base_score": _evidence(top1, "base_score"),
+        "top1_adjusted_score": _evidence(top1, "adjusted_score"),
+        "top1_closed_bonus": _evidence(top1, "closed_bonus"),
+        "top1_reentry_gap_bonus": _evidence(top1, "reentry_gap_bonus"),
+        "top1_active_conflict_penalty": _evidence(top1, "active_conflict_penalty"),
+        "top1_status_penalty": _evidence(top1, "status_penalty"),
+        "score_gap_top1_minus_target": (0.0 if top1 is None or target_candidate is None else float(top1.score - target_candidate.score)),
         "topk_contains_target": topk_contains_target,
         "decision_type": decision_type,
         "rejection_reason": rejection_reason,
@@ -364,6 +416,13 @@ def _reentry_row(
         "novelty_score": 0.0 if decision is None else decision.novelty_score,
         "failure_bucket": bucket,
     }
+
+
+def _evidence(candidate: Any, key: str) -> float:
+    if candidate is None:
+        return 0.0
+    breakdown = getattr(candidate, "evidence_breakdown", {}) or {}
+    return float(breakdown.get(key, 0.0))
 
 
 def _matched_object(

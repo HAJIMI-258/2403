@@ -159,6 +159,7 @@ def run_eval(
                 int(frame.frame_idx),
                 ground_truth={
                     "boxes": scaled_boxes,
+                    # LaSOT is single-target; numeric id 1 is an eval-local target id.
                     "instance_ids": [1 for _ in scaled_boxes],
                     "concept_ids": [1 for _ in scaled_boxes],
                 },
@@ -234,13 +235,31 @@ def _reentry_row(
     gt_box: tuple[float, float, float, float] | None,
     strict_min_iou: float,
     oracle_gt_box_eval_only: bool,
+    oracle_force_query: bool = False,
 ) -> dict[str, Any]:
     instance_numeric_id = 1
     matched_object, matched_iou = _matched_object(result, instance_numeric_id, gt_box, strict_min_iou)
     retrievals = []
     decision = None
     object_attended = 0
-    if matched_object is not None:
+    if oracle_force_query and gt_box is not None:
+        matched_object = _oracle_object_file(result.encoding, gt_box, int(event.reappear_frame), str(event.sequence_id))
+        matched_iou = 1.0
+        object_attended = 1
+        retrieval_context = RetrievalContext(
+            frame_index=int(event.reappear_frame),
+            mode="reentry",
+            min_reentry_gap=8,
+            prefer_closed_episodes=True,
+            suppress_active_conflicts=True,
+        )
+        retrievals = loop.episodic_memory.retrieve(matched_object, top_k=5, context=retrieval_context)
+        decision = loop.recognizer.recognize(
+            matched_object,
+            episodic_candidates=retrievals,
+            retrieval_mode="reentry",
+        )
+    elif matched_object is not None:
         object_attended = int(any(row.object_file_id == matched_object.object_file_id for row in result.attended_object_files))
         retrievals = result.episodic_retrievals.get(matched_object.object_file_id, [])
         decision = next(

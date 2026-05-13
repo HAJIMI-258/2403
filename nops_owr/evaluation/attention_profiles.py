@@ -69,6 +69,28 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "motion_weight": 0.10,
             "low_familiarity_weight": 0.05,
         },
+        {
+            "profile_name": "A5_recall_max24",
+            "max_attended_objects": 24,
+            "min_quality": 0.00,
+            "quality_weight": 0.22,
+            "novelty_weight": 0.20,
+            "surprise_weight": 0.22,
+            "prediction_error_weight": 0.20,
+            "motion_weight": 0.11,
+            "low_familiarity_weight": 0.05,
+        },
+        {
+            "profile_name": "A6_diagnostic_max32",
+            "max_attended_objects": 32,
+            "min_quality": 0.00,
+            "quality_weight": 0.18,
+            "novelty_weight": 0.20,
+            "surprise_weight": 0.24,
+            "prediction_error_weight": 0.22,
+            "motion_weight": 0.11,
+            "low_familiarity_weight": 0.05,
+        },
     ]
 
 

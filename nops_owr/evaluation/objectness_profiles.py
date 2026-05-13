@@ -64,6 +64,30 @@ def objectness_profile_specs() -> list[dict[str, Any]]:
             "max_proposals": 24,
             "smoothing_kernel_size": 3,
         },
+        {
+            "profile_name": "A6_quantile_q055_saliency_windows_props32",
+            "threshold_mode": "quantile_local",
+            "q_obj": 0.55,
+            "local_k": 0.00,
+            "min_area": 6,
+            "max_proposals": 32,
+            "smoothing_kernel_size": 3,
+            "saliency_window_count": 12,
+            "saliency_window_fracs": (0.16, 0.24, 0.34),
+            "saliency_nms_iou": 0.55,
+        },
+        {
+            "profile_name": "A7_quantile_q050_saliency_windows_props48",
+            "threshold_mode": "quantile_local",
+            "q_obj": 0.50,
+            "local_k": 0.00,
+            "min_area": 4,
+            "max_proposals": 48,
+            "smoothing_kernel_size": 3,
+            "saliency_window_count": 20,
+            "saliency_window_fracs": (0.14, 0.22, 0.32, 0.44),
+            "saliency_nms_iou": 0.50,
+        },
     ]
 
 

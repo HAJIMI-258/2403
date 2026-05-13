@@ -67,6 +67,9 @@ class MinimalObjectnessField:
         smoothing_kernel_size: int = 5,
         min_area: int = 96,
         max_proposals: int = 8,
+        saliency_window_count: int = 0,
+        saliency_window_fracs: tuple[float, ...] | None = None,
+        saliency_nms_iou: float = 0.65,
     ) -> None:
         self.wb = float(wb)
         self.wt = float(wt)
@@ -82,6 +85,9 @@ class MinimalObjectnessField:
         self.smoothing_kernel_size = int(max(1, smoothing_kernel_size))
         self.min_area = int(min_area)
         self.max_proposals = int(max_proposals)
+        self.saliency_window_count = int(max(0, saliency_window_count))
+        self.saliency_window_fracs = tuple(float(v) for v in (saliency_window_fracs or (0.18, 0.28)))
+        self.saliency_nms_iou = float(np.clip(saliency_nms_iou, 0.0, 1.0))
         self._activation_memory: np.ndarray | None = None
         self._surprise_reference: np.ndarray | None = None
         self._habituation_memory: np.ndarray | None = None
@@ -147,6 +153,15 @@ class MinimalObjectnessField:
             min_area=self.min_area,
             max_proposals=self.max_proposals,
         )
+        if self.saliency_window_count > 0:
+            proposals = _append_saliency_window_proposals(
+                proposals=proposals,
+                score_map=normalized_objectness,
+                window_fracs=self.saliency_window_fracs,
+                window_count=self.saliency_window_count,
+                max_proposals=self.max_proposals,
+                nms_iou=self.saliency_nms_iou,
+            )
 
         return ObjectnessOutput(
             activation_map=activation_map,
@@ -263,6 +278,117 @@ def _extract_proposals(
         reverse=True,
     )
     return proposals[:max_proposals]
+
+
+def _append_saliency_window_proposals(
+    *,
+    proposals: list[Proposal],
+    score_map: np.ndarray,
+    window_fracs: tuple[float, ...],
+    window_count: int,
+    max_proposals: int,
+    nms_iou: float,
+) -> list[Proposal]:
+    """Add GT-free heatmap window proposals for fragmented real-video targets.
+
+    Connected components are still the primary proposal source. These windows
+    are an optional external-eval recall profile for cases where the target
+    only leaves fragmented edge/surprise evidence and no component covers the
+    object well.
+    """
+
+    if window_count <= 0 or max_proposals <= 0:
+        return proposals[:max_proposals]
+    height, width = score_map.shape
+    candidates: list[Proposal] = []
+    for frac in window_fracs:
+        window = int(round(float(frac) * min(height, width)))
+        window = max(8, min(window, height, width))
+        stride = max(4, window // 2)
+        for y1 in range(0, max(1, height - window + 1), stride):
+            for x1 in range(0, max(1, width - window + 1), stride):
+                x2 = min(width, x1 + window)
+                y2 = min(height, y1 + window)
+                if x2 <= x1 or y2 <= y1:
+                    continue
+                candidates.append(_saliency_window_proposal((x1, y1, x2, y2), score_map))
+        # Make sure the right/bottom border can still generate a candidate.
+        if height > window or width > window:
+            for y1 in {max(0, height - window)}:
+                for x1 in {max(0, width - window)}:
+                    candidates.append(_saliency_window_proposal((x1, y1, min(width, x1 + window), min(height, y1 + window)), score_map))
+
+    candidates.sort(key=lambda proposal: (proposal.quality_score, proposal.score, proposal.area), reverse=True)
+    merged = list(proposals)
+    added = 0
+    for candidate in candidates:
+        if added >= int(window_count):
+            break
+        if any(_box_iou(candidate.box, existing.box) >= nms_iou for existing in merged):
+            continue
+        merged.append(candidate)
+        added += 1
+    merged.sort(
+        key=lambda proposal: (
+            proposal.score + 0.35 * (proposal.quality_score - proposal.score),
+            proposal.quality_score,
+            proposal.area,
+        ),
+        reverse=True,
+    )
+    return merged[:max_proposals]
+
+
+def _saliency_window_proposal(box: Box, score_map: np.ndarray) -> Proposal:
+    x1, y1, x2, y2 = box
+    patch = score_map[y1:y2, x1:x2].astype(np.float32)
+    if patch.size == 0:
+        patch = np.zeros((1, 1), dtype=np.float32)
+    threshold = float(np.quantile(patch, 0.65)) if patch.size > 1 else float(patch.mean())
+    support_mask = patch >= threshold
+    if int(support_mask.sum()) == 0:
+        support_mask = np.ones_like(patch, dtype=bool)
+    area = int(max(1, support_mask.sum()))
+    score = float(0.70 * patch.mean() + 0.30 * patch.max())
+    fill_ratio = float(area / max(1, patch.shape[0] * patch.shape[1]))
+    compactness, boundary_smoothness = _region_shape_metrics(support_mask)
+    near_boundary = int(x1 <= 4 or y1 <= 4 or x2 >= score_map.shape[1] - 4 or y2 >= score_map.shape[0] - 4)
+    quality_score = _proposal_quality_score(
+        score=score,
+        fill_ratio=fill_ratio,
+        compactness=compactness,
+        aspect_ratio=_box_aspect_ratio(box),
+        near_boundary=near_boundary,
+    )
+    return Proposal(
+        box=box,
+        raw_box=box,
+        support_box=box,
+        area=area,
+        raw_area=area,
+        score=score,
+        quality_score=quality_score,
+        centroid=((x1 + x2) * 0.5, (y1 + y2) * 0.5),
+        support_mask=support_mask.astype(bool),
+        fill_ratio=fill_ratio,
+        compactness=compactness,
+        boundary_smoothness=boundary_smoothness,
+        near_boundary=near_boundary,
+    )
+
+
+def _box_iou(left: Box, right: Box) -> float:
+    lx1, ly1, lx2, ly2 = [float(v) for v in left]
+    rx1, ry1, rx2, ry2 = [float(v) for v in right]
+    ix1 = max(lx1, rx1)
+    iy1 = max(ly1, ry1)
+    ix2 = min(lx2, rx2)
+    iy2 = min(ly2, ry2)
+    if ix2 <= ix1 or iy2 <= iy1:
+        return 0.0
+    inter = (ix2 - ix1) * (iy2 - iy1)
+    union = (lx2 - lx1) * (ly2 - ly1) + (rx2 - rx1) * (ry2 - ry1) - inter
+    return 0.0 if union <= 0.0 else float(inter / union)
 
 
 def _build_refined_proposal(

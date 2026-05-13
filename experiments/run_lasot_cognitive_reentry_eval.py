@@ -36,6 +36,7 @@ from nops_owr.evaluation.reentry_audit import (  # noqa: E402
     write_reentry_report,
 )
 from nops_owr.evaluation.objectness_profiles import build_objectness_from_profile  # noqa: E402
+from nops_owr.evaluation.memory_guided_profiles import build_memory_guided_augmenter  # noqa: E402
 from nops_owr.memory import EpisodicMemory, MinimalPrototypeMemory, RetrievalContext  # noqa: E402
 from nops_owr.tracking.temporal_identity import MinimalTemporalIdentityTracker  # noqa: E402
 
@@ -133,6 +134,8 @@ def run_eval(
     oracle_gt_box_eval_only: bool = False,
     objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
     attention_profile: str = "A0_current_max4",
+    memory_guided_profile: str = "M0_disabled",
+    memory_guided_attention: int = 0,
 ) -> dict[str, Any]:
     if image_backend != "pil":
         raise ValueError("Only --image-backend pil is currently supported.")
@@ -171,7 +174,12 @@ def run_eval(
         if not events:
             continue
         evaluated_sequences += 1
-        loop = _build_loop(objectness_profile=objectness_profile, attention_profile=attention_profile)
+        loop = _build_loop(
+            objectness_profile=objectness_profile,
+            attention_profile=attention_profile,
+            memory_guided_profile=memory_guided_profile,
+            memory_guided_attention=bool(memory_guided_attention),
+        )
         event_by_reappear: dict[int, list[Any]] = {}
         for event in events:
             event_by_reappear.setdefault(int(event.reappear_frame), []).append(event)
@@ -232,6 +240,8 @@ def run_eval(
             "max_image_side": int(max_image_side),
             "objectness_profile": objectness_profile,
             "attention_profile": attention_profile,
+            "memory_guided_profile": memory_guided_profile,
+            "memory_guided_attention": int(memory_guided_attention),
         },
     )
     (output_path / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -242,6 +252,8 @@ def run_eval(
 def _build_loop(
     objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
     attention_profile: str = "A0_current_max4",
+    memory_guided_profile: str = "M0_disabled",
+    memory_guided_attention: bool = False,
 ) -> VisualCognitiveLoop:
     return VisualCognitiveLoop(
         encoder=MinimalSpikeEncoder(),
@@ -251,6 +263,8 @@ def _build_loop(
         attention_gate=build_attention_from_profile(attention_profile),
         episodic_memory=EpisodicMemory(memory_budget=256),
         recognizer=PredictiveRecognizer(),
+        memory_guided_proposals=build_memory_guided_augmenter(memory_guided_profile),
+        memory_guided_attention=memory_guided_attention,
     )
 
 
@@ -603,6 +617,8 @@ def main() -> None:
     parser.add_argument("--oracle-gt-box-eval-only", type=int, default=0)
     parser.add_argument("--objectness-profile", default="A0_current_fixed_tau035_area16_props8")
     parser.add_argument("--attention-profile", default="A0_current_max4")
+    parser.add_argument("--memory-guided-profile", default="M0_disabled")
+    parser.add_argument("--memory-guided-attention", type=int, default=0)
     args = parser.parse_args()
     summary = run_eval(
         root=args.root,
@@ -620,6 +636,8 @@ def main() -> None:
         oracle_gt_box_eval_only=bool(args.oracle_gt_box_eval_only),
         objectness_profile=args.objectness_profile,
         attention_profile=args.attention_profile,
+        memory_guided_profile=args.memory_guided_profile,
+        memory_guided_attention=args.memory_guided_attention,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

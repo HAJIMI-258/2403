@@ -53,6 +53,8 @@ class ObjectFile:
     linked_episode_ids: list[int] = field(default_factory=list)
     state: str = "unknown"
     confidence: float = 0.0
+    proposal_source: str = "unknown"
+    proposal_source_score: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -92,6 +94,13 @@ class ObjectFileBuilder:
                     familiarity_score=0.0,
                     prediction_error=float(np.clip(abs(proposal.score - proposal.quality_score), 0.0, 1.0)),
                     confidence=float(np.clip(0.5 * proposal.score + 0.5 * proposal.quality_score, 0.0, 1.0)),
+                    proposal_source=str(getattr(proposal, "source", "component")),
+                    proposal_source_score=float(getattr(proposal, "source_score", proposal.score)),
+                    metadata={
+                        **dict(getattr(proposal, "metadata", {}) or {}),
+                        "proposal_source": str(getattr(proposal, "source", "component")),
+                        "proposal_source_score": float(getattr(proposal, "source_score", proposal.score)),
+                    },
                 )
             )
         return object_files

@@ -23,6 +23,7 @@ from nops_owr.evaluation.cognitive_metrics import (
 )
 from nops_owr.memory.episodic_memory import EpisodicMemory, RetrievedEpisode
 from nops_owr.memory.retrieval_context import RetrievalContext
+from nops_owr.objectness.memory_guided_proposals import MemoryGuidedProposalAugmenter
 
 
 @dataclass(slots=True)
@@ -56,6 +57,8 @@ class VisualCognitiveLoop:
         episodic_memory: EpisodicMemory,
         recognizer: PredictiveRecognizer,
         object_file_builder: ObjectFileBuilder | None = None,
+        memory_guided_proposals: MemoryGuidedProposalAugmenter | None = None,
+        memory_guided_attention: bool = False,
     ) -> None:
         self.encoder = encoder
         self.objectness_field = objectness_field
@@ -65,6 +68,8 @@ class VisualCognitiveLoop:
         self.episodic_memory = episodic_memory
         self.recognizer = recognizer
         self.object_file_builder = object_file_builder or ObjectFileBuilder()
+        self.memory_guided_proposals = memory_guided_proposals
+        self.memory_guided_attention = bool(memory_guided_attention)
         self._prev_memory_output: Any | None = None
         self._active_episode_by_track: dict[int, int] = {}
         self._last_decision_by_track: dict[int, RecognitionDecision] = {}
@@ -83,6 +88,14 @@ class VisualCognitiveLoop:
 
         encoding = self.encoder.encode(prev_frame, current_frame)
         objectness_output = self.objectness_field.compute(encoding)
+        if self.memory_guided_proposals is not None:
+            objectness_output.proposals = self.memory_guided_proposals.augment(
+                objectness_output=objectness_output,
+                encoding=encoding,
+                current_frame=current_frame,
+                episodic_memory=self.episodic_memory,
+                frame_index=frame_index,
+            )
         object_files = self.object_file_builder.build(
             objectness_output=objectness_output,
             encoding=encoding,
@@ -91,7 +104,10 @@ class VisualCognitiveLoop:
         )
         if ground_truth:
             self._attach_ground_truth_metadata(object_files, ground_truth)
-        attended_object_files = self.attention_gate.select(object_files)
+        task_salience = self._memory_task_salience(object_files, frame_index) if self.memory_guided_attention else {}
+        for object_file in object_files:
+            object_file.metadata["memory_salience"] = float(task_salience.get(object_file.object_file_id, 0.0))
+        attended_object_files = self.attention_gate.select(object_files, task_salience=task_salience)
 
         memory_context_used = self._prev_memory_output is not None
         tracking_output = self.tracker.update(
@@ -137,7 +153,12 @@ class VisualCognitiveLoop:
                     frame_index,
                     "object_attended",
                     object_file=object_file,
-                    metadata={"quality_score": object_file.quality_score},
+                    metadata={
+                        "quality_score": object_file.quality_score,
+                        "proposal_source": object_file.proposal_source,
+                        "proposal_source_score": object_file.proposal_source_score,
+                        "memory_salience": float(task_salience.get(object_file.object_file_id, 0.0)),
+                    },
                 )
             )
 
@@ -235,6 +256,16 @@ class VisualCognitiveLoop:
                     and decision.metadata.get("rejection_reason") == "low_retrieval_margin"
                 )
             ),
+            "memory_guided_proposal_count": float(
+                sum(1 for proposal in objectness_output.proposals if getattr(proposal, "source", "") == "memory_guided_window")
+            ),
+            "memory_guided_object_file_count": float(
+                sum(1 for object_file in object_files if object_file.proposal_source == "memory_guided_window")
+            ),
+            "memory_salience_attention_used": float(bool(self.memory_guided_attention)),
+            "mean_memory_salience": float(
+                0.0 if not task_salience else sum(float(v) for v in task_salience.values()) / len(task_salience)
+            ),
         }
         self._prev_memory_output = memory_output
         return CognitiveFrameResult(
@@ -297,6 +328,31 @@ class VisualCognitiveLoop:
         for field_name in ("active_tracks", "dormant_tracks", "ghost_tracks", "retired_tracks"):
             states.extend(list(getattr(tracking_output, field_name, []) or []))
         return states
+
+    def _memory_task_salience(self, object_files: list[ObjectFile], frame_index: int) -> dict[str, float]:
+        salience: dict[str, float] = {}
+        if not object_files or len(self.episodic_memory) == 0:
+            return salience
+        context = RetrievalContext(
+            frame_index=int(frame_index),
+            mode="general",
+            min_reentry_gap=8,
+            prefer_closed_episodes=False,
+            suppress_active_conflicts=True,
+        )
+        for object_file in object_files:
+            candidates = self.episodic_memory.retrieve(object_file, top_k=1, context=context)
+            if not candidates:
+                salience[object_file.object_file_id] = 0.0
+                continue
+            top = candidates[0]
+            score = float(top.score)
+            if top.bundle.closed and top.reentry_gap >= 8:
+                score += 0.10
+            if object_file.proposal_source == "memory_guided_window":
+                score += 0.05
+            salience[object_file.object_file_id] = float(np.clip(score, 0.0, 1.0))
+        return salience
 
     def _determine_retrieval_context(
         self,
@@ -398,6 +454,9 @@ class VisualCognitiveLoop:
             "top1_margin": 0.0 if top1 is None else top1.margin_to_next,
             "active_conflict": False if top1 is None else top1.active_conflict,
             "rejection_reason": decision.metadata.get("rejection_reason", ""),
+            "proposal_source": object_file.proposal_source,
+            "proposal_source_score": object_file.proposal_source_score,
+            "memory_salience": object_file.metadata.get("memory_salience", 0.0),
         }
         return self._event(
             frame_index,

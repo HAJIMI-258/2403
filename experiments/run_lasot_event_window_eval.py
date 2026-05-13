@@ -47,6 +47,12 @@ EVENT_REENTRY_FIELDS = [
 ] + REENTRY_FIELDNAMES
 
 EVENT_FRAME_FIELDS = ["event_id", "window_start_frame", "window_end_frame"] + FRAME_FIELDNAMES
+EVENT_FRAME_FIELDS += [
+    "memory_guided_proposal_count",
+    "memory_guided_object_file_count",
+    "memory_salience_attention_used",
+    "mean_memory_salience",
+]
 
 
 def run_eval(
@@ -63,6 +69,8 @@ def run_eval(
     frame_stride: int = 1,
     objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
     attention_profile: str = "A0_current_max4",
+    memory_guided_profile: str = "M0_disabled",
+    memory_guided_attention: int = 0,
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -94,7 +102,12 @@ def run_eval(
             continue
         evaluated += 1
         event_id = _event_id(event)
-        loop = _build_loop(objectness_profile=objectness_profile, attention_profile=attention_profile)
+        loop = _build_loop(
+            objectness_profile=objectness_profile,
+            attention_profile=attention_profile,
+            memory_guided_profile=memory_guided_profile,
+            memory_guided_attention=bool(memory_guided_attention),
+        )
         prev_image = None
         pre_visible_matched = 0
         pre_visible_count = 0
@@ -130,6 +143,10 @@ def run_eval(
                 "decision_count": len(result.recognition_decisions),
                 "memory_context_used": int(result.memory_context_used),
                 "active_episode_count": result.active_episode_count,
+                "memory_guided_proposal_count": result.metrics_snapshot.get("memory_guided_proposal_count", 0.0),
+                "memory_guided_object_file_count": result.metrics_snapshot.get("memory_guided_object_file_count", 0.0),
+                "memory_salience_attention_used": result.metrics_snapshot.get("memory_salience_attention_used", 0.0),
+                "mean_memory_salience": result.metrics_snapshot.get("mean_memory_salience", 0.0),
             }
             frame_rows.append(row)
             if gt_box is not None and int(frame.frame_idx) <= int(event.disappear_frame):
@@ -187,6 +204,12 @@ def run_eval(
             "frame_stride": int(frame_stride),
             "objectness_profile": objectness_profile,
             "attention_profile": attention_profile,
+            "memory_guided_profile": memory_guided_profile,
+            "memory_guided_attention": int(memory_guided_attention),
+            "mean_memory_guided_proposal_count": _mean(
+                [row["memory_guided_proposal_count"] for row in frame_rows]
+            ),
+            "mean_proposal_count": _mean([row["object_file_count"] for row in frame_rows]),
         },
     )
     (out / "event_window_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -236,6 +259,8 @@ def main() -> None:
     parser.add_argument("--frame-stride", type=int, default=1)
     parser.add_argument("--objectness-profile", default="A0_current_fixed_tau035_area16_props8")
     parser.add_argument("--attention-profile", default="A0_current_max4")
+    parser.add_argument("--memory-guided-profile", default="M0_disabled")
+    parser.add_argument("--memory-guided-attention", type=int, default=0)
     args = parser.parse_args()
     summary = run_eval(
         root=args.root,
@@ -251,6 +276,8 @@ def main() -> None:
         frame_stride=args.frame_stride,
         objectness_profile=args.objectness_profile,
         attention_profile=args.attention_profile,
+        memory_guided_profile=args.memory_guided_profile,
+        memory_guided_attention=args.memory_guided_attention,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

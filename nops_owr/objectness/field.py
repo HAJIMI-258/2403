@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -26,6 +26,9 @@ class Proposal:
     compactness: float
     boundary_smoothness: float
     near_boundary: int
+    source: str = "component"
+    source_score: float = 0.0
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -266,6 +269,9 @@ def _extract_proposals(
                     compactness=float(refined["compactness"]),
                     boundary_smoothness=float(refined["boundary_smoothness"]),
                     near_boundary=int(refined["near_boundary"]),
+                    source="component",
+                    source_score=float(refined["score"]),
+                    metadata={"component_proposal": 1},
                 )
             )
 
@@ -374,6 +380,9 @@ def _saliency_window_proposal(box: Box, score_map: np.ndarray) -> Proposal:
         compactness=compactness,
         boundary_smoothness=boundary_smoothness,
         near_boundary=near_boundary,
+        source="saliency_window",
+        source_score=score,
+        metadata={"window_proposal": 1},
     )
 
 

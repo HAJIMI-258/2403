@@ -24,6 +24,7 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "prediction_error_weight": 0.20,
             "motion_weight": 0.10,
             "low_familiarity_weight": 0.05,
+            "task_salience_weight": 0.15,
         },
         {
             "profile_name": "A1_capacity_max8",
@@ -35,6 +36,7 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "prediction_error_weight": 0.20,
             "motion_weight": 0.10,
             "low_familiarity_weight": 0.05,
+            "task_salience_weight": 0.18,
         },
         {
             "profile_name": "A2_capacity_max12",
@@ -46,6 +48,7 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "prediction_error_weight": 0.20,
             "motion_weight": 0.10,
             "low_familiarity_weight": 0.05,
+            "task_salience_weight": 0.18,
         },
         {
             "profile_name": "A3_quality_surprise_max12",
@@ -68,6 +71,7 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "prediction_error_weight": 0.20,
             "motion_weight": 0.10,
             "low_familiarity_weight": 0.05,
+            "task_salience_weight": 0.18,
         },
         {
             "profile_name": "A5_recall_max24",
@@ -79,6 +83,7 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "prediction_error_weight": 0.20,
             "motion_weight": 0.11,
             "low_familiarity_weight": 0.05,
+            "task_salience_weight": 0.20,
         },
         {
             "profile_name": "A6_diagnostic_max32",
@@ -90,6 +95,7 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "prediction_error_weight": 0.22,
             "motion_weight": 0.11,
             "low_familiarity_weight": 0.05,
+            "task_salience_weight": 0.25,
         },
     ]
 

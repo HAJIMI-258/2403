@@ -62,6 +62,7 @@ def run_eval(
     strict_min_iou: float = 0.25,
     frame_stride: int = 1,
     objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
+    attention_profile: str = "A0_current_max4",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -93,7 +94,7 @@ def run_eval(
             continue
         evaluated += 1
         event_id = _event_id(event)
-        loop = _build_loop(objectness_profile=objectness_profile)
+        loop = _build_loop(objectness_profile=objectness_profile, attention_profile=attention_profile)
         prev_image = None
         pre_visible_matched = 0
         pre_visible_count = 0
@@ -185,6 +186,7 @@ def run_eval(
             "post_context": int(post_context),
             "frame_stride": int(frame_stride),
             "objectness_profile": objectness_profile,
+            "attention_profile": attention_profile,
         },
     )
     (out / "event_window_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -233,6 +235,7 @@ def main() -> None:
     parser.add_argument("--strict-min-iou", type=float, default=0.25)
     parser.add_argument("--frame-stride", type=int, default=1)
     parser.add_argument("--objectness-profile", default="A0_current_fixed_tau035_area16_props8")
+    parser.add_argument("--attention-profile", default="A0_current_max4")
     args = parser.parse_args()
     summary = run_eval(
         root=args.root,
@@ -247,6 +250,7 @@ def main() -> None:
         strict_min_iou=args.strict_min_iou,
         frame_stride=args.frame_stride,
         objectness_profile=args.objectness_profile,
+        attention_profile=args.attention_profile,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

@@ -22,11 +22,11 @@ if str(ROOT) not in sys.path:
 
 from datasets.external.base_video_memory_dataset import FrameSampleExternal  # noqa: E402
 from datasets.external.lasot_adapter import LaSOTAdapter  # noqa: E402
-from nops_owr.attention import AttentionGate  # noqa: E402
 from nops_owr.cognition import PredictiveRecognizer  # noqa: E402
 from nops_owr.cognition.object_file import ObjectFile, ObjectFileBuilder, SupportMaskSummary  # noqa: E402
 from nops_owr.cognition.visual_cognitive_loop import CognitiveFrameResult, VisualCognitiveLoop  # noqa: E402
 from nops_owr.encoder.spike_encoder import MinimalSpikeEncoder, SpikeEncoding  # noqa: E402
+from nops_owr.evaluation.attention_profiles import build_attention_from_profile  # noqa: E402
 from nops_owr.evaluation.reentry_audit import (  # noqa: E402
     bbox_iou,
     failure_bucket,
@@ -107,6 +107,7 @@ def run_eval(
     max_image_side: int = 160,
     oracle_gt_box_eval_only: bool = False,
     objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
+    attention_profile: str = "A0_current_max4",
 ) -> dict[str, Any]:
     if image_backend != "pil":
         raise ValueError("Only --image-backend pil is currently supported.")
@@ -145,7 +146,7 @@ def run_eval(
         if not events:
             continue
         evaluated_sequences += 1
-        loop = _build_loop(objectness_profile=objectness_profile)
+        loop = _build_loop(objectness_profile=objectness_profile, attention_profile=attention_profile)
         event_by_reappear: dict[int, list[Any]] = {}
         for event in events:
             event_by_reappear.setdefault(int(event.reappear_frame), []).append(event)
@@ -205,6 +206,7 @@ def run_eval(
             "sequence_filter": sequence_filter,
             "max_image_side": int(max_image_side),
             "objectness_profile": objectness_profile,
+            "attention_profile": attention_profile,
         },
     )
     (output_path / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -212,13 +214,16 @@ def run_eval(
     return summary
 
 
-def _build_loop(objectness_profile: str = "A0_current_fixed_tau035_area16_props8") -> VisualCognitiveLoop:
+def _build_loop(
+    objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
+    attention_profile: str = "A0_current_max4",
+) -> VisualCognitiveLoop:
     return VisualCognitiveLoop(
         encoder=MinimalSpikeEncoder(),
         objectness_field=build_objectness_from_profile(objectness_profile),
         tracker=MinimalTemporalIdentityTracker(),
         prototype_memory=MinimalPrototypeMemory(memory_budget=96),
-        attention_gate=AttentionGate(max_attended_objects=4),
+        attention_gate=build_attention_from_profile(attention_profile),
         episodic_memory=EpisodicMemory(memory_budget=256),
         recognizer=PredictiveRecognizer(),
     )
@@ -538,6 +543,7 @@ def main() -> None:
     parser.add_argument("--max-image-side", type=int, default=160)
     parser.add_argument("--oracle-gt-box-eval-only", type=int, default=0)
     parser.add_argument("--objectness-profile", default="A0_current_fixed_tau035_area16_props8")
+    parser.add_argument("--attention-profile", default="A0_current_max4")
     args = parser.parse_args()
     summary = run_eval(
         root=args.root,
@@ -554,6 +560,7 @@ def main() -> None:
         max_image_side=args.max_image_side,
         oracle_gt_box_eval_only=bool(args.oracle_gt_box_eval_only),
         objectness_profile=args.objectness_profile,
+        attention_profile=args.attention_profile,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

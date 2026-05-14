@@ -36,6 +36,26 @@ SOURCE_FIELDS = [
     "recall_at_reappear",
     "attention_selected_count",
     "target_episode_top5_when_source_matched",
+    "mean_matched_proposal_index",
+    "mean_matched_quality_score",
+    "mean_matched_source_score",
+    "mean_matched_attention_score",
+    "mean_matched_attention_rank",
+]
+
+DETAIL_FIELDS = [
+    "event_id",
+    "source",
+    "object_file_id",
+    "proposal_index",
+    "matched",
+    "iou",
+    "quality_score",
+    "source_score",
+    "attention_score",
+    "attention_rank",
+    "attended",
+    "target_top5",
 ]
 
 
@@ -67,6 +87,7 @@ def run_audit(
         max_events=max_events,
     )
     source_rows: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    detail_rows: list[dict[str, Any]] = []
     frames_by_sequence: dict[str, list[Any]] = {}
     evaluated = 0
     for event in events:
@@ -97,6 +118,7 @@ def run_audit(
             if int(frame.frame_idx) == int(event.reappear_frame):
                 _accumulate_sources(
                     source_rows,
+                    detail_rows,
                     event=event,
                     result=result,
                     loop=loop,
@@ -117,6 +139,7 @@ def run_audit(
         "source_results": {row["source"]: row for row in summaries},
     }
     _write_csv(out / "source_summary.csv", summaries, SOURCE_FIELDS)
+    _write_csv(out / "source_detail.csv", detail_rows, DETAIL_FIELDS)
     (out / "source_summary.json").write_text(json.dumps(compact, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "report.md").write_text(_report(compact, summaries), encoding="utf-8")
     return compact
@@ -124,6 +147,7 @@ def run_audit(
 
 def _accumulate_sources(
     source_rows: dict[str, list[dict[str, Any]]],
+    detail_rows: list[dict[str, Any]],
     *,
     event: Any,
     result: Any,
@@ -134,6 +158,9 @@ def _accumulate_sources(
     event_id = f"{event.sequence_id}:{event.disappear_frame}:{event.reappear_frame}"
     target_episode = find_target_episode_from_bundles(loop.episodic_memory.bundles, 1, int(result.frame_index))
     attended_ids = {item.object_file_id for item in result.attended_object_files}
+    scored = _attention_scores(loop, result.object_files)
+    ranks = {object_file.object_file_id: rank for rank, (_, object_file) in enumerate(scored, start=1)}
+    scores = {object_file.object_file_id: score for score, object_file in scored}
     for object_file in result.object_files:
         source = str(object_file.proposal_source)
         iou = bbox_iou(object_file.box, gt_box)
@@ -145,15 +172,31 @@ def _accumulate_sources(
                 if int(candidate.bundle.episode_id) == int(target_episode.episode_id):
                     target_rank = int(candidate.rank)
                     break
-        source_rows[source].append(
-            {
-                "event_id": event_id,
-                "matched": int(matched),
-                "iou": float(iou),
-                "attended": int(object_file.object_file_id in attended_ids),
-                "target_top5": int(matched and 1 <= target_rank <= 5),
-            }
-        )
+        row = {
+            "event_id": event_id,
+            "source": source,
+            "object_file_id": object_file.object_file_id,
+            "proposal_index": int(object_file.proposal_index),
+            "matched": int(matched),
+            "iou": float(iou),
+            "quality_score": float(object_file.quality_score),
+            "source_score": float(object_file.proposal_source_score),
+            "attention_score": float(scores.get(object_file.object_file_id, 0.0)),
+            "attention_rank": int(ranks.get(object_file.object_file_id, 0)),
+            "attended": int(object_file.object_file_id in attended_ids),
+            "target_top5": int(matched and 1 <= target_rank <= 5),
+        }
+        source_rows[source].append(row)
+        detail_rows.append(row)
+
+
+def _attention_scores(loop: Any, object_files: list[Any]) -> list[tuple[float, Any]]:
+    scored = []
+    for object_file in object_files:
+        salience = float(object_file.metadata.get("memory_salience", 0.0))
+        scored.append((float(loop.attention_gate.score(object_file, salience)), object_file))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return scored
 
 
 def _source_summary(source: str, rows: list[dict[str, Any]], *, evaluated_event_count: int) -> dict[str, Any]:
@@ -168,7 +211,18 @@ def _source_summary(source: str, rows: list[dict[str, Any]], *, evaluated_event_
         "recall_at_reappear": 0.0 if evaluated_event_count <= 0 else len(matched_events) / float(evaluated_event_count),
         "attention_selected_count": sum(int(row["attended"]) for row in matched),
         "target_episode_top5_when_source_matched": sum(int(row["target_top5"]) for row in matched),
+        "mean_matched_proposal_index": _mean([row["proposal_index"] for row in matched]),
+        "mean_matched_quality_score": _mean([row["quality_score"] for row in matched]),
+        "mean_matched_source_score": _mean([row["source_score"] for row in matched]),
+        "mean_matched_attention_score": _mean([row["attention_score"] for row in matched]),
+        "mean_matched_attention_rank": _mean([row["attention_rank"] for row in matched]),
     }
+
+
+def _mean(values: list[Any]) -> float:
+    if not values:
+        return 0.0
+    return float(sum(float(value) for value in values) / len(values))
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
@@ -185,13 +239,14 @@ def _report(compact: dict[str, Any], rows: list[dict[str, Any]]) -> str:
         "",
         f"- evaluated_event_count: {compact['evaluated_event_count']}",
         "",
-        "| source | proposals | matched | recall@reappear | attended_matches | target_top5_matches |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| source | proposals | matched | recall@reappear | attended_matches | mean_attn_rank | target_top5_matches |",
+        "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
             f"| {row['source']} | {row['proposal_count']} | {row['matched_target_count']} | "
             f"{float(row['recall_at_reappear']):.4f} | {row['attention_selected_count']} | "
+            f"{float(row['mean_matched_attention_rank']):.2f} | "
             f"{row['target_episode_top5_when_source_matched']} |"
         )
     return "\n".join(lines) + "\n"

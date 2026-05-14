@@ -37,6 +37,7 @@ from nops_owr.evaluation.reentry_audit import (  # noqa: E402
 )
 from nops_owr.evaluation.objectness_profiles import build_objectness_from_profile  # noqa: E402
 from nops_owr.evaluation.memory_guided_profiles import build_memory_guided_augmenter  # noqa: E402
+from nops_owr.evaluation.objectness_eval_adapter import ProfiledObjectnessField  # noqa: E402
 from nops_owr.memory import EpisodicMemory, MinimalPrototypeMemory, RetrievalContext  # noqa: E402
 from nops_owr.tracking.temporal_identity import MinimalTemporalIdentityTracker  # noqa: E402
 
@@ -136,6 +137,8 @@ def run_eval(
     attention_profile: str = "A0_current_max4",
     memory_guided_profile: str = "M0_disabled",
     memory_guided_attention: int = 0,
+    component_ranking_profile: str = "R0_current_quality",
+    support_box_profile: str = "B0_refined_box_current",
 ) -> dict[str, Any]:
     if image_backend != "pil":
         raise ValueError("Only --image-backend pil is currently supported.")
@@ -179,6 +182,8 @@ def run_eval(
             attention_profile=attention_profile,
             memory_guided_profile=memory_guided_profile,
             memory_guided_attention=bool(memory_guided_attention),
+            component_ranking_profile=component_ranking_profile,
+            support_box_profile=support_box_profile,
         )
         event_by_reappear: dict[int, list[Any]] = {}
         for event in events:
@@ -242,6 +247,8 @@ def run_eval(
             "attention_profile": attention_profile,
             "memory_guided_profile": memory_guided_profile,
             "memory_guided_attention": int(memory_guided_attention),
+            "component_ranking_profile": component_ranking_profile,
+            "support_box_profile": support_box_profile,
         },
     )
     (output_path / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -254,10 +261,18 @@ def _build_loop(
     attention_profile: str = "A0_current_max4",
     memory_guided_profile: str = "M0_disabled",
     memory_guided_attention: bool = False,
+    component_ranking_profile: str = "R0_current_quality",
+    support_box_profile: str = "B0_refined_box_current",
 ) -> VisualCognitiveLoop:
+    base_objectness = build_objectness_from_profile(objectness_profile)
+    objectness_field = ProfiledObjectnessField(
+        base_objectness,
+        component_ranking_profile=component_ranking_profile,
+        support_box_profile=support_box_profile,
+    )
     return VisualCognitiveLoop(
         encoder=MinimalSpikeEncoder(),
-        objectness_field=build_objectness_from_profile(objectness_profile),
+        objectness_field=objectness_field,
         tracker=MinimalTemporalIdentityTracker(),
         prototype_memory=MinimalPrototypeMemory(memory_budget=96),
         attention_gate=build_attention_from_profile(attention_profile),
@@ -619,6 +634,8 @@ def main() -> None:
     parser.add_argument("--attention-profile", default="A0_current_max4")
     parser.add_argument("--memory-guided-profile", default="M0_disabled")
     parser.add_argument("--memory-guided-attention", type=int, default=0)
+    parser.add_argument("--component-ranking-profile", default="R0_current_quality")
+    parser.add_argument("--support-box-profile", default="B0_refined_box_current")
     args = parser.parse_args()
     summary = run_eval(
         root=args.root,
@@ -638,6 +655,8 @@ def main() -> None:
         attention_profile=args.attention_profile,
         memory_guided_profile=args.memory_guided_profile,
         memory_guided_attention=args.memory_guided_attention,
+        component_ranking_profile=args.component_ranking_profile,
+        support_box_profile=args.support_box_profile,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

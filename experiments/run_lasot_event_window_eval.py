@@ -71,6 +71,8 @@ def run_eval(
     attention_profile: str = "A0_current_max4",
     memory_guided_profile: str = "M0_disabled",
     memory_guided_attention: int = 0,
+    component_ranking_profile: str = "R0_current_quality",
+    support_box_profile: str = "B0_refined_box_current",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -107,6 +109,8 @@ def run_eval(
             attention_profile=attention_profile,
             memory_guided_profile=memory_guided_profile,
             memory_guided_attention=bool(memory_guided_attention),
+            component_ranking_profile=component_ranking_profile,
+            support_box_profile=support_box_profile,
         )
         prev_image = None
         pre_visible_matched = 0
@@ -206,6 +210,8 @@ def run_eval(
             "attention_profile": attention_profile,
             "memory_guided_profile": memory_guided_profile,
             "memory_guided_attention": int(memory_guided_attention),
+            "component_ranking_profile": component_ranking_profile,
+            "support_box_profile": support_box_profile,
             "mean_memory_guided_proposal_count": _mean(
                 [row["memory_guided_proposal_count"] for row in frame_rows]
             ),
@@ -261,6 +267,8 @@ def main() -> None:
     parser.add_argument("--attention-profile", default="A0_current_max4")
     parser.add_argument("--memory-guided-profile", default="M0_disabled")
     parser.add_argument("--memory-guided-attention", type=int, default=0)
+    parser.add_argument("--component-ranking-profile", default="R0_current_quality")
+    parser.add_argument("--support-box-profile", default="B0_refined_box_current")
     args = parser.parse_args()
     summary = run_eval(
         root=args.root,
@@ -278,6 +286,8 @@ def main() -> None:
         attention_profile=args.attention_profile,
         memory_guided_profile=args.memory_guided_profile,
         memory_guided_attention=args.memory_guided_attention,
+        component_ranking_profile=args.component_ranking_profile,
+        support_box_profile=args.support_box_profile,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

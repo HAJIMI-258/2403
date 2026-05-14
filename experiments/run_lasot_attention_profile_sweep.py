@@ -34,6 +34,7 @@ from nops_owr.evaluation.external_event_windows import (  # noqa: E402
     sequence_category,
 )
 from nops_owr.evaluation.objectness_profiles import build_objectness_from_profile  # noqa: E402
+from nops_owr.evaluation.objectness_eval_adapter import ProfiledObjectnessField  # noqa: E402
 from nops_owr.evaluation.reentry_audit import bbox_iou, gap_bucket  # noqa: E402
 
 
@@ -81,6 +82,8 @@ def run_sweep(
     frame_stride: int = 2,
     objectness_profile: str = "A5_quantile_q060_k000_area8_props24",
     strict_min_iou: float = 0.25,
+    component_ranking_profile: str = "R0_current_quality",
+    support_box_profile: str = "B0_refined_box_current",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -118,6 +121,8 @@ def run_sweep(
             encoder=encoder,
             builder=builder,
             objectness_profile=objectness_profile,
+            component_ranking_profile=component_ranking_profile,
+            support_box_profile=support_box_profile,
             max_image_side=max_image_side,
         )
         for attention_profile in profile_names:
@@ -171,6 +176,8 @@ def run_sweep(
     compact = {
         "stage": "LASOT_ATTENTION_PROFILE_SWEEP",
         "objectness_profile": objectness_profile,
+        "component_ranking_profile": component_ranking_profile,
+        "support_box_profile": support_box_profile,
         "total_candidate_events": len(events),
         "evaluated_event_count": evaluated_events,
         "skipped_event_count": int(sum(skipped.values())),
@@ -192,9 +199,15 @@ def _object_files_for_window(
     encoder: MinimalSpikeEncoder,
     builder: ObjectFileBuilder,
     objectness_profile: str,
+    component_ranking_profile: str,
+    support_box_profile: str,
     max_image_side: int,
 ) -> list[dict[str, Any]]:
-    objectness = build_objectness_from_profile(objectness_profile)
+    objectness = ProfiledObjectnessField(
+        build_objectness_from_profile(objectness_profile),
+        component_ranking_profile=component_ranking_profile,
+        support_box_profile=support_box_profile,
+    )
     objectness.reset()
     rows: list[dict[str, Any]] = []
     prev_image = None
@@ -281,6 +294,8 @@ def _report(compact: dict[str, Any], summaries: list[dict[str, Any]]) -> str:
         "# LaSOT Attention Profile Sweep",
         "",
         f"- objectness_profile: `{compact['objectness_profile']}`",
+        f"- component_ranking_profile: `{compact.get('component_ranking_profile', 'R0_current_quality')}`",
+        f"- support_box_profile: `{compact.get('support_box_profile', 'B0_refined_box_current')}`",
         f"- evaluated_event_count: {compact['evaluated_event_count']}",
         f"- best_attention_profile: `{compact['best_attention_profile']}`",
         "",
@@ -310,6 +325,8 @@ def main() -> None:
     parser.add_argument("--sequence-filter", default="")
     parser.add_argument("--frame-stride", type=int, default=2)
     parser.add_argument("--objectness-profile", default="A5_quantile_q060_k000_area8_props24")
+    parser.add_argument("--component-ranking-profile", default="R0_current_quality")
+    parser.add_argument("--support-box-profile", default="B0_refined_box_current")
     args = parser.parse_args()
     summary = run_sweep(
         root=args.root,
@@ -323,6 +340,8 @@ def main() -> None:
         sequence_filter=args.sequence_filter,
         frame_stride=args.frame_stride,
         objectness_profile=args.objectness_profile,
+        component_ranking_profile=args.component_ranking_profile,
+        support_box_profile=args.support_box_profile,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

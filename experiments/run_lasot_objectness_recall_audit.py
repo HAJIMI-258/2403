@@ -26,8 +26,9 @@ from nops_owr.evaluation.external_event_windows import (  # noqa: E402
     scale_box,
     sequence_category,
 )
+from nops_owr.evaluation.objectness_eval_adapter import ProfiledObjectnessField  # noqa: E402
+from nops_owr.evaluation.objectness_profiles import build_objectness_from_profile  # noqa: E402
 from nops_owr.evaluation.reentry_audit import bbox_iou, gap_bucket  # noqa: E402
-from nops_owr.objectness.field import MinimalObjectnessField  # noqa: E402
 
 
 FRAME_FIELDS = [
@@ -57,6 +58,9 @@ def run_audit(
     category_filter: str = "",
     sequence_filter: str = "",
     frame_stride: int = 1,
+    objectness_profile: str = "A0_current_fixed_tau035_area16_props8",
+    component_ranking_profile: str = "R0_current_quality",
+    support_box_profile: str = "B0_refined_box_current",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -69,7 +73,11 @@ def run_audit(
         max_events=max_events,
     )
     encoder = MinimalSpikeEncoder()
-    objectness = MinimalObjectnessField(tau_obj=0.35, threshold_mode="fixed", min_area=16, max_proposals=8)
+    objectness = ProfiledObjectnessField(
+        build_objectness_from_profile(objectness_profile),
+        component_ranking_profile=component_ranking_profile,
+        support_box_profile=support_box_profile,
+    )
     rows: list[dict[str, Any]] = []
     evaluated_events = 0
     skipped = Counter()
@@ -125,6 +133,9 @@ def run_audit(
         evaluated_events=evaluated_events,
         skipped=skipped,
         root=str(root),
+        objectness_profile=objectness_profile,
+        component_ranking_profile=component_ranking_profile,
+        support_box_profile=support_box_profile,
     )
     _write_csv(out / "objectness_frame_recall.csv", rows, FRAME_FIELDS)
     (out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -139,6 +150,9 @@ def _summary(
     evaluated_events: int,
     skipped: Counter[str],
     root: str,
+    objectness_profile: str,
+    component_ranking_profile: str,
+    support_box_profile: str,
 ) -> dict[str, Any]:
     visible_rows = [row for row in rows if int(row["gt_visible"])]
     pre_rows = [row for row in visible_rows if row["phase"] == "pre_visible"]
@@ -148,6 +162,9 @@ def _summary(
     return {
         "dataset_name": "lasot",
         "root": root,
+        "objectness_profile": objectness_profile,
+        "component_ranking_profile": component_ranking_profile,
+        "support_box_profile": support_box_profile,
         "total_candidate_events": int(candidate_events),
         "evaluated_event_count": int(evaluated_events),
         "skipped_event_count": int(sum(skipped.values())),
@@ -216,6 +233,9 @@ def main() -> None:
     parser.add_argument("--category-filter", default="")
     parser.add_argument("--sequence-filter", default="")
     parser.add_argument("--frame-stride", type=int, default=1)
+    parser.add_argument("--objectness-profile", default="A0_current_fixed_tau035_area16_props8")
+    parser.add_argument("--component-ranking-profile", default="R0_current_quality")
+    parser.add_argument("--support-box-profile", default="B0_refined_box_current")
     args = parser.parse_args()
     summary = run_audit(
         root=args.root,
@@ -228,6 +248,9 @@ def main() -> None:
         category_filter=args.category_filter,
         sequence_filter=args.sequence_filter,
         frame_stride=args.frame_stride,
+        objectness_profile=args.objectness_profile,
+        component_ranking_profile=args.component_ranking_profile,
+        support_box_profile=args.support_box_profile,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

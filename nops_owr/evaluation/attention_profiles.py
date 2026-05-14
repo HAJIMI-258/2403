@@ -131,6 +131,23 @@ def attention_profile_specs() -> list[dict[str, Any]]:
             "memory_guided_window_source_bonus": 0.00,
             "memory_template_window_source_bonus": -0.12,
         },
+        {
+            "profile_name": "A9_source_aware_component_max32_diagnostic",
+            "max_attended_objects": 32,
+            "min_quality": 0.00,
+            "quality_weight": 0.22,
+            "novelty_weight": 0.14,
+            "surprise_weight": 0.20,
+            "prediction_error_weight": 0.18,
+            "motion_weight": 0.08,
+            "low_familiarity_weight": 0.03,
+            "task_salience_weight": 0.22,
+            "proposal_source_score_weight": 0.10,
+            "component_source_bonus": 0.08,
+            "saliency_window_source_bonus": 0.02,
+            "memory_guided_window_source_bonus": 0.00,
+            "memory_template_window_source_bonus": -0.10,
+        },
     ]
 
 

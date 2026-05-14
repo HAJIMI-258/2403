@@ -64,25 +64,51 @@ class MemoryGuidedAttentionTest(unittest.TestCase):
         selected = gate.select([template_noise, component_target])
         self.assertEqual(selected[0].object_file_id, component_target.object_file_id)
 
+    def test_diverse_gate_spreads_attention_across_spatial_clusters(self) -> None:
+        gate = AttentionGate(
+            config=AttentionGateConfig(
+                max_attended_objects=2,
+                min_quality=0.0,
+                quality_weight=1.0,
+                novelty_weight=0.0,
+                surprise_weight=0.0,
+                prediction_error_weight=0.0,
+                motion_weight=0.0,
+                low_familiarity_weight=0.0,
+                diversity_iou_penalty=0.4,
+                diversity_center_penalty=0.2,
+                diversity_center_scale=16.0,
+            )
+        )
+        cluster_top = _object_file("cluster_top", quality=0.90, box=(0, 0, 20, 20))
+        cluster_second = _object_file("cluster_second", quality=0.88, box=(2, 2, 22, 22))
+        separate = _object_file("separate", quality=0.70, box=(60, 60, 80, 80))
+        selected = gate.select([cluster_top, cluster_second, separate])
+        selected_ids = {item.object_file_id for item in selected}
+        self.assertIn("cluster_top", selected_ids)
+        self.assertIn("separate", selected_ids)
+
 
 def _object_file(
     name: str,
     quality: float,
     proposal_source: str = "component",
     source_score: float = 0.0,
+    box: tuple[int, int, int, int] = (0, 0, 8, 8),
 ) -> ObjectFile:
+    x1, y1, x2, y2 = box
     return ObjectFile(
         object_file_id=name,
         frame_index=1,
         proposal_index=0,
-        box=(0, 0, 8, 8),
-        raw_box=(0, 0, 8, 8),
-        support_box=(0, 0, 8, 8),
-        centroid=(4.0, 4.0),
-        area=64.0,
+        box=box,
+        raw_box=box,
+        support_box=box,
+        centroid=((x1 + x2) * 0.5, (y1 + y2) * 0.5),
+        area=float(max(1, (x2 - x1) * (y2 - y1))),
         score=quality,
         quality_score=quality,
-        support_mask_summary=SupportMaskSummary(area=64.0, bbox=(0, 0, 8, 8), fill_ratio=1.0, compactness=1.0, boundary_smoothness=1.0),
+        support_mask_summary=SupportMaskSummary(area=64.0, bbox=box, fill_ratio=1.0, compactness=1.0, boundary_smoothness=1.0),
         appearance_signature=np.ones(15, dtype=np.float32),
         shape_signature=np.ones(7, dtype=np.float32),
         context_signature=np.ones(6, dtype=np.float32),

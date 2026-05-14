@@ -78,6 +78,7 @@ def run_sweep(
     category_filter: str = "",
     sequence_filter: str = "",
     frame_stride: int = 2,
+    profile_filter: str = "",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -89,7 +90,17 @@ def run_sweep(
         sequence_filter=sequence_filter,
         max_events=max_events,
     )
-    profiles = objectness_profile_specs()
+    requested_profiles = _parse_profile_filter(profile_filter)
+    all_profiles = objectness_profile_specs()
+    known_profiles = {str(profile["profile_name"]) for profile in all_profiles}
+    missing_profiles = sorted(requested_profiles - known_profiles)
+    if missing_profiles:
+        raise ValueError(f"Unknown objectness profile(s): {', '.join(missing_profiles)}")
+    profiles = [
+        profile
+        for profile in all_profiles
+        if not requested_profiles or str(profile["profile_name"]) in requested_profiles
+    ]
     rows_by_profile: dict[str, list[dict[str, Any]]] = {profile["profile_name"]: [] for profile in profiles}
     skipped = Counter()
     frames_by_sequence: dict[str, list[Any]] = {}
@@ -152,6 +163,7 @@ def run_sweep(
         "best_profile": best_profile,
         "best_profile_summary": next((row for row in profile_summaries if row["profile_name"] == best_profile), {}),
         "profile_count": len(profile_summaries),
+        "profile_filter": profile_filter,
         "next_recommendation": "run event-window eval with selected profile if recall_at_reappear improves cleanly",
     }
     _write_csv(out / "profile_summary.csv", profile_summaries, PROFILE_SUMMARY_FIELDS)
@@ -216,6 +228,12 @@ def _select_best_profile(rows: list[dict[str, Any]]) -> str:
     return str(best["profile_name"])
 
 
+def _parse_profile_filter(profile_filter: str) -> set[str]:
+    if not profile_filter:
+        return set()
+    return {item.strip() for item in profile_filter.split(",") if item.strip()}
+
+
 def _mean(values: list[Any]) -> float:
     if not values:
         return 0.0
@@ -263,6 +281,11 @@ def main() -> None:
     parser.add_argument("--category-filter", default="")
     parser.add_argument("--sequence-filter", default="")
     parser.add_argument("--frame-stride", type=int, default=2)
+    parser.add_argument(
+        "--profile-filter",
+        default="",
+        help="Comma-separated objectness profile names to run. Empty runs all profiles.",
+    )
     args = parser.parse_args()
     summary = run_sweep(
         root=args.root,
@@ -275,6 +298,7 @@ def main() -> None:
         category_filter=args.category_filter,
         sequence_filter=args.sequence_filter,
         frame_stride=args.frame_stride,
+        profile_filter=args.profile_filter,
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

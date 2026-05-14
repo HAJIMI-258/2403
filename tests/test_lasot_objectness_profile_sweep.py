@@ -20,8 +20,16 @@ class LaSOTObjectnessProfileSweepTest(unittest.TestCase):
     def test_profile_sweep_outputs_best_profile(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = create_pixel_mini_lasot(Path(tmp))
-            summary = run_sweep(root=root, output_dir=Path(tmp) / "sweep", max_events=1, pre_context=5, post_context=3)
+            summary = run_sweep(
+                root=root,
+                output_dir=Path(tmp) / "sweep",
+                max_events=1,
+                pre_context=5,
+                post_context=3,
+                profile_filter="A8_quantile_q050_component_props48",
+            )
             self.assertEqual(summary["evaluated_event_count"], 1)
+            self.assertEqual(summary["profile_count"], 1)
             self.assertIn("best_profile", summary)
             self.assertTrue((Path(tmp) / "sweep" / "profile_summary.csv").exists())
 

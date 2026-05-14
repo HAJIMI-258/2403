@@ -106,6 +106,24 @@ def objectness_profile_specs() -> list[dict[str, Any]]:
             "max_proposals": 32,
             "smoothing_kernel_size": 3,
         },
+        {
+            "profile_name": "A10_quantile_q050_component_props96",
+            "threshold_mode": "quantile_local",
+            "q_obj": 0.50,
+            "local_k": 0.00,
+            "min_area": 4,
+            "max_proposals": 96,
+            "smoothing_kernel_size": 3,
+        },
+        {
+            "profile_name": "A11_quantile_q045_component_props128",
+            "threshold_mode": "quantile_local",
+            "q_obj": 0.45,
+            "local_k": 0.00,
+            "min_area": 4,
+            "max_proposals": 128,
+            "smoothing_kernel_size": 3,
+        },
     ]
 
 

@@ -273,6 +273,8 @@ def _summary(
         "mean_best_iou_reappear": _mean([row["best_iou"] for row in reappear]),
         "mean_best_quality_rank_reappear": _mean([row["best_iou_rank_by_quality"] for row in reappear if int(row["best_iou_rank_by_quality"]) > 0]),
         "mean_best_score_rank_reappear": _mean([row["best_iou_rank_by_score"] for row in reappear if int(row["best_iou_rank_by_score"]) > 0]),
+        "mean_proposal_count_visible": _mean([row["proposal_count"] for row in visible]),
+        "mean_proposal_count_reappear": _mean([row["proposal_count"] for row in reappear]),
         "mean_refinement_delta_iou_reappear": _mean([row["refinement_delta_iou"] for row in reappear]),
         "fraction_refinement_hurts_iou": _mean([float(row["refinement_delta_iou"]) < -1e-6 for row in reappear]),
         "fraction_best_near_boundary": _mean([row["best_near_boundary"] for row in reappear]),

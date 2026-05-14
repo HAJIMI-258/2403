@@ -257,10 +257,10 @@ class VisualCognitiveLoop:
                 )
             ),
             "memory_guided_proposal_count": float(
-                sum(1 for proposal in objectness_output.proposals if getattr(proposal, "source", "") == "memory_guided_window")
+                sum(1 for proposal in objectness_output.proposals if str(getattr(proposal, "source", "")).startswith("memory_"))
             ),
             "memory_guided_object_file_count": float(
-                sum(1 for object_file in object_files if object_file.proposal_source == "memory_guided_window")
+                sum(1 for object_file in object_files if object_file.proposal_source.startswith("memory_"))
             ),
             "memory_salience_attention_used": float(bool(self.memory_guided_attention)),
             "mean_memory_salience": float(

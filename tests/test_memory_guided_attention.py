@@ -37,8 +37,40 @@ class MemoryGuidedAttentionTest(unittest.TestCase):
         )
         self.assertEqual(selected[0].object_file_id, weak_memory.object_file_id)
 
+    def test_source_aware_gate_prefers_component_over_template_noise(self) -> None:
+        gate = AttentionGate(
+            config=AttentionGateConfig(
+                max_attended_objects=1,
+                min_quality=0.0,
+                quality_weight=0.5,
+                novelty_weight=0.0,
+                surprise_weight=0.0,
+                prediction_error_weight=0.0,
+                motion_weight=0.0,
+                low_familiarity_weight=0.0,
+                task_salience_weight=0.0,
+                proposal_source_score_weight=0.1,
+                component_source_bonus=0.12,
+                memory_template_window_source_bonus=-0.12,
+            )
+        )
+        component_target = _object_file("component", quality=0.32, proposal_source="component", source_score=0.4)
+        template_noise = _object_file(
+            "template",
+            quality=0.40,
+            proposal_source="memory_template_window",
+            source_score=0.9,
+        )
+        selected = gate.select([template_noise, component_target])
+        self.assertEqual(selected[0].object_file_id, component_target.object_file_id)
 
-def _object_file(name: str, quality: float) -> ObjectFile:
+
+def _object_file(
+    name: str,
+    quality: float,
+    proposal_source: str = "component",
+    source_score: float = 0.0,
+) -> ObjectFile:
     return ObjectFile(
         object_file_id=name,
         frame_index=1,
@@ -56,6 +88,8 @@ def _object_file(name: str, quality: float) -> ObjectFile:
         context_signature=np.ones(6, dtype=np.float32),
         motion_signature=np.zeros(0, dtype=np.float32),
         confidence=quality,
+        proposal_source=proposal_source,
+        proposal_source_score=source_score,
     )
 
 

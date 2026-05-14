@@ -20,6 +20,11 @@ class AttentionGateConfig:
     motion_weight: float = 0.10
     low_familiarity_weight: float = 0.05
     task_salience_weight: float = 0.0
+    proposal_source_score_weight: float = 0.0
+    component_source_bonus: float = 0.0
+    saliency_window_source_bonus: float = 0.0
+    memory_guided_window_source_bonus: float = 0.0
+    memory_template_window_source_bonus: float = 0.0
 
 
 class AttentionGate:
@@ -50,6 +55,8 @@ class AttentionGate:
             + self.config.motion_weight * motion_salience
             + self.config.low_familiarity_weight * (1.0 - object_file.familiarity_score)
             + self.config.task_salience_weight * task_salience
+            + self.config.proposal_source_score_weight * float(np.clip(object_file.proposal_source_score, 0.0, 1.0))
+            + _source_bonus(self.config, object_file.proposal_source)
         )
         return float(np.clip(score, 0.0, 1.0))
 
@@ -70,3 +77,15 @@ def _motion_salience(signature: np.ndarray) -> float:
     if signature.size == 0:
         return 0.0
     return float(np.clip(np.linalg.norm(signature), 0.0, 1.0))
+
+
+def _source_bonus(config: AttentionGateConfig, proposal_source: str) -> float:
+    if proposal_source == "component":
+        return float(config.component_source_bonus)
+    if proposal_source == "saliency_window":
+        return float(config.saliency_window_source_bonus)
+    if proposal_source == "memory_guided_window":
+        return float(config.memory_guided_window_source_bonus)
+    if proposal_source == "memory_template_window":
+        return float(config.memory_template_window_source_bonus)
+    return 0.0

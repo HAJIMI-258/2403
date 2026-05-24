@@ -316,7 +316,7 @@ def _appearance_component_scores(left: np.ndarray, right: np.ndarray) -> tuple[f
     right = right.astype(np.float32, copy=False)
     if left.size >= 27 and right.size >= 27:
         gray_score = _cosine_similarity(left[:15], right[:15])
-        chromatic_score = _cosine_similarity(left[15:27], right[15:27])
+        chromatic_score = _cosine_similarity(left[15:], right[15:])
         return gray_score, chromatic_score
     score = _cosine_similarity(left, right)
     return score, 0.5

@@ -73,6 +73,7 @@ class ObjectFileBuilder:
         proposal_count = len(objectness_output.proposals)
         for proposal_index, proposal in enumerate(objectness_output.proposals):
             chromatic_signature = _chromatic_signature(proposal.box, current_frame)
+            chromatic_grid_signature = _chromatic_grid_signature(proposal.box, current_frame, grid=4)
             object_files.append(
                 ObjectFile(
                     object_file_id=f"of:{frame_index}:{proposal_index}",
@@ -101,6 +102,7 @@ class ObjectFileBuilder:
                         "proposal_source": str(getattr(proposal, "source", "component")),
                         "proposal_source_score": float(getattr(proposal, "source_score", proposal.score)),
                         "chromatic_signature": chromatic_signature.tolist(),
+                        "chromatic_grid_signature": chromatic_grid_signature.tolist(),
                         "template_gray_16": _template_patch(encoding.current_gray, proposal.box, size=16).tolist(),
                         "template_edge_16": _template_patch(encoding.edge_map, proposal.box, size=16).tolist(),
                     },
@@ -174,6 +176,28 @@ def _chromatic_signature(box: Box, current_frame: np.ndarray | None) -> np.ndarr
         posinf=1.0,
         neginf=0.0,
     )
+
+
+def _chromatic_grid_signature(box: Box, current_frame: np.ndarray | None, grid: int = 4) -> np.ndarray:
+    """Return a fixed color layout summary; this is not raw crop storage."""
+    if current_frame is None or current_frame.ndim < 3 or current_frame.shape[2] < 3:
+        return np.zeros(grid * grid * 3, dtype=np.float32)
+    patch = _crop_rgb(current_frame, box)
+    if patch.size == 0:
+        return np.zeros(grid * grid * 3, dtype=np.float32)
+    patch = patch.astype(np.float32, copy=False)[:, :, :3] / 255.0
+    h, w = patch.shape[:2]
+    output = np.zeros((grid, grid, 3), dtype=np.float32)
+    for gy in range(grid):
+        y1 = int(round(gy * h / grid))
+        y2 = int(round((gy + 1) * h / grid))
+        for gx in range(grid):
+            x1 = int(round(gx * w / grid))
+            x2 = int(round((gx + 1) * w / grid))
+            cell = patch[y1:max(y1 + 1, y2), x1:max(x1 + 1, x2), :]
+            if cell.size:
+                output[gy, gx, :] = np.mean(cell.reshape(-1, 3), axis=0)
+    return np.nan_to_num(output.reshape(-1), nan=0.0, posinf=1.0, neginf=0.0)
 
 
 def _context_signature(proposal: Proposal, frame_shape: tuple[int, int], proposal_count: int) -> np.ndarray:

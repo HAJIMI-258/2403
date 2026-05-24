@@ -54,8 +54,9 @@ class SpikingInvariantDescriptorBuilder:
         support_spikes = _crop(encoding.spike_response, support_box)
 
         chromatic = _metadata_vector(object_file.metadata.get("chromatic_signature"), expected_length=12)
+        chromatic_grid = _metadata_vector(object_file.metadata.get("chromatic_grid_signature"), expected_length=48)
         appearance = np.asarray(
-            _patch_stats(gray) + _patch_stats(edge) + _patch_stats(spikes) + chromatic.tolist(),
+            _patch_stats(gray) + _patch_stats(edge) + _patch_stats(spikes) + chromatic.tolist() + chromatic_grid.tolist(),
             dtype=np.float32,
         )
         shape = _shape_signature(object_file, encoding.current_gray.shape)

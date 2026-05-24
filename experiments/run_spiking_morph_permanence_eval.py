@@ -56,6 +56,21 @@ EVENT_FIELDS = [
     "top1_margin",
     "false_resurrection_risk",
     "top1_is_true_capsule",
+    "top2_capsule_id",
+    "top2_score",
+    "true_capsule_rank",
+    "true_capsule_score",
+    "score_gap_top1_minus_true",
+    "true_spike_score",
+    "true_deformation_score",
+    "true_identity_score",
+    "true_chromatic_score",
+    "true_hash_score",
+    "delta_top1_minus_true_spike",
+    "delta_top1_minus_true_deformation",
+    "delta_top1_minus_true_identity",
+    "delta_top1_minus_true_chromatic",
+    "delta_top1_minus_true_hash",
     "memory_bytes",
     "capsule_count",
     "spike_density",
@@ -121,6 +136,7 @@ def run_eval(
             decision = recognizer.decide(object_file, matches)
             matched_capsule_id = decision.capsule_id
             true_capsule_id = true_capsules[object_id]
+            match_diagnostics = _match_diagnostics(matches, true_capsule_id)
             success = decision.decision_type in {"same_object", "familiar_but_deformed"} and matched_capsule_id == true_capsule_id
             false_res = decision.decision_type in {"same_object", "familiar_but_deformed"} and matched_capsule_id not in {None, true_capsule_id}
             if success:
@@ -147,7 +163,7 @@ def run_eval(
                     decision.spike_score,
                     decision.deformation_score,
                     bank,
-                    decision.metadata,
+                    {**decision.metadata, **match_diagnostics},
                     decision.false_resurrection_risk,
                 )
             )
@@ -271,7 +287,11 @@ def _object_file(
         context_signature=context,
         motion_signature=np.zeros(0, dtype=np.float32),
         confidence=1.0,
-        metadata={"object_id_eval_only": object_id, "chromatic_signature": _chromatic_signature(box, current_frame).tolist()},
+        metadata={
+            "object_id_eval_only": object_id,
+            "chromatic_signature": _chromatic_signature(box, current_frame).tolist(),
+            "chromatic_grid_signature": _chromatic_grid_signature(box, current_frame, grid=4).tolist(),
+        },
     )
 
 
@@ -303,6 +323,28 @@ def _chromatic_signature(box: tuple[int, int, int, int], current_frame: np.ndarr
         posinf=1.0,
         neginf=0.0,
     )
+
+
+def _chromatic_grid_signature(box: tuple[int, int, int, int], current_frame: np.ndarray | None, grid: int = 4) -> np.ndarray:
+    if current_frame is None or current_frame.ndim < 3 or current_frame.shape[2] < 3:
+        return np.zeros(grid * grid * 3, dtype=np.float32)
+    x1, y1, x2, y2 = box
+    patch = current_frame[y1:y2, x1:x2, :3]
+    if patch.size == 0:
+        return np.zeros(grid * grid * 3, dtype=np.float32)
+    patch = patch.astype(np.float32, copy=False) / 255.0
+    h, w = patch.shape[:2]
+    output = np.zeros((grid, grid, 3), dtype=np.float32)
+    for gy in range(grid):
+        cy1 = int(round(gy * h / grid))
+        cy2 = int(round((gy + 1) * h / grid))
+        for gx in range(grid):
+            cx1 = int(round(gx * w / grid))
+            cx2 = int(round((gx + 1) * w / grid))
+            cell = patch[cy1:max(cy1 + 1, cy2), cx1:max(cx1 + 1, cx2), :]
+            if cell.size:
+                output[gy, gx, :] = np.mean(cell.reshape(-1, 3), axis=0)
+    return np.nan_to_num(output.reshape(-1), nan=0.0, posinf=1.0, neginf=0.0)
 
 
 def _row(
@@ -355,10 +397,67 @@ def _row(
         "top1_margin": float(metadata.get("top1_margin", 0.0)),
         "false_resurrection_risk": float(false_resurrection_risk),
         "top1_is_true_capsule": top1_is_true,
+        "top2_capsule_id": metadata.get("top2_capsule_id", ""),
+        "top2_score": float(metadata.get("top2_score", 0.0)),
+        "true_capsule_rank": int(metadata.get("true_capsule_rank", 1 if top1_is_true else 0)),
+        "true_capsule_score": float(metadata.get("true_capsule_score", score if top1_is_true else 0.0)),
+        "score_gap_top1_minus_true": float(metadata.get("score_gap_top1_minus_true", 0.0 if top1_is_true else score)),
+        "true_spike_score": float(metadata.get("true_spike_score", spike_score if top1_is_true else 0.0)),
+        "true_deformation_score": float(metadata.get("true_deformation_score", deformation_score if top1_is_true else 0.0)),
+        "true_identity_score": float(metadata.get("true_identity_score", metadata.get("identity_score", 0.0) if top1_is_true else 0.0)),
+        "true_chromatic_score": float(metadata.get("true_chromatic_score", metadata.get("chromatic_score", 0.0) if top1_is_true else 0.0)),
+        "true_hash_score": float(metadata.get("true_hash_score", metadata.get("hash_score", 0.0) if top1_is_true else 0.0)),
+        "delta_top1_minus_true_spike": float(metadata.get("delta_top1_minus_true_spike", 0.0)),
+        "delta_top1_minus_true_deformation": float(metadata.get("delta_top1_minus_true_deformation", 0.0)),
+        "delta_top1_minus_true_identity": float(metadata.get("delta_top1_minus_true_identity", 0.0)),
+        "delta_top1_minus_true_chromatic": float(metadata.get("delta_top1_minus_true_chromatic", 0.0)),
+        "delta_top1_minus_true_hash": float(metadata.get("delta_top1_minus_true_hash", 0.0)),
         "memory_bytes": int(bank.memory_bytes()),
         "capsule_count": int(len(bank)),
         "spike_density": float(bank.mean_spike_density()),
         "is_reentry": int(phase == "reentry"),
+    }
+
+
+def _match_diagnostics(matches: list[Any], true_capsule_id: int) -> dict[str, Any]:
+    top1 = matches[0] if matches else None
+    top1_score = float(top1.score) if top1 is not None else 0.0
+    top2 = matches[1] if len(matches) > 1 else None
+    true_match = None
+    true_rank = 0
+    true_score = 0.0
+    for match in matches:
+        if int(match.capsule_id) == int(true_capsule_id):
+            true_match = match
+            true_rank = int(match.rank)
+            true_score = float(match.score)
+            break
+    true_spike = float(true_match.spike_score) if true_match is not None else 0.0
+    true_deformation = float(true_match.deformation_score) if true_match is not None else 0.0
+    true_identity = float(true_match.identity_score) if true_match is not None else 0.0
+    true_chromatic = float(true_match.metadata.get("chromatic_score", 0.0)) if true_match is not None else 0.0
+    true_hash = float(true_match.hash_score) if true_match is not None else 0.0
+    top1_spike = float(top1.spike_score) if top1 is not None else 0.0
+    top1_deformation = float(top1.deformation_score) if top1 is not None else 0.0
+    top1_identity = float(top1.identity_score) if top1 is not None else 0.0
+    top1_chromatic = float(top1.metadata.get("chromatic_score", 0.0)) if top1 is not None else 0.0
+    top1_hash = float(top1.hash_score) if top1 is not None else 0.0
+    return {
+        "top2_capsule_id": "" if top2 is None else int(top2.capsule_id),
+        "top2_score": 0.0 if top2 is None else float(top2.score),
+        "true_capsule_rank": true_rank,
+        "true_capsule_score": true_score,
+        "score_gap_top1_minus_true": float(top1_score - true_score) if true_rank > 0 else top1_score,
+        "true_spike_score": true_spike,
+        "true_deformation_score": true_deformation,
+        "true_identity_score": true_identity,
+        "true_chromatic_score": true_chromatic,
+        "true_hash_score": true_hash,
+        "delta_top1_minus_true_spike": top1_spike - true_spike if true_rank > 0 else top1_spike,
+        "delta_top1_minus_true_deformation": top1_deformation - true_deformation if true_rank > 0 else top1_deformation,
+        "delta_top1_minus_true_identity": top1_identity - true_identity if true_rank > 0 else top1_identity,
+        "delta_top1_minus_true_chromatic": top1_chromatic - true_chromatic if true_rank > 0 else top1_chromatic,
+        "delta_top1_minus_true_hash": top1_hash - true_hash if true_rank > 0 else top1_hash,
     }
 
 
@@ -367,6 +466,8 @@ def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank, config: 
     memory_sizes = [row["capsule_count"] for row in rows]
     accepted = [row for row in reentry if row["decision_type"] in {"same_object", "familiar_but_deformed"}]
     top1_true = [row for row in reentry if int(row.get("top1_is_true_capsule", 0)) == 1]
+    true_in_top3 = [row for row in reentry if 1 <= int(row.get("true_capsule_rank", 0)) <= 3]
+    true_in_top5 = [row for row in reentry if 1 <= int(row.get("true_capsule_rank", 0)) <= 5]
     top1_true_rejected = [
         row
         for row in top1_true
@@ -379,10 +480,13 @@ def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank, config: 
         "accepted_reentry_decision_count": int(len(accepted)),
         "false_resurrection_count": int(sum(int(row.get("false_resurrection", 0)) for row in reentry)),
         "top1_true_capsule_rate": _safe_rate(len(top1_true), len(reentry)),
+        "true_capsule_top3_rate": _safe_rate(len(true_in_top3), len(reentry)),
+        "true_capsule_top5_rate": _safe_rate(len(true_in_top5), len(reentry)),
         "top1_true_but_not_accepted_rate": _safe_rate(len(top1_true_rejected), len(reentry)),
         "uncertain_hold_rate": _safe_rate(sum(1 for row in reentry if row["decision_type"] == "uncertain_hold"), len(reentry)),
         "false_resurrection_risk_decision_rate": _safe_rate(sum(1 for row in reentry if row["decision_type"] == "false_resurrection_risk"), len(reentry)),
         "mean_top1_margin": float(np.mean([row["top1_margin"] for row in reentry])) if reentry else 0.0,
+        "mean_score_gap_top1_minus_true": float(np.mean([row["score_gap_top1_minus_true"] for row in true_in_top5])) if true_in_top5 else 0.0,
         "mean_false_resurrection_risk": float(np.mean([row["false_resurrection_risk"] for row in reentry])) if reentry else 0.0,
         "mean_memory_bytes": float(np.mean([row["memory_bytes"] for row in rows])) if rows else 0.0,
         "bytes_per_capsule": bytes_per_capsule(bank.memory_bytes(), len(bank)),

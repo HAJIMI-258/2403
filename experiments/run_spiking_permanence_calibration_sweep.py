@@ -31,6 +31,8 @@ SUMMARY_FIELDS = [
     "accepted_reentry_decision_count",
     "false_resurrection_count",
     "top1_true_capsule_rate",
+    "true_capsule_top3_rate",
+    "true_capsule_top5_rate",
     "top1_true_but_not_accepted_rate",
     "uncertain_hold_rate",
     "false_resurrection_risk_decision_rate",

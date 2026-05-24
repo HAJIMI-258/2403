@@ -60,7 +60,7 @@ class SpikingInvariantDescriptorTest(unittest.TestCase):
         desc_a = builder.build(_object_file(2, 1, box_a, enc_a, source="a", current_frame=current_a), enc_a)
         desc_b = builder.build(_object_file(2, 2, box_b, enc_b, source="b", current_frame=current_b), enc_b)
 
-        self.assertEqual(desc_a.appearance_signature.shape[0], 27)
+        self.assertEqual(desc_a.appearance_signature.shape[0], 75)
         self.assertGreater(float(np.linalg.norm(desc_a.appearance_signature - desc_b.appearance_signature)), 0.05)
 
 

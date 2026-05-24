@@ -47,8 +47,8 @@ The long-term memory cost is `O(number_of_capsules * descriptor_dim)`, not
 pseudo-spike encoding into a fixed-size descriptor. It pools current-gray,
 edge-map, and spike-response crops into small shape, appearance, topology, and
 deformation signatures. When RGB input is available, the object-file path also
-adds fixed-size chromatic statistics to the descriptor; this is still bounded
-metadata, not raw crop storage. A deterministic projection converts the
+adds fixed-size chromatic statistics and a 4x4 color-layout summary to the
+descriptor; this is still bounded metadata, not raw crop storage. A deterministic projection converts the
 continuous signature into sparse spike bits and a binary hash.
 
 This descriptor is "spiking" in the compressed sparse coding sense. It does not
@@ -156,6 +156,20 @@ resurrection. `best_safe_config` is selected from non-zero recall settings,
 while `lowest_false_resurrection_config` may be a strict no-acceptance reference.
 Current defaults prioritize low false resurrection over recall because a wrong
 long-term identity update is more damaging than an unresolved object.
+
+To inspect whether failures come from retrieval ranking or decision release,
+run:
+
+```powershell
+python experiments\run_spiking_permanence_evidence_audit.py `
+  --events-csv results\spiking_morph_permanence_eval\events.csv `
+  --output-dir results\spiking_permanence_evidence_audit
+```
+
+The evidence audit is eval-only. It separates true top-1, false top-1,
+accepted-false, and rejected-true cases, then checks whether any GT-free
+predicate over score, margin, risk, chromatic, hash, and deformation evidence can
+release true matches without false resurrection.
 
 ## Failure Modes
 

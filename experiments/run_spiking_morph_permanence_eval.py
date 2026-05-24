@@ -49,6 +49,8 @@ EVENT_FIELDS = [
     "spike_score",
     "deformation_score",
     "identity_score",
+    "gray_appearance_score",
+    "chromatic_score",
     "hash_score",
     "conflict_score",
     "top1_margin",
@@ -93,7 +95,7 @@ def run_eval(
         spec = object_specs[object_id]
         prev, current, box = _render_observation(spec, scale=1.0, aspect=1.0, brightness=1.0, occlusion=0.0)
         encoding = encoder.encode(prev, current)
-        object_file = _object_file(object_id, frame_index, box, encoding, source="context")
+        object_file = _object_file(object_id, frame_index, box, encoding, source="context", current_frame=current)
         descriptor = builder.build(object_file, encoding)
         capsule_id = bank.create_capsule(descriptor, frame_index=frame_index, metadata={"object_id_eval_only": object_id})
         true_capsules[object_id] = capsule_id
@@ -113,7 +115,7 @@ def run_eval(
             distractor_level = distractors[(object_id + event_idx) % len(distractors)]
             prev, current, box = _render_observation(spec, scale=scale, aspect=aspect, brightness=brightness, occlusion=occlusion)
             encoding = encoder.encode(prev, current)
-            object_file = _object_file(object_id, frame_index, box, encoding, source="reentry")
+            object_file = _object_file(object_id, frame_index, box, encoding, source="reentry", current_frame=current)
             descriptor = builder.build(object_file, encoding)
             matches = bank.match(descriptor, frame_index=frame_index, top_k=5)
             decision = recognizer.decide(object_file, matches)
@@ -203,7 +205,15 @@ def _render_observation(
     return prev, current, (x1, y1, x2, y2)
 
 
-def _object_file(object_id: int, frame_index: int, box: tuple[int, int, int, int], encoding: SpikeEncoding, *, source: str) -> ObjectFile:
+def _object_file(
+    object_id: int,
+    frame_index: int,
+    box: tuple[int, int, int, int],
+    encoding: SpikeEncoding,
+    *,
+    source: str,
+    current_frame: np.ndarray | None = None,
+) -> ObjectFile:
     x1, y1, x2, y2 = box
     area = float((x2 - x1) * (y2 - y1))
     frame_area = float(encoding.current_gray.shape[0] * encoding.current_gray.shape[1])
@@ -230,7 +240,7 @@ def _object_file(object_id: int, frame_index: int, box: tuple[int, int, int, int
         context_signature=context,
         motion_signature=np.zeros(0, dtype=np.float32),
         confidence=1.0,
-        metadata={"object_id_eval_only": object_id},
+        metadata={"object_id_eval_only": object_id, "chromatic_signature": _chromatic_signature(box, current_frame).tolist()},
     )
 
 
@@ -242,6 +252,26 @@ def _appearance(box: tuple[int, int, int, int], encoding: SpikeEncoding) -> np.n
         values = patch.reshape(-1).astype(np.float32)
         stats.extend([float(np.mean(values)), float(np.std(values)), float(np.quantile(values, 0.25)), float(np.quantile(values, 0.50)), float(np.quantile(values, 0.75))])
     return np.asarray(stats, dtype=np.float32)
+
+
+def _chromatic_signature(box: tuple[int, int, int, int], current_frame: np.ndarray | None) -> np.ndarray:
+    if current_frame is None or current_frame.ndim < 3 or current_frame.shape[2] < 3:
+        return np.zeros(12, dtype=np.float32)
+    x1, y1, x2, y2 = box
+    patch = current_frame[y1:y2, x1:x2, :3]
+    if patch.size == 0:
+        return np.zeros(12, dtype=np.float32)
+    values = patch.reshape(-1, 3).astype(np.float32) / 255.0
+    means = np.mean(values, axis=0)
+    stds = np.std(values, axis=0)
+    intensity = np.sum(values, axis=1, keepdims=True) + 1e-6
+    chroma = values / intensity
+    return np.nan_to_num(
+        np.concatenate([means, stds, np.mean(chroma, axis=0), np.std(chroma, axis=0)]).astype(np.float32),
+        nan=0.0,
+        posinf=1.0,
+        neginf=0.0,
+    )
 
 
 def _row(
@@ -287,6 +317,8 @@ def _row(
         "spike_score": float(spike_score),
         "deformation_score": float(deformation_score),
         "identity_score": float(metadata.get("identity_score", 0.0)),
+        "gray_appearance_score": float(metadata.get("gray_appearance_score", 0.0)),
+        "chromatic_score": float(metadata.get("chromatic_score", 0.0)),
         "hash_score": float(metadata.get("hash_score", 0.0)),
         "conflict_score": float(metadata.get("conflict_score", 0.0)),
         "top1_margin": float(metadata.get("top1_margin", 0.0)),

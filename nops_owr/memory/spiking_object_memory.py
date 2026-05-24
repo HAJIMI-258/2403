@@ -88,9 +88,17 @@ class SpikingObjectMemoryBank:
         for capsule in self.capsules.values():
             spike_score = _spike_similarity(descriptor.spike_signature, capsule.spike_mu)
             shape_score = _gaussian_similarity(descriptor.shape_signature, capsule.shape_mu, capsule.shape_var)
-            appearance_score = _cosine_similarity(descriptor.appearance_signature, capsule.appearance_mu)
+            gray_appearance_score, chromatic_score = _appearance_component_scores(
+                descriptor.appearance_signature,
+                capsule.appearance_mu,
+            )
             topology_score = _cosine_similarity(descriptor.topology_signature, capsule.topology_mu)
-            identity_score = float(0.35 * shape_score + 0.30 * appearance_score + 0.35 * topology_score)
+            identity_score = float(
+                0.20 * shape_score
+                + 0.125 * gray_appearance_score
+                + 0.375 * chromatic_score
+                + 0.30 * topology_score
+            )
             deformation_score = _gaussian_similarity(
                 descriptor.deformation_signature,
                 capsule.deformation_mu,
@@ -99,17 +107,22 @@ class SpikingObjectMemoryBank:
             hash_score = _hash_similarity(descriptor.binary_hash, capsule.binary_hash)
             stability_bonus = float(np.clip(capsule.stability, 0.0, 1.0))
             base_score = (
-                0.35 * spike_score
-                + 0.25 * identity_score
-                + 0.20 * deformation_score
-                + 0.10 * hash_score
-                + 0.10 * stability_bonus
+                0.20 * spike_score
+                + 0.08 * shape_score
+                + 0.05 * gray_appearance_score
+                + 0.15 * chromatic_score
+                + 0.12 * topology_score
+                + 0.15 * deformation_score
+                + 0.20 * hash_score
+                + 0.05 * stability_bonus
             )
             scored.append(
                 {
                     "capsule": capsule,
                     "base_score": float(base_score),
                     "identity_score": identity_score,
+                    "gray_appearance_score": gray_appearance_score,
+                    "chromatic_score": chromatic_score,
                     "deformation_score": deformation_score,
                     "spike_score": spike_score,
                     "hash_score": hash_score,
@@ -149,6 +162,8 @@ class SpikingObjectMemoryBank:
                     metadata={
                         "base_score": float(row["base_score"]),
                         "top1_margin": margin if rank == 1 else 0.0,
+                        "gray_appearance_score": float(row["gray_appearance_score"]),
+                        "chromatic_score": float(row["chromatic_score"]),
                     },
                 )
             )
@@ -294,6 +309,17 @@ def _cosine_similarity(left: np.ndarray, right: np.ndarray) -> float:
     if denom <= 1e-6:
         return 0.0
     return float(np.clip(0.5 + 0.5 * float(np.dot(left, right) / denom), 0.0, 1.0))
+
+
+def _appearance_component_scores(left: np.ndarray, right: np.ndarray) -> tuple[float, float]:
+    left = left.astype(np.float32, copy=False)
+    right = right.astype(np.float32, copy=False)
+    if left.size >= 27 and right.size >= 27:
+        gray_score = _cosine_similarity(left[:15], right[:15])
+        chromatic_score = _cosine_similarity(left[15:27], right[15:27])
+        return gray_score, chromatic_score
+    score = _cosine_similarity(left, right)
+    return score, 0.5
 
 
 def _gaussian_similarity(sample: np.ndarray, mu: np.ndarray, var: np.ndarray) -> float:

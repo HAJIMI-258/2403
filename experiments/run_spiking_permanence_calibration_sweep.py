@@ -53,7 +53,7 @@ def run_sweep(
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    thresholds = [0.72, 0.80, 0.86]
+    thresholds = [0.72, 0.80, 0.86, 0.90, 0.92]
     margins = [0.04, 0.06, 0.10]
     risk_thresholds = [0.30, 0.35, 0.45]
     rows: list[dict[str, Any]] = []
@@ -86,11 +86,12 @@ def run_sweep(
     best = _select_best_safe(rows)
     if best is not None:
         best["selected_as_best_safe"] = 1
+    strict_lowest_false = min(rows, key=lambda row: (float(row["false_resurrection_rate"]), -float(row["same_instance_reentry_recall"]))) if rows else {}
     summary_json = {
         "config_count": len(rows),
         "best_safe_config": dict(best or {}),
         "best_recall_config": dict(max(rows, key=lambda row: (float(row["same_instance_reentry_recall"]), -float(row["false_resurrection_rate"]))) if rows else {}),
-        "lowest_false_resurrection_config": dict(min(rows, key=lambda row: (float(row["false_resurrection_rate"]), -float(row["same_instance_reentry_recall"]))) if rows else {}),
+        "lowest_false_resurrection_config": dict(strict_lowest_false),
     }
     _write_csv(out / "sweep_summary.csv", rows, SUMMARY_FIELDS)
     (out / "sweep_summary.json").write_text(json.dumps(summary_json, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -101,17 +102,18 @@ def run_sweep(
 def _select_best_safe(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     if not rows:
         return None
-    # Safety first: choose among zero-false-resurrection configs if any. If none
-    # exist, choose the lowest false-resurrection setting with maximum recall.
-    zero_false = [row for row in rows if float(row["false_resurrection_rate"]) <= 0.0]
-    candidates = zero_false if zero_false else rows
-    return max(
+    # Safety first, but avoid selecting a trivial no-acceptance configuration as
+    # the actionable best setting. Strict zero-false configs are still reported
+    # separately as lowest_false_resurrection_config.
+    nonzero_recall = [row for row in rows if float(row["same_instance_reentry_recall"]) > 0.0]
+    candidates = nonzero_recall if nonzero_recall else rows
+    return min(
         candidates,
         key=lambda row: (
-            -float(row["false_resurrection_rate"]),
-            float(row["same_instance_reentry_recall"]),
-            float(row["top1_true_capsule_rate"]),
-            -float(row["mean_spike_density"]),
+            float(row["false_resurrection_rate"]),
+            -float(row["same_instance_reentry_recall"]),
+            -float(row["top1_true_capsule_rate"]),
+            float(row["mean_spike_density"]),
         ),
     )
 

@@ -68,11 +68,11 @@ class ObjectFileBuilder:
         frame_index: int,
         current_frame: np.ndarray | None = None,
     ) -> list[ObjectFile]:
-        del current_frame  # Signatures intentionally use current minimal pipeline outputs.
         object_files: list[ObjectFile] = []
         frame_shape = encoding.current_gray.shape
         proposal_count = len(objectness_output.proposals)
         for proposal_index, proposal in enumerate(objectness_output.proposals):
+            chromatic_signature = _chromatic_signature(proposal.box, current_frame)
             object_files.append(
                 ObjectFile(
                     object_file_id=f"of:{frame_index}:{proposal_index}",
@@ -100,6 +100,7 @@ class ObjectFileBuilder:
                         **dict(getattr(proposal, "metadata", {}) or {}),
                         "proposal_source": str(getattr(proposal, "source", "component")),
                         "proposal_source_score": float(getattr(proposal, "source_score", proposal.score)),
+                        "chromatic_signature": chromatic_signature.tolist(),
                         "template_gray_16": _template_patch(encoding.current_gray, proposal.box, size=16).tolist(),
                         "template_edge_16": _template_patch(encoding.edge_map, proposal.box, size=16).tolist(),
                     },
@@ -153,6 +154,28 @@ def _appearance_signature(box: Box, encoding: SpikeEncoding) -> np.ndarray:
     return np.asarray(stats, dtype=np.float32)
 
 
+def _chromatic_signature(box: Box, current_frame: np.ndarray | None) -> np.ndarray:
+    """Return fixed-size color statistics without storing the crop itself."""
+    if current_frame is None or current_frame.ndim < 3 or current_frame.shape[2] < 3:
+        return np.zeros(12, dtype=np.float32)
+    patch = _crop_rgb(current_frame, box)
+    if patch.size == 0:
+        return np.zeros(12, dtype=np.float32)
+    values = patch.reshape(-1, patch.shape[-1]).astype(np.float32)[:, :3] / 255.0
+    means = np.mean(values, axis=0)
+    stds = np.std(values, axis=0)
+    intensity = np.sum(values, axis=1, keepdims=True) + 1e-6
+    chroma = values / intensity
+    chroma_means = np.mean(chroma, axis=0)
+    chroma_stds = np.std(chroma, axis=0)
+    return np.nan_to_num(
+        np.concatenate([means, stds, chroma_means, chroma_stds]).astype(np.float32),
+        nan=0.0,
+        posinf=1.0,
+        neginf=0.0,
+    )
+
+
 def _context_signature(proposal: Proposal, frame_shape: tuple[int, int], proposal_count: int) -> np.ndarray:
     height, width = frame_shape
     cx, cy = proposal.centroid
@@ -183,6 +206,18 @@ def _crop_2d(array: np.ndarray, box: Box) -> np.ndarray:
     if x2 <= x1 or y2 <= y1:
         return np.zeros((0, 0), dtype=np.float32)
     return array[y1:y2, x1:x2].astype(np.float32, copy=False)
+
+
+def _crop_rgb(array: np.ndarray, box: Box) -> np.ndarray:
+    height, width = array.shape[:2]
+    x1, y1, x2, y2 = box
+    x1 = int(np.clip(x1, 0, width))
+    x2 = int(np.clip(x2, 0, width))
+    y1 = int(np.clip(y1, 0, height))
+    y2 = int(np.clip(y2, 0, height))
+    if x2 <= x1 or y2 <= y1:
+        return np.zeros((0, 0, 3), dtype=np.float32)
+    return array[y1:y2, x1:x2, :3].astype(np.float32, copy=False)
 
 
 def _template_patch(array: np.ndarray, box: Box, size: int = 16) -> np.ndarray:

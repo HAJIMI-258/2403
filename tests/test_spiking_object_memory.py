@@ -52,6 +52,7 @@ class SpikingObjectMemoryTest(unittest.TestCase):
         other = bank.match(_descriptor(3, 3), frame_index=3)[0]
         self.assertEqual(same.capsule_id, capsule_id)
         self.assertGreaterEqual(same.score, other.score)
+        self.assertIn("chromatic_score", same.metadata)
 
 
 if __name__ == "__main__":

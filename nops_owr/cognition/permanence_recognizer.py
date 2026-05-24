@@ -82,6 +82,8 @@ class PermanenceRecognizer:
                 "top1_margin": margin,
                 "identity_score": float(top.identity_score),
                 "hash_score": float(top.hash_score),
+                "gray_appearance_score": float(top.metadata.get("gray_appearance_score", 0.0)),
+                "chromatic_score": float(top.metadata.get("chromatic_score", 0.0)),
                 "conflict_score": float(top.conflict_score),
                 "decision_hint": top.decision_hint,
                 "same_object_threshold": self.same_object_threshold,

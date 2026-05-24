@@ -53,8 +53,9 @@ class SpikingInvariantDescriptorBuilder:
         spikes = _crop(encoding.spike_response, box)
         support_spikes = _crop(encoding.spike_response, support_box)
 
+        chromatic = _metadata_vector(object_file.metadata.get("chromatic_signature"), expected_length=12)
         appearance = np.asarray(
-            _patch_stats(gray) + _patch_stats(edge) + _patch_stats(spikes),
+            _patch_stats(gray) + _patch_stats(edge) + _patch_stats(spikes) + chromatic.tolist(),
             dtype=np.float32,
         )
         shape = _shape_signature(object_file, encoding.current_gray.shape)
@@ -187,6 +188,17 @@ def _patch_stats(patch: np.ndarray) -> list[float]:
         float(np.quantile(values, 0.50)),
         float(np.quantile(values, 0.75)),
     ]
+
+
+def _metadata_vector(value: Any, expected_length: int) -> np.ndarray:
+    if value is None:
+        return np.zeros(expected_length, dtype=np.float32)
+    array = np.asarray(value, dtype=np.float32).reshape(-1)
+    output = np.zeros(expected_length, dtype=np.float32)
+    n = min(expected_length, array.size)
+    if n:
+        output[:n] = array[:n]
+    return np.nan_to_num(output, nan=0.0, posinf=1.0, neginf=0.0)
 
 
 def _crop(array: np.ndarray, box: Box) -> np.ndarray:

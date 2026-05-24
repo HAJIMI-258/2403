@@ -20,7 +20,7 @@ class SpikingInvariantDescriptorTest(unittest.TestCase):
         spec = _object_spec(0, np.random.default_rng(7))
         prev, current, box = _render_observation(spec, scale=1.0, aspect=1.0, brightness=1.0, occlusion=0.0)
         encoding = encoder.encode(prev, current)
-        object_file = _object_file(0, 1, box, encoding, source="test")
+        object_file = _object_file(0, 1, box, encoding, source="test", current_frame=current)
 
         left = builder.build(object_file, encoding)
         right = builder.build(object_file, encoding)
@@ -39,13 +39,29 @@ class SpikingInvariantDescriptorTest(unittest.TestCase):
         prev_b, current_b, box_b = _render_observation(spec, scale=1.25, aspect=1.1, brightness=1.05, occlusion=0.0)
         enc_a = encoder.encode(prev_a, current_a)
         enc_b = encoder.encode(prev_b, current_b)
-        desc_a = builder.build(_object_file(1, 1, box_a, enc_a, source="a"), enc_a)
-        desc_b = builder.build(_object_file(1, 2, box_b, enc_b, source="b"), enc_b)
+        desc_a = builder.build(_object_file(1, 1, box_a, enc_a, source="a", current_frame=current_a), enc_a)
+        desc_b = builder.build(_object_file(1, 2, box_b, enc_b, source="b", current_frame=current_b), enc_b)
 
         overlap = float(np.dot(desc_a.spike_signature, desc_b.spike_signature))
         denom = float(np.linalg.norm(desc_a.spike_signature) * np.linalg.norm(desc_b.spike_signature))
         similarity = 0.0 if denom <= 1e-6 else overlap / denom
         self.assertGreaterEqual(similarity, 0.10)
+
+    def test_chromatic_signature_changes_appearance_descriptor(self) -> None:
+        encoder = MinimalSpikeEncoder()
+        builder = SpikingInvariantDescriptorBuilder(spike_dim=64, hash_bits=64, seed=19)
+        spec = _object_spec(2, np.random.default_rng(23))
+        prev_a, current_a, box_a = _render_observation(spec, scale=1.0, aspect=1.0, brightness=1.0, occlusion=0.0)
+        altered = dict(spec)
+        altered["color"] = np.asarray([spec["color"][2], spec["color"][0], spec["color"][1]], dtype=np.float32)
+        prev_b, current_b, box_b = _render_observation(altered, scale=1.0, aspect=1.0, brightness=1.0, occlusion=0.0)
+        enc_a = encoder.encode(prev_a, current_a)
+        enc_b = encoder.encode(prev_b, current_b)
+        desc_a = builder.build(_object_file(2, 1, box_a, enc_a, source="a", current_frame=current_a), enc_a)
+        desc_b = builder.build(_object_file(2, 2, box_b, enc_b, source="b", current_frame=current_b), enc_b)
+
+        self.assertEqual(desc_a.appearance_signature.shape[0], 27)
+        self.assertGreater(float(np.linalg.norm(desc_a.appearance_signature - desc_b.appearance_signature)), 0.05)
 
 
 if __name__ == "__main__":

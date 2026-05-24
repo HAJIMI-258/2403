@@ -70,7 +70,7 @@ def run_eval(
     max_capsules: int = 32,
     spike_dim: int = 128,
     max_frames: int = 800,
-    same_object_threshold: float = 0.86,
+    same_object_threshold: float = 0.90,
     same_object_margin_threshold: float = 0.04,
     false_resurrection_risk_threshold: float = 0.30,
 ) -> dict[str, Any]:
@@ -176,6 +176,10 @@ def _object_spec(object_id: int, rng: np.random.Generator) -> dict[str, Any]:
         "height": 12 + (object_id % 4) * 4,
         "x": 20 + (object_id % 4) * 18,
         "y": 18 + (object_id % 3) * 18,
+        "texture_period": 3 + (object_id % 4),
+        "texture_axis": object_id % 3,
+        "texture_phase": (object_id * 2) % 5,
+        "texture_strength": 18 + (object_id % 4) * 8,
     }
 
 
@@ -198,11 +202,38 @@ def _render_observation(
     y2 = int(np.clip(y1 + height, y1 + 1, size))
     color = np.clip(np.asarray(spec["color"]) * 255.0 * float(brightness), 0, 255).astype(np.uint8)
     current[y1:y2, x1:x2, :] = color
-    current[y1:y2:3, x1:x2, :] = np.clip(color + 20, 0, 255)
+    _apply_object_texture(current, (x1, y1, x2, y2), spec, color)
     if occlusion > 0.0:
         occ_w = max(1, int(round((x2 - x1) * float(occlusion))))
         current[y1:y2, x2 - occ_w : x2, :] = 0
     return prev, current, (x1, y1, x2, y2)
+
+
+def _apply_object_texture(
+    frame: np.ndarray,
+    box: tuple[int, int, int, int],
+    spec: dict[str, Any],
+    color: np.ndarray,
+) -> None:
+    x1, y1, x2, y2 = box
+    period = max(2, int(spec.get("texture_period", 4)))
+    axis = int(spec.get("texture_axis", 0))
+    phase = int(spec.get("texture_phase", 0))
+    strength = float(spec.get("texture_strength", 24.0))
+    bright = np.clip(color.astype(np.float32) + strength, 0, 255).astype(np.uint8)
+    dark = np.clip(color.astype(np.float32) - 0.6 * strength, 0, 255).astype(np.uint8)
+    if axis == 0:
+        frame[y1 + phase % period : y2 : period, x1:x2, :] = bright
+        frame[y1 + (phase + period // 2) % period : y2 : period, x1:x2, :] = dark
+    elif axis == 1:
+        frame[y1:y2, x1 + phase % period : x2 : period, :] = bright
+        frame[y1:y2, x1 + (phase + period // 2) % period : x2 : period, :] = dark
+    else:
+        yy, xx = np.indices((max(1, y2 - y1), max(1, x2 - x1)))
+        mask = ((xx + yy + phase) % period) == 0
+        patch = frame[y1:y2, x1:x2, :]
+        patch[mask, :] = bright
+        frame[y1:y2, x1:x2, :] = patch
 
 
 def _object_file(
@@ -404,7 +435,7 @@ def main() -> None:
     parser.add_argument("--max-capsules", type=int, default=32)
     parser.add_argument("--spike-dim", type=int, default=128)
     parser.add_argument("--max-frames", type=int, default=800)
-    parser.add_argument("--same-object-threshold", type=float, default=0.86)
+    parser.add_argument("--same-object-threshold", type=float, default=0.90)
     parser.add_argument("--same-object-margin-threshold", type=float, default=0.04)
     parser.add_argument("--false-resurrection-risk-threshold", type=float, default=0.30)
     summary = run_eval(**vars(parser.parse_args()))

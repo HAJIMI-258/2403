@@ -26,7 +26,7 @@ class PermanenceDecision:
 class PermanenceRecognizer:
     def __init__(
         self,
-        same_object_threshold: float = 0.86,
+        same_object_threshold: float = 0.90,
         uncertain_threshold: float = 0.55,
         same_object_margin_threshold: float = 0.04,
         false_resurrection_risk_threshold: float = 0.30,

@@ -131,7 +131,8 @@ python experiments\run_spiking_morph_permanence_eval.py `
 ```
 
 The evaluation generates deterministic object streams with disappearance and
-reappearance under scale, aspect, brightness, occlusion, and distractor changes.
+reappearance under scale, aspect, brightness, occlusion, object-specific bounded
+texture, and distractor changes.
 It writes:
 
 - `events.csv`;

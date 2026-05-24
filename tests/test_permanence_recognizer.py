@@ -45,7 +45,7 @@ class PermanenceRecognizerTest(unittest.TestCase):
 
     def test_high_score_and_margin_is_same_object(self) -> None:
         recognizer = PermanenceRecognizer()
-        decision = recognizer.decide(_dummy_object_file(), [_match(1, 0.86), _match(2, 0.55)])
+        decision = recognizer.decide(_dummy_object_file(), [_match(1, 0.92), _match(2, 0.55)])
         self.assertEqual(decision.decision_type, "same_object")
         self.assertEqual(decision.capsule_id, 1)
 

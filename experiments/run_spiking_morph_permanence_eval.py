@@ -1,0 +1,327 @@
+"""Controlled morphology re-entry eval for bounded spiking object memory."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from metrics.permanence_metrics import (  # noqa: E402
+    bytes_per_capsule,
+    deformation_tolerance_curve,
+    false_resurrection_rate,
+    mean_spike_density,
+    memory_growth_rate,
+    same_instance_reentry_recall,
+)
+from nops_owr.cognition.object_file import ObjectFile, SupportMaskSummary  # noqa: E402
+from nops_owr.cognition.permanence_recognizer import PermanenceRecognizer  # noqa: E402
+from nops_owr.descriptor.spiking_invariant_descriptor import SpikingInvariantDescriptorBuilder  # noqa: E402
+from nops_owr.encoder.spike_encoder import MinimalSpikeEncoder, SpikeEncoding  # noqa: E402
+from nops_owr.memory.spiking_object_memory import SpikingObjectMemoryBank  # noqa: E402
+
+
+EVENT_FIELDS = [
+    "event_id",
+    "object_id",
+    "frame_index",
+    "phase",
+    "scale_change",
+    "aspect_change",
+    "brightness_drift",
+    "occlusion",
+    "distractor_level",
+    "decision_type",
+    "matched_capsule_id",
+    "true_capsule_id",
+    "same_instance_success",
+    "false_resurrection",
+    "score",
+    "spike_score",
+    "deformation_score",
+    "memory_bytes",
+    "capsule_count",
+    "spike_density",
+]
+
+
+def run_eval(
+    output_dir: str | Path = "results/spiking_morph_permanence_eval",
+    seed: int = 7,
+    object_count: int = 16,
+    events_per_object: int = 4,
+    max_capsules: int = 32,
+    spike_dim: int = 128,
+    max_frames: int = 800,
+) -> dict[str, Any]:
+    del max_frames
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    rng = np.random.default_rng(int(seed))
+    encoder = MinimalSpikeEncoder()
+    builder = SpikingInvariantDescriptorBuilder(spike_dim=spike_dim, hash_bits=spike_dim, seed=seed)
+    bank = SpikingObjectMemoryBank(max_capsules=max_capsules, spike_dim=spike_dim)
+    recognizer = PermanenceRecognizer()
+    rows: list[dict[str, Any]] = []
+    true_capsules: dict[int, int] = {}
+    object_specs = [_object_spec(object_id, rng) for object_id in range(int(object_count))]
+    frame_index = 1
+
+    for object_id in range(int(object_count)):
+        spec = object_specs[object_id]
+        prev, current, box = _render_observation(spec, scale=1.0, aspect=1.0, brightness=1.0, occlusion=0.0)
+        encoding = encoder.encode(prev, current)
+        object_file = _object_file(object_id, frame_index, box, encoding, source="context")
+        descriptor = builder.build(object_file, encoding)
+        capsule_id = bank.create_capsule(descriptor, frame_index=frame_index, metadata={"object_id_eval_only": object_id})
+        true_capsules[object_id] = capsule_id
+        rows.append(_row("context", object_id, frame_index, "context", 1.0, 1.0, 1.0, 0.0, "none", "same_object", capsule_id, capsule_id, True, False, 1.0, 1.0, 1.0, bank))
+        frame_index += 1
+
+    scale_values = [1.0, 1.2, 1.5, 2.0]
+    aspect_values = [1.0, 1.25, 1.5]
+    distractors = ["none", "low", "high"]
+    for object_id in range(int(object_count)):
+        spec = object_specs[object_id]
+        for event_idx in range(int(events_per_object)):
+            scale = scale_values[event_idx % len(scale_values)]
+            aspect = aspect_values[(object_id + event_idx) % len(aspect_values)]
+            brightness = 1.0 + (0.10 if event_idx % 2 else -0.08)
+            occlusion = 0.0 if event_idx % 3 else 0.25
+            distractor_level = distractors[(object_id + event_idx) % len(distractors)]
+            prev, current, box = _render_observation(spec, scale=scale, aspect=aspect, brightness=brightness, occlusion=occlusion)
+            encoding = encoder.encode(prev, current)
+            object_file = _object_file(object_id, frame_index, box, encoding, source="reentry")
+            descriptor = builder.build(object_file, encoding)
+            matches = bank.match(descriptor, frame_index=frame_index, top_k=5)
+            decision = recognizer.decide(object_file, matches)
+            matched_capsule_id = decision.capsule_id
+            true_capsule_id = true_capsules[object_id]
+            success = decision.decision_type in {"same_object", "familiar_but_deformed"} and matched_capsule_id == true_capsule_id
+            false_res = decision.decision_type in {"same_object", "familiar_but_deformed"} and matched_capsule_id not in {None, true_capsule_id}
+            if success:
+                bank.update_capsule(true_capsule_id, descriptor, frame_index=frame_index, confidence=decision.confidence)
+            elif decision.decision_type == "new_object" and distractor_level == "high":
+                bank.write_or_update(descriptor, frame_index=frame_index, confidence=0.5, metadata={"object_id_eval_only": object_id})
+            rows.append(
+                _row(
+                    f"obj{object_id}_event{event_idx}",
+                    object_id,
+                    frame_index,
+                    "reentry",
+                    scale,
+                    aspect,
+                    brightness,
+                    occlusion,
+                    distractor_level,
+                    decision.decision_type,
+                    matched_capsule_id,
+                    true_capsule_id,
+                    success,
+                    false_res,
+                    decision.score,
+                    decision.spike_score,
+                    decision.deformation_score,
+                    bank,
+                )
+            )
+            frame_index += 1
+
+    summary = _summary(rows, bank)
+    _write_csv(out / "events.csv", rows, EVENT_FIELDS)
+    (out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    (out / "report.md").write_text(_report(summary), encoding="utf-8")
+    return summary
+
+
+def _object_spec(object_id: int, rng: np.random.Generator) -> dict[str, Any]:
+    base = rng.uniform(0.35, 0.90, size=3)
+    return {
+        "color": np.roll(base, object_id % 3),
+        "width": 12 + (object_id % 5) * 3,
+        "height": 12 + (object_id % 4) * 4,
+        "x": 20 + (object_id % 4) * 18,
+        "y": 18 + (object_id % 3) * 18,
+    }
+
+
+def _render_observation(
+    spec: dict[str, Any],
+    *,
+    scale: float,
+    aspect: float,
+    brightness: float,
+    occlusion: float,
+    size: int = 96,
+) -> tuple[np.ndarray, np.ndarray, tuple[int, int, int, int]]:
+    prev = np.zeros((size, size, 3), dtype=np.uint8)
+    current = np.zeros_like(prev)
+    width = max(4, int(round(float(spec["width"]) * float(scale) * float(aspect))))
+    height = max(4, int(round(float(spec["height"]) * float(scale) / max(0.5, float(aspect)))))
+    x1 = int(np.clip(int(spec["x"]) - width // 2, 0, size - 2))
+    y1 = int(np.clip(int(spec["y"]) - height // 2, 0, size - 2))
+    x2 = int(np.clip(x1 + width, x1 + 1, size))
+    y2 = int(np.clip(y1 + height, y1 + 1, size))
+    color = np.clip(np.asarray(spec["color"]) * 255.0 * float(brightness), 0, 255).astype(np.uint8)
+    current[y1:y2, x1:x2, :] = color
+    current[y1:y2:3, x1:x2, :] = np.clip(color + 20, 0, 255)
+    if occlusion > 0.0:
+        occ_w = max(1, int(round((x2 - x1) * float(occlusion))))
+        current[y1:y2, x2 - occ_w : x2, :] = 0
+    return prev, current, (x1, y1, x2, y2)
+
+
+def _object_file(object_id: int, frame_index: int, box: tuple[int, int, int, int], encoding: SpikeEncoding, *, source: str) -> ObjectFile:
+    x1, y1, x2, y2 = box
+    area = float((x2 - x1) * (y2 - y1))
+    frame_area = float(encoding.current_gray.shape[0] * encoding.current_gray.shape[1])
+    shape = np.asarray(
+        [(x2 - x1) / 96.0, (y2 - y1) / 96.0, (x2 - x1) / max(1.0, y2 - y1), area / max(1.0, frame_area), 1.0, 0.6, 0.6],
+        dtype=np.float32,
+    )
+    appearance = _appearance(box, encoding)
+    context = np.asarray([(x1 + x2) / 192.0, (y1 + y2) / 192.0, 1.0, 0.0, x1 / 96.0, y1 / 96.0], dtype=np.float32)
+    return ObjectFile(
+        object_file_id=f"morph:{object_id}:{frame_index}:{source}",
+        frame_index=int(frame_index),
+        proposal_index=0,
+        box=box,
+        raw_box=box,
+        support_box=box,
+        centroid=((x1 + x2) * 0.5, (y1 + y2) * 0.5),
+        area=area,
+        score=1.0,
+        quality_score=1.0,
+        support_mask_summary=SupportMaskSummary(area=area, bbox=box, fill_ratio=1.0, compactness=0.6, boundary_smoothness=0.6),
+        appearance_signature=appearance,
+        shape_signature=shape,
+        context_signature=context,
+        motion_signature=np.zeros(0, dtype=np.float32),
+        confidence=1.0,
+        metadata={"object_id_eval_only": object_id},
+    )
+
+
+def _appearance(box: tuple[int, int, int, int], encoding: SpikeEncoding) -> np.ndarray:
+    x1, y1, x2, y2 = box
+    stats = []
+    for array in (encoding.current_gray, encoding.edge_map, encoding.spike_response):
+        patch = array[y1:y2, x1:x2]
+        values = patch.reshape(-1).astype(np.float32)
+        stats.extend([float(np.mean(values)), float(np.std(values)), float(np.quantile(values, 0.25)), float(np.quantile(values, 0.50)), float(np.quantile(values, 0.75))])
+    return np.asarray(stats, dtype=np.float32)
+
+
+def _row(
+    event_id: str,
+    object_id: int,
+    frame_index: int,
+    phase: str,
+    scale: float,
+    aspect: float,
+    brightness: float,
+    occlusion: float,
+    distractor: str,
+    decision_type: str,
+    matched_capsule_id: int | None,
+    true_capsule_id: int,
+    success: bool,
+    false_resurrection: bool,
+    score: float,
+    spike_score: float,
+    deformation_score: float,
+    bank: SpikingObjectMemoryBank,
+) -> dict[str, Any]:
+    return {
+        "event_id": event_id,
+        "object_id": int(object_id),
+        "frame_index": int(frame_index),
+        "phase": phase,
+        "scale_change": float(scale),
+        "aspect_change": float(aspect),
+        "brightness_drift": float(brightness),
+        "occlusion": float(occlusion),
+        "distractor_level": distractor,
+        "decision_type": decision_type,
+        "matched_capsule_id": "" if matched_capsule_id is None else int(matched_capsule_id),
+        "true_capsule_id": int(true_capsule_id),
+        "same_instance_success": int(success),
+        "false_resurrection": int(false_resurrection),
+        "score": float(score),
+        "spike_score": float(spike_score),
+        "deformation_score": float(deformation_score),
+        "memory_bytes": int(bank.memory_bytes()),
+        "capsule_count": int(len(bank)),
+        "spike_density": float(bank.mean_spike_density()),
+        "is_reentry": int(phase == "reentry"),
+    }
+
+
+def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank) -> dict[str, Any]:
+    reentry = [row for row in rows if row["phase"] == "reentry"]
+    memory_sizes = [row["capsule_count"] for row in rows]
+    return {
+        "same_instance_reentry_recall": same_instance_reentry_recall(reentry),
+        "false_resurrection_rate": false_resurrection_rate(reentry),
+        "mean_memory_bytes": float(np.mean([row["memory_bytes"] for row in rows])) if rows else 0.0,
+        "bytes_per_capsule": bytes_per_capsule(bank.memory_bytes(), len(bank)),
+        "mean_spike_density": mean_spike_density([row["spike_density"] for row in rows]),
+        "memory_growth_rate": memory_growth_rate(memory_sizes),
+        "final_capsule_count": int(len(bank)),
+        "final_memory_bytes": int(bank.memory_bytes()),
+        "recall_by_scale_change": deformation_tolerance_curve(reentry, field="scale_change"),
+        "recall_by_aspect_change": deformation_tolerance_curve(reentry, field="aspect_change"),
+        "false_resurrection_by_distractor_level": _false_by_group(reentry, "distractor_level"),
+    }
+
+
+def _false_by_group(rows: list[dict[str, Any]], field: str) -> dict[str, float]:
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        groups.setdefault(str(row[field]), []).append(row)
+    return {key: false_resurrection_rate(group) for key, group in sorted(groups.items())}
+
+
+def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field, "") for field in fieldnames})
+
+
+def _report(summary: dict[str, Any]) -> str:
+    return (
+        "# Spiking Morph Permanence Eval\n\n"
+        f"- same_instance_reentry_recall: {summary['same_instance_reentry_recall']:.4f}\n"
+        f"- false_resurrection_rate: {summary['false_resurrection_rate']:.4f}\n"
+        f"- bytes_per_capsule: {summary['bytes_per_capsule']:.2f}\n"
+        f"- mean_spike_density: {summary['mean_spike_density']:.4f}\n"
+        f"- final_capsule_count: {summary['final_capsule_count']}\n"
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", default="results/spiking_morph_permanence_eval")
+    parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--object-count", type=int, default=16)
+    parser.add_argument("--events-per-object", type=int, default=4)
+    parser.add_argument("--max-capsules", type=int, default=32)
+    parser.add_argument("--spike-dim", type=int, default=128)
+    parser.add_argument("--max-frames", type=int, default=800)
+    summary = run_eval(**vars(parser.parse_args()))
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

@@ -15,7 +15,9 @@ import numpy as np
 from nops_owr.attention.attention_gate import AttentionGate
 from nops_owr.cognition.cognitive_event import CognitiveEvent
 from nops_owr.cognition.object_file import ObjectFile, ObjectFileBuilder
+from nops_owr.cognition.permanence_recognizer import PermanenceRecognizer
 from nops_owr.cognition.predictive_recognition import PredictiveRecognizer, RecognitionDecision
+from nops_owr.descriptor.spiking_invariant_descriptor import SpikingInvariantDescriptorBuilder
 from nops_owr.evaluation.cognitive_metrics import (
     attended_object_ratio,
     memory_write_rate,
@@ -23,6 +25,7 @@ from nops_owr.evaluation.cognitive_metrics import (
 )
 from nops_owr.memory.episodic_memory import EpisodicMemory, RetrievedEpisode
 from nops_owr.memory.retrieval_context import RetrievalContext
+from nops_owr.memory.spiking_object_memory import SpikingObjectMemoryBank
 from nops_owr.objectness.memory_guided_proposals import MemoryGuidedProposalAugmenter
 
 
@@ -59,6 +62,10 @@ class VisualCognitiveLoop:
         object_file_builder: ObjectFileBuilder | None = None,
         memory_guided_proposals: MemoryGuidedProposalAugmenter | None = None,
         memory_guided_attention: bool = False,
+        spiking_memory_bank: SpikingObjectMemoryBank | None = None,
+        spiking_descriptor_builder: SpikingInvariantDescriptorBuilder | None = None,
+        permanence_recognizer: PermanenceRecognizer | None = None,
+        use_spiking_long_term_memory: bool = False,
     ) -> None:
         self.encoder = encoder
         self.objectness_field = objectness_field
@@ -70,6 +77,10 @@ class VisualCognitiveLoop:
         self.object_file_builder = object_file_builder or ObjectFileBuilder()
         self.memory_guided_proposals = memory_guided_proposals
         self.memory_guided_attention = bool(memory_guided_attention)
+        self.spiking_memory_bank = spiking_memory_bank
+        self.spiking_descriptor_builder = spiking_descriptor_builder
+        self.permanence_recognizer = permanence_recognizer
+        self.use_spiking_long_term_memory = bool(use_spiking_long_term_memory)
         self._prev_memory_output: Any | None = None
         self._active_episode_by_track: dict[int, int] = {}
         self._last_decision_by_track: dict[int, RecognitionDecision] = {}
@@ -108,6 +119,7 @@ class VisualCognitiveLoop:
         for object_file in object_files:
             object_file.metadata["memory_salience"] = float(task_salience.get(object_file.object_file_id, 0.0))
         attended_object_files = self.attention_gate.select(object_files, task_salience=task_salience)
+        self._apply_spiking_long_term_memory(attended_object_files, encoding, frame_index)
 
         memory_context_used = self._prev_memory_output is not None
         tracking_output = self.tracker.update(
@@ -266,6 +278,9 @@ class VisualCognitiveLoop:
             "mean_memory_salience": float(
                 0.0 if not task_salience else sum(float(v) for v in task_salience.values()) / len(task_salience)
             ),
+            "spiking_memory_bytes": float(0 if self.spiking_memory_bank is None else self.spiking_memory_bank.memory_bytes()),
+            "spiking_memory_capsule_count": float(0 if self.spiking_memory_bank is None else len(self.spiking_memory_bank)),
+            "spiking_memory_spike_density": float(0.0 if self.spiking_memory_bank is None else self.spiking_memory_bank.mean_spike_density()),
         }
         self._prev_memory_output = memory_output
         return CognitiveFrameResult(
@@ -311,6 +326,48 @@ class VisualCognitiveLoop:
             else:
                 object_file.linked_prototype_id = getattr(track_assignment, "linked_prototype_id", None)
                 object_file.linked_concept_id = getattr(track_assignment, "linked_lineage_id", None)
+
+    def _apply_spiking_long_term_memory(
+        self,
+        attended_object_files: list[ObjectFile],
+        encoding: Any,
+        frame_index: int,
+    ) -> None:
+        if not self.use_spiking_long_term_memory:
+            return
+        if self.spiking_memory_bank is None or self.spiking_descriptor_builder is None or self.permanence_recognizer is None:
+            return
+        for object_file in attended_object_files:
+            descriptor = self.spiking_descriptor_builder.build(object_file, encoding)
+            matches = self.spiking_memory_bank.match(descriptor, frame_index=frame_index, top_k=5)
+            decision = self.permanence_recognizer.decide(object_file, matches)
+            capsule_id = decision.capsule_id
+            if decision.decision_type in {"same_object", "familiar_but_deformed"} and capsule_id is not None:
+                capsule_id = self.spiking_memory_bank.write_or_update(
+                    descriptor,
+                    frame_index=frame_index,
+                    confirmed_capsule_id=capsule_id,
+                    confidence=decision.confidence,
+                )
+            elif decision.decision_type == "new_object" and decision.confidence >= 0.50:
+                capsule_id = self.spiking_memory_bank.create_capsule(
+                    descriptor,
+                    frame_index=frame_index,
+                    metadata={"source_object_file_id": object_file.object_file_id},
+                )
+            object_file.metadata.update(
+                {
+                    "spiking_capsule_id": "" if capsule_id is None else int(capsule_id),
+                    "permanence_decision_type": decision.decision_type,
+                    "permanence_score": float(decision.score),
+                    "permanence_spike_score": float(decision.spike_score),
+                    "permanence_deformation_score": float(decision.deformation_score),
+                    "permanence_false_resurrection_risk": float(decision.false_resurrection_risk),
+                    "spiking_memory_bytes": self.spiking_memory_bank.memory_bytes(),
+                    "spiking_memory_capsule_count": len(self.spiking_memory_bank),
+                    "spiking_memory_spike_density": self.spiking_memory_bank.mean_spike_density(),
+                }
+            )
 
     def _should_write_episode(self, object_file: ObjectFile, decision: RecognitionDecision) -> bool:
         if object_file.quality_score < 0.05:

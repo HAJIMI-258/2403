@@ -11,6 +11,7 @@ from .decision_policy import (
 from .episodic_memory import EpisodicBundle, EpisodicMemory, RetrievedEpisode
 from .prototype_memory import FrameMemoryResult, MinimalPrototypeMemory, PrototypeAssignment, PrototypeState
 from .retrieval_context import RetrievalContext
+from .spiking_object_memory import SpikingMemoryMatch, SpikingObjectMemoryBank, SpikingObjectMemoryCapsule
 
 __all__ = [
     "EpisodicBundle",
@@ -24,6 +25,9 @@ __all__ = [
     "RetrievedEpisode",
     "RetrievalContext",
     "RetrievalState",
+    "SpikingMemoryMatch",
+    "SpikingObjectMemoryBank",
+    "SpikingObjectMemoryCapsule",
     "assert_safe_side_effects",
     "can_release_after_wait",
     "decide_memory_retrieval",

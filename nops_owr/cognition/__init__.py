@@ -14,6 +14,8 @@ __all__ = [
     "CognitiveEvent",
     "ObjectFile",
     "ObjectFileBuilder",
+    "PermanenceDecision",
+    "PermanenceRecognizer",
     "PredictiveRecognizer",
     "RecognitionDecision",
     "SupportMaskSummary",
@@ -30,4 +32,8 @@ def __getattr__(name: str):
         from .visual_cognitive_loop import CognitiveFrameResult, VisualCognitiveLoop
 
         return {"CognitiveFrameResult": CognitiveFrameResult, "VisualCognitiveLoop": VisualCognitiveLoop}[name]
+    if name in {"PermanenceDecision", "PermanenceRecognizer"}:
+        from .permanence_recognizer import PermanenceDecision, PermanenceRecognizer
+
+        return {"PermanenceDecision": PermanenceDecision, "PermanenceRecognizer": PermanenceRecognizer}[name]
     raise AttributeError(name)

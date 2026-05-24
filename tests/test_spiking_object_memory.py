@@ -54,6 +54,17 @@ class SpikingObjectMemoryTest(unittest.TestCase):
         self.assertGreaterEqual(same.score, other.score)
         self.assertIn("chromatic_score", same.metadata)
 
+    def test_hash_chroma_deform_profile_matches_without_changing_budget(self) -> None:
+        bank = SpikingObjectMemoryBank(max_capsules=4, spike_dim=64, match_profile="hash_chroma_deform")
+        capsule_id = bank.create_capsule(_descriptor(1, 1), frame_index=1)
+        changed = _descriptor(1, 2, scale=1.15, aspect=1.05)
+
+        matches = bank.match(changed, frame_index=2, top_k=2)
+
+        self.assertEqual(matches[0].capsule_id, capsule_id)
+        self.assertEqual(matches[0].metadata["match_profile"], "hash_chroma_deform")
+        self.assertLessEqual(len(bank), 4)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -26,6 +26,7 @@ class SpikingMorphPermanenceEvalTest(unittest.TestCase):
             out = Path(tmp)
             self.assertTrue((out / "summary.json").exists())
             self.assertTrue((out / "events.csv").exists())
+            self.assertTrue((out / "matches.csv").exists())
             self.assertTrue((out / "report.md").exists())
             loaded = json.loads((out / "summary.json").read_text(encoding="utf-8"))
             for key in (
@@ -45,6 +46,9 @@ class SpikingMorphPermanenceEvalTest(unittest.TestCase):
             self.assertIn("top1_is_true_capsule", csv_text.splitlines()[0])
             self.assertIn("true_capsule_rank", csv_text.splitlines()[0])
             self.assertIn("delta_top1_minus_true_hash", csv_text.splitlines()[0])
+            matches_text = (out / "matches.csv").read_text(encoding="utf-8")
+            self.assertIn("base_score", matches_text.splitlines()[0])
+            self.assertIn("is_true_capsule", matches_text.splitlines()[0])
 
 
 if __name__ == "__main__":

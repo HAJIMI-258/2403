@@ -26,6 +26,7 @@ SUMMARY_FIELDS = [
     "same_object_threshold",
     "same_object_margin_threshold",
     "false_resurrection_risk_threshold",
+    "match_profile",
     "same_instance_reentry_recall",
     "false_resurrection_rate",
     "accepted_reentry_decision_count",
@@ -52,12 +53,13 @@ def run_sweep(
     events_per_object: int = 4,
     max_capsules: int = 32,
     spike_dim: int = 128,
+    match_profile: str = "current",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     thresholds = [0.72, 0.80, 0.86, 0.90, 0.92]
-    margins = [0.04, 0.06, 0.10]
-    risk_thresholds = [0.30, 0.35, 0.45]
+    margins = [0.04, 0.06, 0.10, 0.14]
+    risk_thresholds = [0.25, 0.30, 0.35, 0.45]
     rows: list[dict[str, Any]] = []
     config_index = 0
     for same_threshold in thresholds:
@@ -72,6 +74,7 @@ def run_sweep(
                     events_per_object=events_per_object,
                     max_capsules=max_capsules,
                     spike_dim=spike_dim,
+                    match_profile=match_profile,
                     same_object_threshold=same_threshold,
                     same_object_margin_threshold=margin_threshold,
                     false_resurrection_risk_threshold=risk_threshold,
@@ -151,6 +154,7 @@ def main() -> None:
     parser.add_argument("--events-per-object", type=int, default=4)
     parser.add_argument("--max-capsules", type=int, default=32)
     parser.add_argument("--spike-dim", type=int, default=128)
+    parser.add_argument("--match-profile", default="current")
     summary = run_sweep(**vars(parser.parse_args()))
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

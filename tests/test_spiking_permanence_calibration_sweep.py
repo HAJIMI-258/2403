@@ -30,6 +30,8 @@ class SpikingPermanenceCalibrationSweepTest(unittest.TestCase):
             self.assertIn("best_safe_config", summary)
             self.assertIn("best_safe_config", loaded)
             self.assertGreater(loaded["config_count"], 0)
+            csv_header = (out / "sweep_summary.csv").read_text(encoding="utf-8").splitlines()[0]
+            self.assertIn("match_profile", csv_header)
 
 
 if __name__ == "__main__":

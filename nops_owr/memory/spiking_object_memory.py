@@ -64,6 +64,7 @@ class SpikingObjectMemoryBank:
         min_match_score: float = 0.68,
         min_same_object_margin: float = 0.06,
         max_spike_density: float = 0.20,
+        match_profile: str = "current",
     ) -> None:
         self.max_capsules = int(max_capsules)
         self.spike_dim = int(spike_dim)
@@ -71,6 +72,7 @@ class SpikingObjectMemoryBank:
         self.min_match_score = float(min_match_score)
         self.min_same_object_margin = float(min_same_object_margin)
         self.max_spike_density = float(max_spike_density)
+        self.match_profile = str(match_profile)
         self.capsules: dict[int, SpikingObjectMemoryCapsule] = {}
         self._next_capsule_id = 1
 
@@ -106,15 +108,17 @@ class SpikingObjectMemoryBank:
             )
             hash_score = _hash_similarity(descriptor.binary_hash, capsule.binary_hash)
             stability_bonus = float(np.clip(capsule.stability, 0.0, 1.0))
-            base_score = (
-                0.20 * spike_score
-                + 0.08 * shape_score
-                + 0.05 * gray_appearance_score
-                + 0.15 * chromatic_score
-                + 0.12 * topology_score
-                + 0.15 * deformation_score
-                + 0.20 * hash_score
-                + 0.05 * stability_bonus
+            base_score = _profile_base_score(
+                self.match_profile,
+                spike_score=spike_score,
+                shape_score=shape_score,
+                gray_appearance_score=gray_appearance_score,
+                chromatic_score=chromatic_score,
+                topology_score=topology_score,
+                deformation_score=deformation_score,
+                hash_score=hash_score,
+                identity_score=identity_score,
+                stability_bonus=stability_bonus,
             )
             scored.append(
                 {
@@ -126,6 +130,9 @@ class SpikingObjectMemoryBank:
                     "deformation_score": deformation_score,
                     "spike_score": spike_score,
                     "hash_score": hash_score,
+                    "shape_score": shape_score,
+                    "topology_score": topology_score,
+                    "stability_bonus": stability_bonus,
                 }
             )
         scored.sort(key=lambda row: row["base_score"], reverse=True)
@@ -164,6 +171,10 @@ class SpikingObjectMemoryBank:
                         "top1_margin": margin if rank == 1 else 0.0,
                         "gray_appearance_score": float(row["gray_appearance_score"]),
                         "chromatic_score": float(row["chromatic_score"]),
+                        "shape_score": float(row["shape_score"]),
+                        "topology_score": float(row["topology_score"]),
+                        "stability_bonus": float(row["stability_bonus"]),
+                        "match_profile": self.match_profile,
                     },
                 )
             )
@@ -320,6 +331,47 @@ def _appearance_component_scores(left: np.ndarray, right: np.ndarray) -> tuple[f
         return gray_score, chromatic_score
     score = _cosine_similarity(left, right)
     return score, 0.5
+
+
+def _profile_base_score(
+    match_profile: str,
+    *,
+    spike_score: float,
+    shape_score: float,
+    gray_appearance_score: float,
+    chromatic_score: float,
+    topology_score: float,
+    deformation_score: float,
+    hash_score: float,
+    identity_score: float,
+    stability_bonus: float,
+) -> float:
+    if match_profile == "hash_chroma_deform":
+        return float(
+            0.30 * hash_score
+            + 0.25 * chromatic_score
+            + 0.20 * deformation_score
+            + 0.15 * spike_score
+            + 0.10 * identity_score
+        )
+    if match_profile == "identity_hash_chroma":
+        return float(
+            0.30 * identity_score
+            + 0.25 * hash_score
+            + 0.25 * chromatic_score
+            + 0.10 * deformation_score
+            + 0.10 * spike_score
+        )
+    return float(
+        0.20 * spike_score
+        + 0.08 * shape_score
+        + 0.05 * gray_appearance_score
+        + 0.15 * chromatic_score
+        + 0.12 * topology_score
+        + 0.15 * deformation_score
+        + 0.20 * hash_score
+        + 0.05 * stability_bonus
+    )
 
 
 def _gaussian_similarity(sample: np.ndarray, mu: np.ndarray, var: np.ndarray) -> float:

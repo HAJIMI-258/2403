@@ -76,6 +76,34 @@ EVENT_FIELDS = [
     "spike_density",
 ]
 
+MATCH_FIELDS = [
+    "event_id",
+    "object_id",
+    "frame_index",
+    "rank",
+    "capsule_id",
+    "true_capsule_id",
+    "is_true_capsule",
+    "score",
+    "base_score",
+    "identity_score",
+    "spike_score",
+    "deformation_score",
+    "gray_appearance_score",
+    "chromatic_score",
+    "hash_score",
+    "shape_score",
+    "topology_score",
+    "stability_bonus",
+    "conflict_score",
+    "top1_margin",
+    "scale_change",
+    "aspect_change",
+    "brightness_drift",
+    "occlusion",
+    "distractor_level",
+]
+
 
 def run_eval(
     output_dir: str | Path = "results/spiking_morph_permanence_eval",
@@ -88,6 +116,7 @@ def run_eval(
     same_object_threshold: float = 0.90,
     same_object_margin_threshold: float = 0.04,
     false_resurrection_risk_threshold: float = 0.30,
+    match_profile: str = "current",
 ) -> dict[str, Any]:
     del max_frames
     out = Path(output_dir)
@@ -95,13 +124,14 @@ def run_eval(
     rng = np.random.default_rng(int(seed))
     encoder = MinimalSpikeEncoder()
     builder = SpikingInvariantDescriptorBuilder(spike_dim=spike_dim, hash_bits=spike_dim, seed=seed)
-    bank = SpikingObjectMemoryBank(max_capsules=max_capsules, spike_dim=spike_dim)
+    bank = SpikingObjectMemoryBank(max_capsules=max_capsules, spike_dim=spike_dim, match_profile=match_profile)
     recognizer = PermanenceRecognizer(
         same_object_threshold=same_object_threshold,
         same_object_margin_threshold=same_object_margin_threshold,
         false_resurrection_risk_threshold=false_resurrection_risk_threshold,
     )
     rows: list[dict[str, Any]] = []
+    match_rows: list[dict[str, Any]] = []
     true_capsules: dict[int, int] = {}
     object_specs = [_object_spec(object_id, rng) for object_id in range(int(object_count))]
     frame_index = 1
@@ -137,6 +167,21 @@ def run_eval(
             matched_capsule_id = decision.capsule_id
             true_capsule_id = true_capsules[object_id]
             match_diagnostics = _match_diagnostics(matches, true_capsule_id)
+            event_id = f"obj{object_id}_event{event_idx}"
+            match_rows.extend(
+                _match_rows(
+                    event_id,
+                    object_id,
+                    frame_index,
+                    matches,
+                    true_capsule_id,
+                    scale,
+                    aspect,
+                    brightness,
+                    occlusion,
+                    distractor_level,
+                )
+            )
             success = decision.decision_type in {"same_object", "familiar_but_deformed"} and matched_capsule_id == true_capsule_id
             false_res = decision.decision_type in {"same_object", "familiar_but_deformed"} and matched_capsule_id not in {None, true_capsule_id}
             if success:
@@ -145,7 +190,7 @@ def run_eval(
                 bank.write_or_update(descriptor, frame_index=frame_index, confidence=0.5, metadata={"object_id_eval_only": object_id})
             rows.append(
                 _row(
-                    f"obj{object_id}_event{event_idx}",
+                    event_id,
                     object_id,
                     frame_index,
                     "reentry",
@@ -176,9 +221,11 @@ def run_eval(
             "same_object_threshold": float(same_object_threshold),
             "same_object_margin_threshold": float(same_object_margin_threshold),
             "false_resurrection_risk_threshold": float(false_resurrection_risk_threshold),
+            "match_profile": str(match_profile),
         },
     )
     _write_csv(out / "events.csv", rows, EVENT_FIELDS)
+    _write_csv(out / "matches.csv", match_rows, MATCH_FIELDS)
     (out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "report.md").write_text(_report(summary), encoding="utf-8")
     return summary
@@ -461,6 +508,52 @@ def _match_diagnostics(matches: list[Any], true_capsule_id: int) -> dict[str, An
     }
 
 
+def _match_rows(
+    event_id: str,
+    object_id: int,
+    frame_index: int,
+    matches: list[Any],
+    true_capsule_id: int,
+    scale: float,
+    aspect: float,
+    brightness: float,
+    occlusion: float,
+    distractor: str,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for match in matches:
+        rows.append(
+            {
+                "event_id": event_id,
+                "object_id": int(object_id),
+                "frame_index": int(frame_index),
+                "rank": int(match.rank),
+                "capsule_id": int(match.capsule_id),
+                "true_capsule_id": int(true_capsule_id),
+                "is_true_capsule": int(int(match.capsule_id) == int(true_capsule_id)),
+                "score": float(match.score),
+                "base_score": float(match.metadata.get("base_score", match.score)),
+                "identity_score": float(match.identity_score),
+                "spike_score": float(match.spike_score),
+                "deformation_score": float(match.deformation_score),
+                "gray_appearance_score": float(match.metadata.get("gray_appearance_score", 0.0)),
+                "chromatic_score": float(match.metadata.get("chromatic_score", 0.0)),
+                "hash_score": float(match.hash_score),
+                "shape_score": float(match.metadata.get("shape_score", 0.0)),
+                "topology_score": float(match.metadata.get("topology_score", 0.0)),
+                "stability_bonus": float(match.metadata.get("stability_bonus", 0.0)),
+                "conflict_score": float(match.conflict_score),
+                "top1_margin": float(match.metadata.get("top1_margin", 0.0)),
+                "scale_change": float(scale),
+                "aspect_change": float(aspect),
+                "brightness_drift": float(brightness),
+                "occlusion": float(occlusion),
+                "distractor_level": distractor,
+            }
+        )
+    return rows
+
+
 def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank, config: dict[str, float] | None = None) -> dict[str, Any]:
     reentry = [row for row in rows if row["phase"] == "reentry"]
     memory_sizes = [row["capsule_count"] for row in rows]
@@ -542,6 +635,7 @@ def main() -> None:
     parser.add_argument("--same-object-threshold", type=float, default=0.90)
     parser.add_argument("--same-object-margin-threshold", type=float, default=0.04)
     parser.add_argument("--false-resurrection-risk-threshold", type=float, default=0.30)
+    parser.add_argument("--match-profile", default="current")
     summary = run_eval(**vars(parser.parse_args()))
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

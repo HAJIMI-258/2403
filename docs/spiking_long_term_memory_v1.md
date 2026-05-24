@@ -69,6 +69,12 @@ capsules using:
 The final score combines these terms and returns ranked `SpikingMemoryMatch`
 objects with explicit component scores.
 
+The default matching profile remains `current`. A diagnostic candidate profile,
+`hash_chroma_deform`, can be enabled explicitly. It weights hash, chromatic
+layout, deformation, sparse spike overlap, and identity evidence more heavily.
+It is useful for evaluating whether object-specific bounded appearance evidence
+can improve top-k ranking without changing memory size.
+
 ## Plasticity
 
 Capsules update with robust EMA statistics. High-confidence observations update
@@ -130,6 +136,14 @@ python experiments\run_spiking_morph_permanence_eval.py `
   --max-frames 800
 ```
 
+To test the optional hash/chromatic/deformation matching profile:
+
+```powershell
+python experiments\run_spiking_morph_permanence_eval.py `
+  --output-dir results\spiking_morph_permanence_eval_hash_chroma_deform `
+  --match-profile hash_chroma_deform
+```
+
 The evaluation generates deterministic object streams with disappearance and
 reappearance under scale, aspect, brightness, occlusion, object-specific bounded
 texture, and distractor changes.
@@ -170,6 +184,19 @@ The evidence audit is eval-only. It separates true top-1, false top-1,
 accepted-false, and rejected-true cases, then checks whether any GT-free
 predicate over score, margin, risk, chromatic, hash, and deformation evidence can
 release true matches without false resurrection.
+
+To test whether existing top-k evidence can be reranked without adding new
+features, run:
+
+```powershell
+python experiments\run_spiking_permanence_rerank_sweep.py `
+  --matches-csv results\spiking_morph_permanence_eval\matches.csv `
+  --output-dir results\spiking_permanence_rerank_sweep
+```
+
+The rerank sweep is also eval-only. It scores candidate capsules with GT-free
+component weights and uses eval labels only to report top-1/top-3/top-5
+correctness.
 
 ## Failure Modes
 

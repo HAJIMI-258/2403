@@ -48,6 +48,12 @@ EVENT_FIELDS = [
     "score",
     "spike_score",
     "deformation_score",
+    "identity_score",
+    "hash_score",
+    "conflict_score",
+    "top1_margin",
+    "false_resurrection_risk",
+    "top1_is_true_capsule",
     "memory_bytes",
     "capsule_count",
     "spike_density",
@@ -62,6 +68,9 @@ def run_eval(
     max_capsules: int = 32,
     spike_dim: int = 128,
     max_frames: int = 800,
+    same_object_threshold: float = 0.86,
+    same_object_margin_threshold: float = 0.04,
+    false_resurrection_risk_threshold: float = 0.30,
 ) -> dict[str, Any]:
     del max_frames
     out = Path(output_dir)
@@ -70,7 +79,11 @@ def run_eval(
     encoder = MinimalSpikeEncoder()
     builder = SpikingInvariantDescriptorBuilder(spike_dim=spike_dim, hash_bits=spike_dim, seed=seed)
     bank = SpikingObjectMemoryBank(max_capsules=max_capsules, spike_dim=spike_dim)
-    recognizer = PermanenceRecognizer()
+    recognizer = PermanenceRecognizer(
+        same_object_threshold=same_object_threshold,
+        same_object_margin_threshold=same_object_margin_threshold,
+        false_resurrection_risk_threshold=false_resurrection_risk_threshold,
+    )
     rows: list[dict[str, Any]] = []
     true_capsules: dict[int, int] = {}
     object_specs = [_object_spec(object_id, rng) for object_id in range(int(object_count))]
@@ -132,11 +145,21 @@ def run_eval(
                     decision.spike_score,
                     decision.deformation_score,
                     bank,
+                    decision.metadata,
+                    decision.false_resurrection_risk,
                 )
             )
             frame_index += 1
 
-    summary = _summary(rows, bank)
+    summary = _summary(
+        rows,
+        bank,
+        {
+            "same_object_threshold": float(same_object_threshold),
+            "same_object_margin_threshold": float(same_object_margin_threshold),
+            "false_resurrection_risk_threshold": float(false_resurrection_risk_threshold),
+        },
+    )
     _write_csv(out / "events.csv", rows, EVENT_FIELDS)
     (out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "report.md").write_text(_report(summary), encoding="utf-8")
@@ -240,7 +263,11 @@ def _row(
     spike_score: float,
     deformation_score: float,
     bank: SpikingObjectMemoryBank,
+    decision_metadata: dict[str, Any] | None = None,
+    false_resurrection_risk: float = 0.0,
 ) -> dict[str, Any]:
+    metadata = dict(decision_metadata or {})
+    top1_is_true = int(matched_capsule_id == true_capsule_id) if matched_capsule_id not in {None, ""} else 0
     return {
         "event_id": event_id,
         "object_id": int(object_id),
@@ -259,6 +286,12 @@ def _row(
         "score": float(score),
         "spike_score": float(spike_score),
         "deformation_score": float(deformation_score),
+        "identity_score": float(metadata.get("identity_score", 0.0)),
+        "hash_score": float(metadata.get("hash_score", 0.0)),
+        "conflict_score": float(metadata.get("conflict_score", 0.0)),
+        "top1_margin": float(metadata.get("top1_margin", 0.0)),
+        "false_resurrection_risk": float(false_resurrection_risk),
+        "top1_is_true_capsule": top1_is_true,
         "memory_bytes": int(bank.memory_bytes()),
         "capsule_count": int(len(bank)),
         "spike_density": float(bank.mean_spike_density()),
@@ -266,12 +299,28 @@ def _row(
     }
 
 
-def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank) -> dict[str, Any]:
+def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank, config: dict[str, float] | None = None) -> dict[str, Any]:
     reentry = [row for row in rows if row["phase"] == "reentry"]
     memory_sizes = [row["capsule_count"] for row in rows]
+    accepted = [row for row in reentry if row["decision_type"] in {"same_object", "familiar_but_deformed"}]
+    top1_true = [row for row in reentry if int(row.get("top1_is_true_capsule", 0)) == 1]
+    top1_true_rejected = [
+        row
+        for row in top1_true
+        if row["decision_type"] not in {"same_object", "familiar_but_deformed"}
+    ]
     return {
+        **dict(config or {}),
         "same_instance_reentry_recall": same_instance_reentry_recall(reentry),
         "false_resurrection_rate": false_resurrection_rate(reentry),
+        "accepted_reentry_decision_count": int(len(accepted)),
+        "false_resurrection_count": int(sum(int(row.get("false_resurrection", 0)) for row in reentry)),
+        "top1_true_capsule_rate": _safe_rate(len(top1_true), len(reentry)),
+        "top1_true_but_not_accepted_rate": _safe_rate(len(top1_true_rejected), len(reentry)),
+        "uncertain_hold_rate": _safe_rate(sum(1 for row in reentry if row["decision_type"] == "uncertain_hold"), len(reentry)),
+        "false_resurrection_risk_decision_rate": _safe_rate(sum(1 for row in reentry if row["decision_type"] == "false_resurrection_risk"), len(reentry)),
+        "mean_top1_margin": float(np.mean([row["top1_margin"] for row in reentry])) if reentry else 0.0,
+        "mean_false_resurrection_risk": float(np.mean([row["false_resurrection_risk"] for row in reentry])) if reentry else 0.0,
         "mean_memory_bytes": float(np.mean([row["memory_bytes"] for row in rows])) if rows else 0.0,
         "bytes_per_capsule": bytes_per_capsule(bank.memory_bytes(), len(bank)),
         "mean_spike_density": mean_spike_density([row["spike_density"] for row in rows]),
@@ -282,6 +331,10 @@ def _summary(rows: list[dict[str, Any]], bank: SpikingObjectMemoryBank) -> dict[
         "recall_by_aspect_change": deformation_tolerance_curve(reentry, field="aspect_change"),
         "false_resurrection_by_distractor_level": _false_by_group(reentry, "distractor_level"),
     }
+
+
+def _safe_rate(numerator: int, denominator: int) -> float:
+    return 0.0 if denominator <= 0 else float(numerator) / float(denominator)
 
 
 def _false_by_group(rows: list[dict[str, Any]], field: str) -> dict[str, float]:
@@ -319,6 +372,9 @@ def main() -> None:
     parser.add_argument("--max-capsules", type=int, default=32)
     parser.add_argument("--spike-dim", type=int, default=128)
     parser.add_argument("--max-frames", type=int, default=800)
+    parser.add_argument("--same-object-threshold", type=float, default=0.86)
+    parser.add_argument("--same-object-margin-threshold", type=float, default=0.04)
+    parser.add_argument("--false-resurrection-risk-threshold", type=float, default=0.30)
     summary = run_eval(**vars(parser.parse_args()))
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

@@ -31,11 +31,16 @@ class SpikingMorphPermanenceEvalTest(unittest.TestCase):
             for key in (
                 "same_instance_reentry_recall",
                 "false_resurrection_rate",
+                "top1_true_capsule_rate",
+                "mean_top1_margin",
                 "bytes_per_capsule",
                 "mean_spike_density",
             ):
                 self.assertIn(key, summary)
                 self.assertIn(key, loaded)
+            csv_text = (out / "events.csv").read_text(encoding="utf-8")
+            self.assertIn("false_resurrection_risk", csv_text.splitlines()[0])
+            self.assertIn("top1_is_true_capsule", csv_text.splitlines()[0])
 
 
 if __name__ == "__main__":

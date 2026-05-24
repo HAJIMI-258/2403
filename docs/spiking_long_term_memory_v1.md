@@ -136,6 +136,23 @@ It writes:
 - `summary.json`;
 - `report.md`.
 
+To audit permanence decision thresholds without changing memory capacity, run:
+
+```powershell
+python experiments\run_spiking_permanence_calibration_sweep.py `
+  --output-dir results\spiking_permanence_calibration_sweep `
+  --seed 7 `
+  --object-count 16 `
+  --events-per-object 4 `
+  --max-capsules 32 `
+  --spike-dim 128
+```
+
+The sweep reports the tradeoff between same-instance re-entry recall and false
+resurrection. Current defaults prioritize low false resurrection over recall
+because a wrong long-term identity update is more damaging than an unresolved
+object.
+
 ## Failure Modes
 
 Current v1 is intentionally small. Expected failure modes include:

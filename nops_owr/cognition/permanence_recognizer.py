@@ -26,12 +26,14 @@ class PermanenceDecision:
 class PermanenceRecognizer:
     def __init__(
         self,
-        same_object_threshold: float = 0.80,
+        same_object_threshold: float = 0.86,
         uncertain_threshold: float = 0.55,
-        false_resurrection_risk_threshold: float = 0.35,
+        same_object_margin_threshold: float = 0.04,
+        false_resurrection_risk_threshold: float = 0.30,
     ) -> None:
         self.same_object_threshold = float(same_object_threshold)
         self.uncertain_threshold = float(uncertain_threshold)
+        self.same_object_margin_threshold = float(same_object_margin_threshold)
         self.false_resurrection_risk_threshold = float(false_resurrection_risk_threshold)
 
     def decide(
@@ -59,7 +61,7 @@ class PermanenceRecognizer:
         decision_type = "uncertain_hold"
         if risk >= self.false_resurrection_risk_threshold:
             decision_type = "false_resurrection_risk"
-        elif top.score >= self.same_object_threshold and margin >= 0.06 and top.deformation_score >= 0.45:
+        elif top.score >= self.same_object_threshold and margin >= self.same_object_margin_threshold and top.deformation_score >= 0.45:
             decision_type = "same_object"
         elif top.score >= self.uncertain_threshold and top.spike_score >= 0.55 and top.deformation_score < 0.45:
             decision_type = "familiar_but_deformed"
@@ -82,6 +84,9 @@ class PermanenceRecognizer:
                 "hash_score": float(top.hash_score),
                 "conflict_score": float(top.conflict_score),
                 "decision_hint": top.decision_hint,
+                "same_object_threshold": self.same_object_threshold,
+                "same_object_margin_threshold": self.same_object_margin_threshold,
+                "false_resurrection_risk_threshold": self.false_resurrection_risk_threshold,
             },
         )
 

@@ -22,6 +22,7 @@ class SpikingMorphPermanenceEvalTest(unittest.TestCase):
                 max_capsules=4,
                 spike_dim=64,
                 max_frames=40,
+                context_observations_per_object=2,
             )
             out = Path(tmp)
             self.assertTrue((out / "summary.json").exists())
@@ -38,6 +39,7 @@ class SpikingMorphPermanenceEvalTest(unittest.TestCase):
                 "mean_score_gap_top1_minus_true",
                 "bytes_per_capsule",
                 "mean_spike_density",
+                "context_observations_per_object",
             ):
                 self.assertIn(key, summary)
                 self.assertIn(key, loaded)

@@ -144,6 +144,22 @@ python experiments\run_spiking_morph_permanence_eval.py `
   --match-profile hash_chroma_deform
 ```
 
+To test fixed-size capsule consolidation from multiple stable observations
+before disappearance:
+
+```powershell
+python experiments\run_spiking_permanence_consolidation_sweep.py `
+  --output-dir results\spiking_permanence_consolidation_sweep `
+  --match-profile hash_chroma_deform `
+  --same-object-threshold 0.90 `
+  --same-object-margin-threshold 0.14 `
+  --false-resurrection-risk-threshold 0.25
+```
+
+This sweep updates each capsule with 1, 2, 4, 6, or 8 context observations while
+keeping the number of long-term capsules fixed. It tests consolidation quality,
+not memory growth through extra slots.
+
 The evaluation generates deterministic object streams with disappearance and
 reappearance under scale, aspect, brightness, occlusion, object-specific bounded
 texture, and distractor changes.

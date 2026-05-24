@@ -117,6 +117,7 @@ def run_eval(
     same_object_margin_threshold: float = 0.04,
     false_resurrection_risk_threshold: float = 0.30,
     match_profile: str = "current",
+    context_observations_per_object: int = 1,
 ) -> dict[str, Any]:
     del max_frames
     out = Path(output_dir)
@@ -136,16 +137,44 @@ def run_eval(
     object_specs = [_object_spec(object_id, rng) for object_id in range(int(object_count))]
     frame_index = 1
 
+    context_observations = max(1, int(context_observations_per_object))
     for object_id in range(int(object_count)):
         spec = object_specs[object_id]
-        prev, current, box = _render_observation(spec, scale=1.0, aspect=1.0, brightness=1.0, occlusion=0.0)
-        encoding = encoder.encode(prev, current)
-        object_file = _object_file(object_id, frame_index, box, encoding, source="context", current_frame=current)
-        descriptor = builder.build(object_file, encoding)
-        capsule_id = bank.create_capsule(descriptor, frame_index=frame_index, metadata={"object_id_eval_only": object_id})
-        true_capsules[object_id] = capsule_id
-        rows.append(_row("context", object_id, frame_index, "context", 1.0, 1.0, 1.0, 0.0, "none", "same_object", capsule_id, capsule_id, True, False, 1.0, 1.0, 1.0, bank))
-        frame_index += 1
+        capsule_id: int | None = None
+        for obs_idx in range(context_observations):
+            scale, aspect, brightness, occlusion = _context_variation(obs_idx)
+            prev, current, box = _render_observation(spec, scale=scale, aspect=aspect, brightness=brightness, occlusion=occlusion)
+            encoding = encoder.encode(prev, current)
+            object_file = _object_file(object_id, frame_index, box, encoding, source="context", current_frame=current)
+            descriptor = builder.build(object_file, encoding)
+            if capsule_id is None:
+                capsule_id = bank.create_capsule(descriptor, frame_index=frame_index, metadata={"object_id_eval_only": object_id})
+                true_capsules[object_id] = capsule_id
+            else:
+                bank.update_capsule(capsule_id, descriptor, frame_index=frame_index, confidence=0.95)
+            rows.append(
+                _row(
+                    f"context{obs_idx}",
+                    object_id,
+                    frame_index,
+                    "context",
+                    scale,
+                    aspect,
+                    brightness,
+                    occlusion,
+                    "none",
+                    "same_object",
+                    capsule_id,
+                    capsule_id,
+                    True,
+                    False,
+                    1.0,
+                    1.0,
+                    1.0,
+                    bank,
+                )
+            )
+            frame_index += 1
 
     scale_values = [1.0, 1.2, 1.5, 2.0]
     aspect_values = [1.0, 1.25, 1.5]
@@ -222,6 +251,7 @@ def run_eval(
             "same_object_margin_threshold": float(same_object_margin_threshold),
             "false_resurrection_risk_threshold": float(false_resurrection_risk_threshold),
             "match_profile": str(match_profile),
+            "context_observations_per_object": int(context_observations),
         },
     )
     _write_csv(out / "events.csv", rows, EVENT_FIELDS)
@@ -244,6 +274,16 @@ def _object_spec(object_id: int, rng: np.random.Generator) -> dict[str, Any]:
         "texture_phase": (object_id * 2) % 5,
         "texture_strength": 18 + (object_id % 4) * 8,
     }
+
+
+def _context_variation(obs_idx: int) -> tuple[float, float, float, float]:
+    if obs_idx <= 0:
+        return 1.0, 1.0, 1.0, 0.0
+    scale = 1.0 + 0.03 * ((obs_idx % 3) - 1)
+    aspect = 1.0 + 0.04 * (1 if obs_idx % 2 else -1)
+    brightness = 1.0 + 0.04 * (1 if obs_idx % 3 == 1 else -1)
+    occlusion = 0.10 if obs_idx % 5 == 0 else 0.0
+    return float(scale), float(aspect), float(brightness), float(occlusion)
 
 
 def _render_observation(
@@ -636,6 +676,7 @@ def main() -> None:
     parser.add_argument("--same-object-margin-threshold", type=float, default=0.04)
     parser.add_argument("--false-resurrection-risk-threshold", type=float, default=0.30)
     parser.add_argument("--match-profile", default="current")
+    parser.add_argument("--context-observations-per-object", type=int, default=1)
     summary = run_eval(**vars(parser.parse_args()))
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

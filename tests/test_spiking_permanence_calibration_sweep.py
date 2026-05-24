@@ -32,6 +32,7 @@ class SpikingPermanenceCalibrationSweepTest(unittest.TestCase):
             self.assertGreater(loaded["config_count"], 0)
             csv_header = (out / "sweep_summary.csv").read_text(encoding="utf-8").splitlines()[0]
             self.assertIn("match_profile", csv_header)
+            self.assertIn("context_observations_per_object", csv_header)
 
 
 if __name__ == "__main__":
